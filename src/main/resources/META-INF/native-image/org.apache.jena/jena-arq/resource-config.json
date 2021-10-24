@@ -1,0 +1,11 @@
+{
+  "resources":{
+  "includes":[
+    {
+      "pattern":"\\QMETA-INF/services/org.apache.jena.sys.JenaSubsystemLifecycle\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/apache/jena/arq/arq-properties.xml\\E"
+    }
+  ]}
+}

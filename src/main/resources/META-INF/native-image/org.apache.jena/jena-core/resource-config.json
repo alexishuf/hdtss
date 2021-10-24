@@ -1,0 +1,14 @@
+{
+  "resources":{
+  "includes":[
+    {
+      "pattern":"\\QMETA-INF/services/org.apache.jena.sys.JenaSubsystemLifecycle\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/apache/jena/jena-properties.xml\\E"
+    }
+  ]},
+  "bundles":[{
+      "name":"org.apache.jena.ext.xerces.impl.xpath.regex.message"
+    }]
+}

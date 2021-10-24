@@ -1,0 +1,9 @@
+{ "rules": [
+  {"excludeClasses": "com.github.lapesd.hdtss.**"},
+  {"excludeClasses": "io.micronaut.**"},
+  {"excludeClasses": "ch.qos.logback.**"},
+  {"excludeClasses": "sun.**"},
+  {"excludeClasses": "java.**"},
+  {"excludeClasses": "io.netty.**"}
+]
+}

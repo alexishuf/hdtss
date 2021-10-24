@@ -1,0 +1,11 @@
+{
+  "resources":{
+  "includes":[
+    {
+      "pattern":"\\QMETA-INF/services/org.apache.jena.sys.JenaSubsystemLifecycle\\E"
+    },
+    {
+      "pattern":"\\Qorg/apache/jena/tdb2/tdb2-properties.xml\\E"
+    }
+  ]}
+}
