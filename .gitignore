@@ -1,0 +1,18 @@
+### IDEs
+.idea/
+.project
+.cproject
+*.iml
+*.ipr
+.attach_*
+
+### Maven template
+target/
+dependency-reduced-pom.xml
+
+### GraalVM
+*.build_artifacts.txt
+
+### Command-line utils
+.rsync-filter
+

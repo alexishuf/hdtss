@@ -1,0 +1,60 @@
+hdt:
+  load:
+    location: data.hdt
+    progress:
+      impl: log
+      log:
+        level: INFO
+        period: 5s
+        on-start: true
+        on-end: true
+sparql:
+  reactive:
+    # IO: use Micronaaut TaskExecutors.IO. ELASTIC: create with  Schedulers.newBounderElastic
+    scheduler: IO
+    # max number of threads if scheduler=ELASTIC
+    max-threads: -1
+    # max number of queued tasks per thread if scheduler=ELASTIC
+    max-queue: -1
+  hdt:
+    # REACTIVE flow creates a Flux<> over solutions (push-pull model), solutions will be
+    # proactively pushed from Micronaut IO thread pool.
+    # ITERATOR creates a plain Iterator<> over solutions (pull model)
+    flow: REACTIVE
+  endpoint:
+    # CHUNKED uses Transfer-Encoding: chunked, whereas BATCH uses no Transfer-Encoding
+    # BATCH will cause the server to only start transmitting after all solutions to a
+    # query had been enumerated
+    flow: CHUNKED
+  filter:
+    flow: REACTIVE
+  join:
+    strategy: BIND
+    reorder: NONE
+    flow: REACTIVE
+  union:
+    flow: ITERATOR
+  distinct:
+    strategy: HASH
+    # window only applies to strategy=WINDOW
+    window: 8192
+    flow: ITERATOR
+  project:
+    flow: ITERATOR
+  values:
+    flow: ITERATOR
+  limit:
+    flow: ITERATOR
+  offset:
+    flow: ITERATOR
+  assign:
+    flow: REACTIVE
+  exists:
+    flow: REACTIVE
+  minus:
+    # BIND: bind the right side with left solutions
+    # SET: store right solutions into a set
+    strategy: BIND
+    # Set implementation to use when strategy=SET: HASH or TREE
+    set: HASH
+    flow: REACTIVE

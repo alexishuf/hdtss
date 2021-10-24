@@ -1,0 +1,6 @@
+applicationType: default
+defaultPackage: com.github.lapesd.hdt.server
+testFramework: junit
+sourceLanguage: java
+buildTool: maven
+features: [annotation-api, app-name, http-client, java, java-application, junit, log4j2, lombok, maven, netty-server, reactor, reactor-http-client, readme, shade, yaml]

@@ -1,0 +1,5 @@
+micronaut:
+  application:
+    name: hdtss
+  server:
+    default-charset: UTF-8
