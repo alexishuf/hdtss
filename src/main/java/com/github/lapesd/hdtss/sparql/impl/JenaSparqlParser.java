@@ -20,6 +20,7 @@ import org.apache.jena.sparql.expr.E_Exists;
 import org.apache.jena.sparql.expr.E_NotExists;
 import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.syntax.*;
+import org.apache.jena.sys.JenaSystem;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.ArrayList;
@@ -33,6 +34,10 @@ import static java.util.stream.Collectors.toList;
 
 @Singleton
 public class JenaSparqlParser implements SparqlParser {
+    public JenaSparqlParser() {
+        JenaSystem.init();
+    }
+
     @Override
     public @NonNull Op parse(@NonNull CharSequence sparql) throws FeatureNotSupportedException {
         String queryString = sparql.toString();
