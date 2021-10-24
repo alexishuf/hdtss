@@ -75,17 +75,54 @@ class SparqlControllerTest {
                 PREFIX foaf: <%s>
                 """, XSD.NS, RDF.NS, RDFS.NS, FOAF.NS);
         return Stream.of(
-                arguments(prolog+"SELECT ?x WHERE { ?x foaf:age 23. }",
+    /*  1 */    arguments(prolog+"SELECT ?x WHERE { ?x foaf:age 23. }",
                           List.of(List.of(Alice))),
-                arguments(prolog+"SELECT DISTINCT * WHERE { ?x foaf:age ?y. }",
+    /*  2 */    arguments(prolog+"SELECT DISTINCT * WHERE { ?x foaf:age ?y. }",
                           asList(asList(Alice, i23), asList(Bob, i25))),
-                arguments(prolog+ """
+    /*  3 */    arguments(prolog+ """
                         SELECT * WHERE {
                           { ?x foaf:name "Alice"@en }
                           UNION
                           { ?x foaf:name "charlie". }
                         }""",
-                        asList(List.of(Alice), List.of(Charlie)))
+                        asList(List.of(Alice), List.of(Charlie))),
+                // Filter by number
+    /*  4 */    arguments(prolog+ """
+                        SELECT * WHERE {
+                        ?who foaf:age ?age FILTER(?age < 25)
+                        }
+                        """, List.of(asList(Alice, i23))),
+                // simple S-S join
+    /*  5 */    arguments(prolog+ """
+                        SELECT ?name WHERE {
+                          ?who foaf:name ?name;
+                               foaf:knows :Alice.
+                        }
+                        """, asList(List.of(bob), List.of(roberto), List.of(charlie))),
+                // bogus result var
+    /*  6 */    arguments(prolog+ """
+                        SELECT ?name ?age WHERE {
+                          ?who foaf:name ?name;
+                               foaf:knows :Alice.
+                        }
+                        """, asList(asList(bob, null), asList(roberto, null), asList(charlie, null))),
+                // left join
+    /*  7 */    arguments(prolog+ """
+                        SELECT ?name ?age WHERE {
+                          ?who foaf:name ?name;
+                               foaf:knows :Alice.
+                          OPTIONAL { ?who foaf:age ?age }
+                        }
+                        """, asList(asList(bob, i25), asList(roberto, i25), asList(charlie, null))),
+                // regex evaluation
+    /*  8 */    arguments(prolog+ """
+                        SELECT ?name ?age WHERE {
+                          ?who foaf:name ?name;
+                               foaf:knows :Alice.
+                          FILTER(regex(str(?name), "^[abc].*"))
+                          OPTIONAL { ?who foaf:age ?age }
+                        }
+                        """, asList(asList(bob, i25), asList(charlie, null)))
         );
     }
 

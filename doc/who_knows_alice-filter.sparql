@@ -6,5 +6,6 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 SELECT ?name ?age WHERE {
   ?who foaf:name ?name;
        foaf:knows :Alice.
+  FILTER(regex(str(?name), "^[abc].*"))
   OPTIONAL { ?who foaf:age ?age }
 }
