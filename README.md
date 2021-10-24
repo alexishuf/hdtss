@@ -58,7 +58,7 @@ target/hdtss -hdt.location=doc/foaf-graph.hdt
 SPARQL queries can be submitted to `/sparql` as per the 
 [SPARQL protocol](https://www.w3.org/TR/sparql11-protocol/): 
 ```shell
-curl -data-urlencode query=@doc/who_knows_alice.sparql \
+curl --data-urlencode query@doc/who_knows_alice.sparql \
       -H "Accept: text/tab-separated-values" \
       http://localhost:8080/sparql
 ```
