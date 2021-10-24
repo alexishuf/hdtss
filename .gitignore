@@ -1,5 +1,6 @@
 ### IDEs
 .idea/
+run/
 .project
 .cproject
 *.iml
