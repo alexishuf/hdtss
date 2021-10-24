@@ -1,7 +1,7 @@
 package com.github.lapesd.hdtss.data.load;
 
-import io.micronaut.runtime.context.scope.Refreshable;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.rdfhdt.hdt.hdt.HDT;
 
@@ -10,13 +10,18 @@ import java.io.IOException;
 import java.util.List;
 import java.util.regex.Pattern;
 
-@Refreshable
+@Singleton
 public class HDTLoaderUtil {
     private static final Pattern URI_RX = Pattern.compile("(?i)^[a-z][-+.a-z0-9]*:.*$");
     private static final Pattern FILE_URI_PARSER = Pattern.compile("^file:(/*)(.*)$");
 
-    @Inject private @NonNull List<HDTLoader> loaders;
-    @Inject private @NonNull HdtConfig cfg;
+    private final @NonNull List<HDTLoader> loaders;
+    private final @NonNull HdtConfig cfg;
+
+    @Inject public HDTLoaderUtil(@NonNull List<HDTLoader> loaders, @NonNull HdtConfig cfg) {
+        this.loaders = loaders;
+        this.cfg = cfg;
+    }
 
     private static record ScoredLoader(@NonNull HDTLoader loader, int score)
             implements Comparable<ScoredLoader> {
