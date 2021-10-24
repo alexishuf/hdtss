@@ -5,16 +5,16 @@ HDT SPARQL Server (`hdtss`)
 
 The goals of this implementation are:
 
-- Quick startup (if the HDT index sidecar already exists)
-  - aka [GraalVM](https://www.graalvm.org/) native images
-- Concurrent query processing and results transmission
+- Quick startup (if the HDT index sidecar already exists).
+  - aka [GraalVM](https://www.graalvm.org/) native images.
+- Concurrent query processing and results transmission.
   - `Transfer-Encoding: chunked` allows any solution to a query to be sent 
     ASAP. For large query results and **clients capable of incremental 
     parsing**, this can provide dramatic latency improvements. Paging over query 
     solutions with `LIMIT` and `OFFSET` is thus not recommended.  
 - Configurable internal flow control strategies
   - Choose between pull-based `Iterator`s or push/pull reactive 
-    streams (`Flux<>`).   
+    streams (`Flux<>`).
 
 The goal is to support all of [SPARQL 1.1 Query Language](https://www.w3.org/TR/sparql11-query/). 
 The [SPARQL Update language](https://www.w3.org/TR/2013/REC-sparql11-update-20130321/) 
@@ -23,11 +23,13 @@ is out of scope, since HDT files are not designed for mutability.
 Currently, the missing SPARQL 1.1 features are:
 
 - `CONSTRUCT` queries
+- `DESCRIBE` queries
 - Property paths
+- Federation with `SERVICE` blocks
 - Named graph blocks (`GRAPH <...> {...}` or `GRAPH ?g {...}`)
 - Named graphs set with `FROM` clause or via the SPARQL protocol
 
-These will (hopefully) be implemented soon. 
+These will (hopefully) be implemented _soon_. 
 
 Quickstart
 ----------
@@ -39,11 +41,11 @@ Build (fast) and expose a SPARQL endpoint at [http://localhost:8080/sparql](http
 target/hdtss -hdt.location=doc/foaf-graph.hdt
 ```
 
-> hdtss as generated with packaging=jar (the default) is both a shell-script 
+> hdtss as generated with 'packaging=jar' (the default) is both a shell-script 
 > and fat jar (including all dependencies). It will behave as an executable 
 > as long as `java` is in `$PATH` 
 
-A statically linked binary can be built with [GraalVM](https://www.graalvm.org/), either:
+A binary can be built with [GraalVM](https://www.graalvm.org/), either:
  - using a GraalVM in the host system (`-Dpackaging=native-image`), or 
  - using a Docker container (`-Dpackaging=docker-native`).  
 
@@ -52,13 +54,13 @@ A statically linked binary can be built with [GraalVM](https://www.graalvm.org/)
 target/hdtss -hdt.location=doc/foaf-graph.hdt
 ```
 
-> GraalVM native images are start faster and are executable without a JVM
+> GraalVM native images start faster and are executable without a JVM
 > The build will be slower (>3min) and require ~9 GiB of RAM.
 
 SPARQL queries can be submitted to `/sparql` as per the 
 [SPARQL protocol](https://www.w3.org/TR/sparql11-protocol/): 
 ```shell
-curl --data-urlencode query@doc/who_knows_alice.sparql \
+curl --data-urlencode query@doc/who_knows_alice-filter.sparql \
       -H "Accept: text/tab-separated-values" \
       http://localhost:8080/sparql
 ```
@@ -88,18 +90,18 @@ Configuration
 Configuration is handled by [Micronaut](http://micronaut.io), and centers 
 around _configuration properties_. Each configuration property can be named 
 in different styles, depending on where it is being set. The command line and 
-documentation uses Java properties syntax: `parent.child.property`. On JSON 
-or YAML files, the `.` yields a hierarchical structure. In environment 
+documentation uses Java property syntax: `parent.child.property`. On JSON 
+or YAML files, the `.` translates into a hierarchical structure. In environment 
 variables, `.` and `-`  become `_` and everything is upper case. 
 
 > For usability, a positional command-line argument (i.e., it is not a 
-> value of an -option or --option) is assumed to be a value for the 
-> `-hdt.location` option. 
+> value of an -option/--option) is assumed to be a value for `-hdt.location`. 
 
 The `hdtss` configuration properties and their defaults are documented 
 [here](./doc/CONFIG.md) 
 
-> Micronaut itself exposes some properties, such as -port and -host.
+> Micronaut itself exposes some properties, such as -port and -host. For 
+> details check the official [documentation](https://docs.micronaut.io/latest/guide).
 
 The command-line interface can take properties preceded with either a single 
 `-` or `--`. There are single-letter options. Properties can be set in a 

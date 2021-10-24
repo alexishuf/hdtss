@@ -1,6 +1,20 @@
 Configuration properties
 ========================
 
+Table of Contents:
+
+- [Setting properties](#setting-properties)
+- [HDT configuration properties](#hdt-configuration-properties)
+  - [Loading](#loading)
+    - [Progress Listener](#progress-listener)   
+- [Querying configuration properties](#querying-configuration-properties)
+  - [Flow Control](#flow-control) 
+  - [Implementation Strategies](#implementation-strategies) 
+- [SPARQL protocol configuration properties](#sparql-protocol-configuration-properties) 
+
+Setting Properties
+------------------
+
 Configuration is handled via [Micronaut](https://micronaut.io/). Specifically, 
 check the default sources and priority at 
 the [Included PropertySource Loaders sub-subsection](https://docs.micronaut.io/latest/guide/#propertySource).
@@ -38,8 +52,8 @@ properties.
 > found in the [docs directory](./application-example.yaml)
 > 
 
-HDT properties
---------------
+HDT configuration properties
+----------------------------
 
 These properties select implementations responsible for loading and 
 querying triple patterns against HDT files.
@@ -119,7 +133,7 @@ of the above loader properties having the following weights:
 > **Default is `false`**, i.e., constraints on `HDTLoader` characteristics 
 > will be relaxed if unsatisfiable. 
 
-#### Progress listeners
+#### Progress listener
 
 As HDT files are loaded (or memory-mapped), the progress will be displayed 
 via a `org.rdfhdt.hdt.listener.ProgressListener` implementation. 
@@ -164,8 +178,8 @@ These properties choose the implementation and configure it.
 > message to be logged if the  minimum period constraint is satisfied. 
 
  
-Querying
---------
+Querying configuration properties
+---------------------------------
 
 ### Flow control
 
@@ -178,8 +192,9 @@ When processing queries, the flow control pattern can be one of three:
    (e.g., code serializing solutions) pulls one solution, triggering all 
    required processing only when it does so.
 3. `BATCH`: All processing steps are eagerly computed generating lists of 
-   solutions as result. This favors cache coherence when generating such lists 
-   but will strain the garbage collector or cause `OutOfMemoryError`s.
+   solutions as result. This pattern favors cache coherence when generating 
+   such lists but is likely to stress the garbage collector or cause 
+   `OutOfMemoryError`s.
 
 The flow control type can be set for each individual SPARQL operator, as well 
 for the processing of triple pattern queries against an HDT file. 
@@ -267,7 +282,7 @@ such implementations.
 >  > `HASH`: store all solutions in a `HashSet`
 > 
 >  > `WINDOW`: store only the past `sparql.distinct.window` solutions in
->  > a hash set. This is not conformant with the W3C recommendation.
+>  > a hash set. This does not conform to the [W3C recommendation](https://www.w3.org/TR/sparql11-query/).
 
 > `sparql.distinct.window=integer`
 >
@@ -316,8 +331,8 @@ reordering strategy can be configured as such:
 > > one join-connected component (connected means operands share variables), 
 > > the ensuing cartesian product execution is delayed as long as possible.
 
-SPARQL protocol
----------------
+SPARQL protocol configuration properties
+----------------------------------------
 
 The main point of hdt-server is exposing a SPARQL endpoint over an HDT file.
 As with the querying triple patterns against HDT and processing SPARQL algebra 
