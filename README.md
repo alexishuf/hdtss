@@ -1,7 +1,7 @@
-HDT SPARQL Endpoint (`hdtss`)
-=============================
+HDT SPARQL Server (`hdtss`)
+===========================
 
-`hdt-server` exposes a SPARQL endpoint over HTTP from an HDT file. 
+`hdtss` exposes a SPARQL endpoint over HTTP from an HDT file. 
 
 The goals of this implementation are:
 
