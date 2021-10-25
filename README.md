@@ -44,17 +44,23 @@ target/hdtss -hdt.location=doc/foaf-graph.hdt
 > hdtss as generated with 'packaging=jar' (the default) is both a shell-script 
 > and fat jar (including all dependencies). It will behave as an executable 
 > as long as `java` is in `$PATH` 
+ 
+Run from a docker image:
+```shell
+docker run -it --rm -p 8080:8080 -v $(pwd):/data \
+  alexishuf/hdtss doc/foaf-graph.hdt
+```
 
-A binary can be built with [GraalVM](https://www.graalvm.org/), either:
- - using a GraalVM in the host system (`-Dpackaging=native-image`), or 
- - using a Docker container (`-Dpackaging=docker-native`).  
+> The docker image uses a GraalVM native image, which starts faster than a 
+> regular jar and does not need a JVM
+
+Build a [GraalVM](https://www.graalvm.org/) native image and then run it:
 
 ```shell
 ./mvnw package -Dpackaging=native-image 
 target/hdtss -hdt.location=doc/foaf-graph.hdt
 ```
 
-> GraalVM native images start faster and are executable without a JVM
 > The build will be slower (>3min) and require ~9 GiB of RAM.
 
 SPARQL queries can be submitted to `/sparql` as per the 
