@@ -7,15 +7,32 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Slf4j
 public class Application {
     private static final Pattern OPTION_RX = Pattern.compile("^--?");
     private static final Pattern HDT_LOCATION_RX = Pattern.compile("^--?hdt.location");
+    private static final Pattern SERVER_CONFIG_RX = Pattern.compile(
+            "^(--?)(http-version|thread-selection|default-charset|port|host|read-timeout" +
+                    "|server-header|max-request-size|read-idle-timeout|write-idle-timeout" +
+                    "|idle-timeout|date-header|log-handled-exeptions|client-address-header" +
+                    "|context-path|dual-protocol|http-to-https-redirect)(=|$)");
 
-    public static void main(String[] args) {
-        Micronaut.run(Application.class, promoteOrphansToHdtLocation(args));
+    public static void main(@NonNull String @NonNull[] args) {
+        args = promoteOrphansToHdtLocation(args);
+        scopeServerProperties(args);
+        Micronaut.run(Application.class, args);
+    }
+
+    private static void
+    scopeServerProperties(@NonNull String @NonNull[] args) {
+        for (int i = 0; i < args.length; i++) {
+            Matcher matcher = SERVER_CONFIG_RX.matcher(args[i]);
+            if (matcher.find())
+                args[i] = matcher.replaceAll("$1micronaut.server.$2$3");
+        }
     }
 
     private static @NonNull String @NonNull []
