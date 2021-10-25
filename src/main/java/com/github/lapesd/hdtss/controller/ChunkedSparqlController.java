@@ -30,7 +30,7 @@ import static java.util.stream.Collectors.joining;
                         MediaType.TEXT_HTML, MediaType.TEXT_PLAIN})
 @Singleton
 @Requires(property = "sparql.endpoint.flow", value = "CHUNKED", defaultValue = "CHUNKED")
-public class ChunkedSparqlController implements SparqlController {
+public class ChunkedSparqlController extends HeartBeatingSparqlController {
     private final @NonNull Scheduler scheduler;
     private final @NonNull SparqlParser parser;
     private final @NonNull OpExecutorDispatcher dispatcher;
@@ -63,6 +63,7 @@ public class ChunkedSparqlController implements SparqlController {
     private @NonNull Publisher<byte[]> answer(@Nullable String query, @Nullable String out,
                                               @Nullable String output, @NonNull HttpHeaders headers) {
         query = query == null ? "" : query;
+        logQuery(query);
         MediaType mt = SparqlMediaTypes.firstResultType(headers.accept());
         if (mt == null)
             mt = SparqlMediaTypes.resultTypeFromShortName(out, output);

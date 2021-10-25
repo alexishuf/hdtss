@@ -6,6 +6,7 @@ import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.vocab.RDF;
 import com.github.lapesd.hdtss.vocab.RDFS;
 import com.github.lapesd.hdtss.vocab.XSD;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
@@ -23,6 +24,7 @@ import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementVisitorBase;
+import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.vocabulary.OWL2;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -35,6 +37,7 @@ import java.util.regex.Pattern;
 
 import static org.apache.jena.graph.NodeFactory.*;
 
+@Slf4j
 public class JenaUtils {
     private static final @NonNull Set<String> BI_OPS = Set.of("<",  "<=", "=", "==", "!=",
                                                               ">=", ">",  "+", "-",  "*",
@@ -49,6 +52,17 @@ public class JenaUtils {
             "PREFIX owl: <"+OWL2.NS+">\n" +
             "SELECT * WHERE {\n";
     private static final @NonNull Pattern UNESCAPED_D_QUOTE = Pattern.compile("([^\\\\]|^)\"");
+    private static boolean initialized = false;
+
+    public static void init() {
+        if (!initialized) {
+            initialized = true;
+            long startNs = System.nanoTime();
+            JenaSystem.init();
+            double ms = (System.nanoTime() - startNs)/1000000.0;
+            log.debug("JenaSystem.init() done in {}ms", String.format("%.3fms", ms));
+        }
+    }
 
     public static Node toNode(Term term) {
         if (term == null)

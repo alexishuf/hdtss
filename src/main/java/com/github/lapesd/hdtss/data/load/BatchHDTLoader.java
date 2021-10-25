@@ -1,6 +1,7 @@
 package com.github.lapesd.hdtss.data.load;
 
-import com.github.lapesd.hdtss.data.progress.HDTProgressListenerSupplier;
+import com.github.lapesd.hdtss.data.progress.HDTLoadListener;
+import com.github.lapesd.hdtss.data.progress.HDTLoadListenerSupplier;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -12,10 +13,10 @@ import java.io.IOException;
 
 @Singleton
 public class BatchHDTLoader implements HDTLoader {
-    private final @NonNull HDTProgressListenerSupplier listenerSupplier;
+    private final @NonNull HDTLoadListenerSupplier listenerSupplier;
 
     @Inject
-    public BatchHDTLoader(@NonNull HDTProgressListenerSupplier listenerSupplier) {
+    public BatchHDTLoader(@NonNull HDTLoadListenerSupplier listenerSupplier) {
         this.listenerSupplier = listenerSupplier;
     }
 
@@ -30,9 +31,16 @@ public class BatchHDTLoader implements HDTLoader {
     @Override
     public @NonNull HDT load(@NotNull @NonNull String location, boolean indexIfMissing) throws IOException {
         var path = HDTLoaderUtil.toFilePath(location);
-        if (indexIfMissing)
-            return HDTManager.loadIndexedHDT(path, listenerSupplier.listenerFor(path));
-        else
-            return HDTManager.loadHDT(path, listenerSupplier.listenerFor(path));
+        HDTLoadListener listener = listenerSupplier.listenerFor(path);
+        listener.onStart();
+        try {
+            HDT hdt = indexIfMissing ? HDTManager.loadIndexedHDT(path, listener)
+                    : HDTManager.loadHDT(path, listener);
+            listener.onEnd();
+            return hdt;
+        } catch (Throwable t) {
+            listener.onError(t);
+            throw t;
+        }
     }
 }

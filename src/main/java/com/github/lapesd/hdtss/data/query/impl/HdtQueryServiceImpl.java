@@ -9,10 +9,10 @@ import com.github.lapesd.hdtss.model.nodes.TriplePattern;
 import com.github.lapesd.hdtss.model.solutions.*;
 import com.github.lapesd.hdtss.utils.QueryExecutionScheduler;
 import io.micronaut.context.annotation.Property;
-import io.micronaut.runtime.context.scope.Refreshable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
-@Refreshable
+@Singleton
 public class HdtQueryServiceImpl implements HdtQueryService, Closeable {
     private final @NonNull HDT hdt;
     private @NonNull final FlowType flowType;

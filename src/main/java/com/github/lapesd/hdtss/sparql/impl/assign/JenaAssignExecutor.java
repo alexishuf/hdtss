@@ -9,7 +9,6 @@ import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.utils.JenaExprEvaluator;
 import com.github.lapesd.hdtss.utils.JenaUtils;
 import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sys.JenaSystem;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.HashMap;
@@ -24,7 +23,7 @@ abstract class JenaAssignExecutor implements OpExecutor {
 
     public JenaAssignExecutor(@NonNull OpExecutorDispatcher dispatcher) {
         this.dispatcher = dispatcher;
-        JenaSystem.init();
+        JenaUtils.init();
     }
 
     @Override public @NonNull Set<Op.Type> supportedTypes() {

@@ -357,3 +357,15 @@ The endpoint implementation is selected using the following property:
 Regardless of the the `BATCH` or `CHUNKED` endpoint implementations, 
 serialization will always be offloaded to an IO-thread, as is recommended 
 by micronaut in order to not block the netty event loop.
+
+hdtss periodically logs simple statiscs about submitted queries. This occurs 
+at a configurable fixed rate:
+
+> `sparql.heartbeat.period=DURATION`
+> 
+> The period between each heartbeat log message. **The default** period is `1m`.
+
+> `sparql.heartbeat.level=ERROR|WARN|INFO|DEBUG|TRACE`
+> 
+> Each heartbeat log message will be written from a class within `com.github.lapesd.hdtss.controller` 
+> at this SLF4J level. The **default** is `INFO`

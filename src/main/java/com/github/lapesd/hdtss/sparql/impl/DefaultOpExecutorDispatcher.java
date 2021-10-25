@@ -4,11 +4,11 @@ import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutor;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
-import io.micronaut.context.annotation.Context;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -16,8 +16,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-@Singleton
-@Context
+@Singleton @Slf4j
 public class DefaultOpExecutorDispatcher implements OpExecutorDispatcher {
     private final @NonNull Provider<OpExecutor> tripleExecutor;
     private final @NonNull Provider<OpExecutor> filterExecutor;
@@ -70,6 +69,7 @@ public class DefaultOpExecutorDispatcher implements OpExecutorDispatcher {
     }
 
     @Override  public void init() {
+        long startNs = System.nanoTime();
         Map<Op. @NonNull Type, @NonNull OpExecutor> map = new HashMap<>();
         map.put(Op.Type.TRIPLE,     this.tripleExecutor.get());
         map.put(Op.Type.FILTER,     this.filterExecutor.get());
@@ -88,6 +88,8 @@ public class DefaultOpExecutorDispatcher implements OpExecutorDispatcher {
         map.put(Op.Type.MINUS,      this.minusExecutor.get());
         assert Arrays.stream(Op.Type.values()).allMatch(map::containsKey);
         this.executorMap = map;
+        double ms = (System.nanoTime() - startNs)/1000000.0;
+        log.debug("OpExecutorDispatcher.init() took {}", String.format("%.3fms", ms));
     }
 
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
