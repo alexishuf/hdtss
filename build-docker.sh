@@ -66,6 +66,7 @@ test "$DO_NATIVE" == "y" && \
 if [ "$PUSH" == "y" ]; then
   if [ "$DO_JDK" == "y" ]; then
     docker push $IMG:$VERSION-jdk
+    docker push $IMG:$VERSION
     docker push $IMG:jdk
     docker push $IMG
   fi
