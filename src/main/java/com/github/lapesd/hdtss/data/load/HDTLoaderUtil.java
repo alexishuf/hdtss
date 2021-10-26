@@ -7,6 +7,7 @@ import org.rdfhdt.hdt.hdt.HDT;
 
 import javax.validation.constraints.NotEmpty;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -85,7 +86,7 @@ public class HDTLoaderUtil {
         return loaders.stream()
                 .filter(l -> l.canLoad(location))
                 .map(l -> new ScoredLoader(l, score(l)))
-                .filter(sl -> sl.score() > -1).sorted().findFirst()
+                .max(Comparator.naturalOrder())
                 .orElseThrow(() -> noLoaderEx(location)).loader();
     }
 

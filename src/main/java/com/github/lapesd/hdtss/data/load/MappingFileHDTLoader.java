@@ -12,11 +12,11 @@ import javax.validation.constraints.NotNull;
 import java.io.IOException;
 
 @Singleton
-public class MapingFileHDTLoader implements HDTLoader {
+public class MappingFileHDTLoader implements HDTLoader {
     private final @NotNull HDTLoadListenerSupplier listenerSupplier;
 
     @Inject
-    public MapingFileHDTLoader(@NotNull HDTLoadListenerSupplier listenerSupplier) {
+    public MappingFileHDTLoader(@NotNull HDTLoadListenerSupplier listenerSupplier) {
         this.listenerSupplier = listenerSupplier;
     }
 
