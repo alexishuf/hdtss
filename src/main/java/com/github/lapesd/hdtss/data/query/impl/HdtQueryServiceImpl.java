@@ -9,7 +9,6 @@ import com.github.lapesd.hdtss.model.nodes.TriplePattern;
 import com.github.lapesd.hdtss.model.solutions.*;
 import com.github.lapesd.hdtss.utils.QueryExecutionScheduler;
 import io.micronaut.context.annotation.Property;
-import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -34,7 +33,7 @@ import java.util.function.Predicate;
 
 @Singleton
 public class HdtQueryServiceImpl implements HdtQueryService, Closeable {
-    private final @NonNull HDT hdt;
+    private HDT hdt;
     private @NonNull final FlowType flowType;
     private @NonNull final Scheduler scheduler;
 
@@ -93,6 +92,8 @@ public class HdtQueryServiceImpl implements HdtQueryService, Closeable {
     }
 
     protected @NonNull NamesAndIt getSolutionIt(@NonNull TriplePattern query) {
+        if (hdt == null)
+            throw new IllegalStateException("HdtQueryServiceImpl is close()ed");
         var hdtIt = HDTUtils.queryIds(hdt, query);
         var vi = query.collectVarsInfo();
         var it = new SolutionIterator(hdt.getDictionary(), hdtIt, vi.positions(),
@@ -121,8 +122,10 @@ public class HdtQueryServiceImpl implements HdtQueryService, Closeable {
         return new IteratorQuerySolutions(ni.names, ni.it);
     }
 
-    @PreDestroy
     @Override public void close() throws IOException {
-        hdt.close();
+        if (hdt != null) {
+            hdt.close();
+            hdt = null;
+        }
     }
 }
