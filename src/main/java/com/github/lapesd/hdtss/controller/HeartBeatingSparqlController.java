@@ -24,7 +24,8 @@ public abstract class HeartBeatingSparqlController implements SparqlController {
         }
     }
 
-    @Scheduled(fixedRate = "${sparql.heartbeat.period:30s}")
+    @Scheduled(initialDelay = "${sparql.heartbeat.period:1m}",
+               fixedRate = "${sparql.heartbeat.period:1m}")
     public void heartBeat() {
         final String msg = "Received {} queries with an average length of {} chars";
         LogUtils.log(log, heartBeatLevel, msg, nQueries, avgQueryLen);
