@@ -503,4 +503,27 @@ class OpExecutorTest {
     void testMinus(@NonNull Minus in, @NonNull Collection<List<Term>> expected) {
         testInContexts(in, expected);
     }
+
+    static Stream<Arguments> testAsk() {
+        List<List<SolutionRow>> positive = List.of(List.of());
+        List<List<SolutionRow>> negative = List.of();
+        return Stream.of(
+                arguments(new Ask(new TriplePattern(x, knowsTerm, y)), positive),
+                arguments(new Ask(new TriplePattern(x, mboxTerm, y)), negative),
+                arguments(new Ask(new Filter(new TriplePattern(x, ageTerm, y),
+                                             "?y > 23")),
+                          positive),
+                arguments(new Ask(new Filter(new TriplePattern(x, ageTerm, y),
+                                             "?y < 23")),
+                          negative),
+                arguments(new Ask(new Union(new TriplePattern(x, mboxTerm, y),
+                                            new TriplePattern(x, nameTerm, bob))),
+                          positive)
+        );
+    }
+
+    @ParameterizedTest @MethodSource
+    void testAsk(@NonNull Ask in, @NonNull Collection<List<Term>> expected) {
+        testInContexts(in, expected);
+    }
 }

@@ -10,6 +10,7 @@ import java.util.*;
  */
 public interface Op {
     enum Type {
+        ASK,
         ASSIGN,
         DISTINCT,
         EXISTS,
@@ -153,7 +154,5 @@ public interface Op {
      * @param other other SPARQL algebra tree to compare against.
      * @return true iff both algebra expressions are exactly equal.
      */
-    default boolean deepEquals(@NonNull Op other) {
-        return OpUtils.deepEquals(this, other);
-    }
+    boolean deepEquals(@NonNull Op other);
 }

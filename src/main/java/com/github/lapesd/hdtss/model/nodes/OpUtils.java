@@ -9,19 +9,6 @@ import java.util.List;
 import java.util.Optional;
 
 public class OpUtils {
-    static boolean deepEquals(@NonNull Op a, @NonNull Op b) {
-        if (!a.getClass().equals(b.getClass()))
-            return false;
-        List<@NonNull Op> ac = a.children(), bc = b.children();
-        int size = ac.size();
-        if (bc.size() != size)
-            return false;
-        for (int i = 0; i < size; i++) {
-            if (!ac.get(i).deepEquals(bc.get(i)))
-                return false;
-        }
-        return true;
-    }
 
     public static @NonNull Op single(@NonNull Collection<? extends Op> coll) {
         return maybeSingle(coll)

@@ -55,7 +55,7 @@ public class JenaSparqlParser implements SparqlParser {
         List<String> vars = query.getResultVars();
         if (query.hasValues())
             root = new Values(convertValues(query), root);
-        if (!vars.equals(root.varNames()))
+        if (!vars.equals(root.varNames()) && !query.isAskType())
             root = new Project(vars, root);
         if (query.isDistinct())
             root = new Distinct(root);
@@ -63,6 +63,8 @@ public class JenaSparqlParser implements SparqlParser {
             root = new Limit(query.getLimit(), root);
         if (query.hasOffset())
             root = new Offset(query.getOffset(), root);
+        if (query.isAskType())
+            root = new Ask(root);
         return root;
     }
 

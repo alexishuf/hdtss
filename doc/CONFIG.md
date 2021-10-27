@@ -218,17 +218,30 @@ The flow control for individual operators can be controlled with
 properties is null, delegating control to `sparql.flow`:
 
 > `sparql.hdt.flow=REACTIVE|ITERATOR|BATCH`
+> 
 > `sparql.filter.flow=REACTIVE|ITERATOR`
+> 
 > `sparql.join.flow=REACTIVE|ITERATOR`
+> 
 > `sparql.union.flow=REACTIVE|ITERATOR`
+> 
 > `sparql.distinct.flow=REACTIVE|ITERATOR`
+> 
 > `sparql.project.flow=REACTIVE|ITERATOR`
+> 
 > `sparql.values.flow=REACTIVE|ITERATOR`
+> 
 > `sparql.limit.flow=REACTIVE|ITERATOR`
+> 
 > `sparql.offset.flow=REACTIVE|ITERATOR`
+> 
 > `sparql.assign.flow=REACTIVE|ITERATOR`
+> 
 > `sparql.exists.flow=REACTIVE|ITERATOR`
+> 
 > `sparql.minus.flow=REACTIVE|ITERATOR`
+> 
+> `sparql.ask.flow=REACTIVE|ITERATOR`
 
 The main advantage of `REACTIVE` is its hybrid push/pull model where publishers 
 can start computing new elements in the sequence before a downstream operator 

@@ -74,6 +74,8 @@ class SparqlControllerTest {
                 PREFIX rdfs: <%s>
                 PREFIX foaf: <%s>
                 """, XSD.NS, RDF.NS, RDFS.NS, FOAF.NS);
+        List<List<Object>> positive = List.of(List.of());
+        List<List<Object>> negative = List.of();
         return Stream.of(
     /*  1 */    arguments(prolog+"SELECT ?x WHERE { ?x foaf:age 23. }",
                           List.of(List.of(Alice))),
@@ -122,7 +124,48 @@ class SparqlControllerTest {
                           FILTER(regex(str(?name), "^[abc].*"))
                           OPTIONAL { ?who foaf:age ?age }
                         }
-                        """, asList(asList(bob, i25), asList(charlie, null)))
+                        """, asList(asList(bob, i25), asList(charlie, null))),
+    /*  9 */    arguments(prolog + "ASK { ?s ?p ?o }", positive),
+    /* 10 */    arguments(prolog + "ASK { ?s foaf:name ?o }", positive),
+    /* 11 */    arguments(prolog + "ASK { ?s foaf:mbox ?o }", negative),
+    /* 12 */    arguments(prolog + "ASK { {?s foaf:name ?o} UNION {?s foaf:mbox ?o} }", positive),
+                // ASK on non-trivial query
+    /* 13 */    arguments(prolog + """
+                        ASK {
+                          ?who foaf:name ?name;
+                               foaf:knows :Alice.
+                          FILTER(regex(str(?name), "^[abc].*"))
+                          OPTIONAL { ?who foaf:age ?age }
+                        }
+                        """, positive),
+                // regex has no solutions, failing the ASK
+    /* 14 */    arguments(prolog + """
+                        ASK {
+                          ?who foaf:name ?name;
+                               foaf:knows :Alice.
+                          FILTER(regex(str(?name), "^[d].*"))
+                          OPTIONAL { ?who foaf:age ?age }
+                        }
+                        """, negative),
+                // ASK of union of non-trivial queries, only last has a solution
+    /* 15 */    arguments(prolog + """
+                        ASK {
+                          { # no solution
+                            ?who foaf:name ?name;
+                            foaf:knows :Alice.
+                            FILTER(regex(str(?name), "^[d].*"))
+                            OPTIONAL { ?who foaf:age ?age }
+                          } UNION { # no solution
+                            ?x foaf:knows ?x;
+                               foaf:knows ?y.
+                             ?y foaf:age ?age FILTER(?age > 23)
+                          } UNION { #This has one solution
+                            ?x foaf:knows ?x;
+                               foaf:knows ?y.
+                             ?y foaf:age ?age FILTER(?age < 25)
+                          }
+                        }
+                        """, positive)
         );
     }
 

@@ -16,8 +16,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static com.github.lapesd.hdtss.TestVocab.*;
-import static com.github.lapesd.hdtss.vocab.FOAF.ageTerm;
-import static com.github.lapesd.hdtss.vocab.FOAF.knowsTerm;
+import static com.github.lapesd.hdtss.vocab.FOAF.*;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
@@ -57,7 +56,15 @@ public abstract class SparqlParserTestBase {
                           new NotExists(new Filter(new Join(new TriplePattern(x, ageTerm, y),
                                                             new TriplePattern(x, knowsTerm, z)),
                                                    "?y > 23"),
-                                        new TriplePattern(z, ageTerm, w)))
+                                        new TriplePattern(z, ageTerm, w))),
+    /*  9 */    arguments(prolog+"ASK {?x ?y ?z}", new Ask(new TriplePattern(x, y, z))),
+    /* 10 */    arguments(prolog+"ASK {\n" +
+                          "  {?x foaf:mbox ?y} UNION {?x foaf:age ?y FILTER(?y > 23)}\n"+
+                          "}",
+                          new Ask(new Union(
+                                  new TriplePattern(x, mboxTerm, y),
+                                  new Filter(new TriplePattern(x, ageTerm, y),
+                                             "?y > 23"))))
         );
     }
 

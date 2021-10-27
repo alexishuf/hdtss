@@ -29,6 +29,20 @@ abstract class AbstractOp implements Op {
         return varNames;
     }
 
+    @Override public boolean deepEquals(@NonNull Op other) {
+        if (!getClass().equals(other.getClass()))
+            return false;
+        List<@NonNull Op> ac = children(), bc = other.children();
+        int size = ac.size();
+        if (bc.size() != size)
+            return false;
+        for (int i = 0; i < size; i++) {
+            if (!ac.get(i).deepEquals(bc.get(i)))
+                return false;
+        }
+        return true;
+    }
+
     @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row,
                                       @NonNull BindType bindType) {
         if (varNames.isEmpty())

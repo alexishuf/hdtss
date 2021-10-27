@@ -33,6 +33,7 @@ public class DefaultOpExecutorDispatcher implements OpExecutorDispatcher {
     private final @NonNull Provider<OpExecutor> existsExecutor;
     private final @NonNull Provider<OpExecutor> notExistsExecutor;
     private final @NonNull Provider<OpExecutor> minusExecutor;
+    private final @NonNull Provider<OpExecutor> askExecutor;
     private @Nullable Map<Op.@NonNull Type, @NonNull OpExecutor> executorMap;
 
     @Inject
@@ -50,7 +51,8 @@ public class DefaultOpExecutorDispatcher implements OpExecutorDispatcher {
                                        @Named("assign")    @NonNull Provider<OpExecutor> assignExecutor,
                                        @Named("exists")    @NonNull Provider<OpExecutor> existsExecutor,
                                        @Named("notExists") @NonNull Provider<OpExecutor> notExistsExecutor,
-                                       @Named("minus") @NonNull Provider<OpExecutor> minusExecutor) {
+                                       @Named("minus")     @NonNull Provider<OpExecutor> minusExecutor,
+                                       @Named("ask")       @NonNull Provider<OpExecutor> askExecutor) {
         this.tripleExecutor = tripleExecutor;
         this.filterExecutor = filterExecutor;
         this.projectExecutor = projectExecutor;
@@ -66,6 +68,7 @@ public class DefaultOpExecutorDispatcher implements OpExecutorDispatcher {
         this.existsExecutor = existsExecutor;
         this.notExistsExecutor = notExistsExecutor;
         this.minusExecutor = minusExecutor;
+        this.askExecutor = askExecutor;
     }
 
     @Override  public void init() {
@@ -86,6 +89,7 @@ public class DefaultOpExecutorDispatcher implements OpExecutorDispatcher {
         map.put(Op.Type.EXISTS,     this.existsExecutor.get());
         map.put(Op.Type.NOT_EXISTS, this.notExistsExecutor.get());
         map.put(Op.Type.MINUS,      this.minusExecutor.get());
+        map.put(Op.Type.ASK,        this.askExecutor.get());
         assert Arrays.stream(Op.Type.values()).allMatch(map::containsKey);
         this.executorMap = map;
         double ms = (System.nanoTime() - startNs)/1000000.0;
