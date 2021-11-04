@@ -1,0 +1,155 @@
+@prefix : <http://example.org/>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+# "safe" strings
+:a1  foaf:name "word-dquote".
+:a2  foaf:name "word-dquote-typed"^^xsd:string.
+:a3  foaf:name "word-dquote-en"@en.
+:a4  foaf:name "word-dquote-pt-BR"@pt-BR.
+:a5  foaf:name 'word-squote'.
+:a6  foaf:name 'word-squote-typed'^^xsd:string.
+:a7  foaf:name 'word-squote-en'@en.
+:a8  foaf:name 'word-squote-pt-BR'@pt-BR.
+:a9  foaf:name """word-long-dquote""".
+:a10 foaf:name """word-long-dquote-typed"""^^xsd:string.
+:a11 foaf:name """word-long-dquote-en"""@en.
+:a12 foaf:name """word-long-dquote-pt-BR"""@pt-BR.
+:a13 foaf:name '''word-long-squote'''.
+:a14 foaf:name '''word-long-squote-typed'''^^xsd:string.
+:a15 foaf:name '''word-long-squote-en'''@en.
+:a16 foaf:name '''word-long-squote-pt-BR'''@pt-BR.
+
+# Inner quotes
+:b1  foaf:name "dquote\"quoted".
+:b2  foaf:name "dquote-typed\"quoted"^^xsd:string.
+:b3  foaf:name "dquote-en\"quoted"@en.
+:b4  foaf:name "dquote-pt-BR\"quoted"@pt-BR.
+:b5  foaf:name 'squote\'quoted'.
+:b6  foaf:name 'squote-typed\'quoted'^^xsd:string.
+:b7  foaf:name 'squote-en\'quoted'@en.
+:b8  foaf:name 'squote-pt-BR\'quoted'@pt-BR.
+:b9  foaf:name """long-dquote"quoted""".
+:b10 foaf:name """long-dquote-typed"quoted"""^^xsd:string.
+:b11 foaf:name """long-dquote-en"quoted"""@en.
+:b12 foaf:name """long-dquote-pt-BR"quoted"""@pt-BR.
+:b13 foaf:name '''long-squote'quoted'''.
+:b14 foaf:name '''long-squote-typed'quoted'''^^xsd:string.
+:b15 foaf:name '''long-squote-en'quoted'''@en.
+:b16 foaf:name '''long-squote-pt-BR'quoted'''@pt-BR.
+
+# Surrounding inner quotes
+:c1  foaf:name "\"dquote\"".
+:c2  foaf:name "\"dquote-typed\""^^xsd:string.
+:c3  foaf:name "\"dquote-en\""@en.
+:c4  foaf:name "\"dquote-pt-BR\""@pt-BR.
+:c5  foaf:name '\'squote\''.
+:c6  foaf:name '\'squote-typed\''^^xsd:string.
+:c7  foaf:name '\'squote-en\''@en.
+:c8  foaf:name '\'squote-pt-BR\''@pt-BR.
+# For the last char in lexical form, quotes MUST be escaped, otherwise \-escaping is optional
+:c9  foaf:name """"long-dquote\"""".
+:c10 foaf:name """"long-dquote-typed\""""^^xsd:string.
+:c11 foaf:name """"long-dquote-en\""""@en.
+:c12 foaf:name """"long-dquote-pt-BR\""""@pt-BR.
+:c13 foaf:name ''''long-squote\''''.
+:c14 foaf:name ''''long-squote-typed\''''^^xsd:string.
+:c15 foaf:name ''''long-squote-en\''''@en.
+:c16 foaf:name ''''long-squote-pt-BR\''''@pt-BR.
+
+# Unicode chars
+:d1  foaf:name "çãéíú° dquote plain ßẞ¹²³£¢¬«»©“”←µ".
+:d2  foaf:name "çãéíú° dquote typed ßẞ¹²³£¢¬«»©“”←µ"^^xsd:string.
+:d3  foaf:name "çãéíú° dquote en ßẞ¹²³£¢¬«»©“”←µ"@en.
+:d4  foaf:name "çãéíú° dquote pt-BR ßẞ¹²³£¢¬«»©“”←µ"@pt-BR.
+:d5  foaf:name 'çãéíú° squote plain ßẞ¹²³£¢¬«»©“”←µ'.
+:d6  foaf:name 'çãéíú° squote typed ßẞ¹²³£¢¬«»©“”←µ'^^xsd:string.
+:d7  foaf:name 'çãéíú° squote en ßẞ¹²³£¢¬«»©“”←µ'@en.
+:d8  foaf:name 'çãéíú° squote pt-BR ßẞ¹²³£¢¬«»©“”←µ'@pt-BR.
+:d9  foaf:name """çãéíú° dquote plain ßẞ¹²³£¢¬«»©“”←µ""".
+:d10 foaf:name """çãéíú° dquote typed ßẞ¹²³£¢¬«»©“”←µ"""^^xsd:string.
+:d11 foaf:name """çãéíú° dquote en ßẞ¹²³£¢¬«»©“”←µ"""@en.
+:d12 foaf:name """çãéíú° dquote pt-BR ßẞ¹²³£¢¬«»©“”←µ"""@pt-BR.
+:d13 foaf:name '''çãéíú° squote plain ßẞ¹²³£¢¬«»©“”←µ'''.
+:d14 foaf:name '''çãéíú° squote typed ßẞ¹²³£¢¬«»©“”←µ'''^^xsd:string.
+:d15 foaf:name '''çãéíú° squote en ßẞ¹²³£¢¬«»©“”←µ'''@en.
+:d16 foaf:name '''çãéíú° squote pt-BR ßẞ¹²³£¢¬«»©“”←µ'''@pt-BR.
+
+# Line breaks
+:e1  foaf:name "dquote\nplain".
+:e2  foaf:name "dquote\ntyped"^^xsd:string.
+:e3  foaf:name "dquote\nen"@en.
+:e4  foaf:name "dquote\npt-BR"@pt-BR.
+:e5  foaf:name 'squote\nplain'.
+:e6  foaf:name 'squote\ntyped'^^xsd:string.
+:e7  foaf:name 'squote\nen'@en.
+:e8  foaf:name 'squote\npt-BR'@pt-BR.
+:e9  foaf:name """long-dquote
+plain""".
+:e10 foaf:name """long-dquote
+typed"""^^xsd:string.
+:e11 foaf:name """long-dquote
+en"""@en.
+:e12 foaf:name """long-dquote
+pt-BR"""@pt-BR.
+:e13 foaf:name '''long-squote
+plain'''.
+:e14 foaf:name '''long-squote
+typed'''^^xsd:string.
+:e15 foaf:name '''long-squote
+en'''@en.
+:e16 foaf:name '''long-squote
+pt-BR'''@pt-BR.
+
+# Single dot
+:f1  foaf:name ".".
+:f2  foaf:name "."^^xsd:string.
+:f3  foaf:name "."@en.
+:f4  foaf:name "."@pt-BR.
+:f5  foaf:name '.'.
+:f6  foaf:name '.'^^xsd:string.
+:f7  foaf:name '.'@en.
+:f8  foaf:name '.'@pt-BR.
+:f9  foaf:name """.""".
+:f10 foaf:name """."""^^xsd:string.
+:f11 foaf:name """."""@en.
+:f12 foaf:name """."""@pt-BR.
+:f13 foaf:name '''.'''.
+:f14 foaf:name '''.'''^^xsd:string.
+:f15 foaf:name '''.'''@en.
+:f16 foaf:name '''.'''@pt-BR.
+
+# Lexical form is single quote (may confuse parsers)
+:g1  foaf:name "\"".
+:g2  foaf:name "\""^^xsd:string.
+:g3  foaf:name "\""@en.
+:g4  foaf:name "\""@pt-BR.
+:g5  foaf:name '\''.
+:g6  foaf:name '\''^^xsd:string.
+:g7  foaf:name '\''@en.
+:g8  foaf:name '\''@pt-BR.
+:g9  foaf:name """\"""".
+:g10 foaf:name """\""""^^xsd:string.
+:g11 foaf:name """\""""@en.
+:g12 foaf:name """\""""@pt-BR.
+:g13 foaf:name '''\''''.
+:g14 foaf:name '''\''''^^xsd:string.
+:g15 foaf:name '''\''''@en.
+:g16 foaf:name '''\''''@pt-BR.
+
+# <>?x='%20'&param[]="${^}"# (needs escaping in JSON and XML)
+:h1  foaf:name "<>?x='%20'&param[]=\"${^}\"#".
+:h2  foaf:name "<>?x='%20'&param[]=\"${^}\"#"^^xsd:string.
+:h3  foaf:name "<>?x='%20'&param[]=\"${^}\"#"@pt-BR.
+:h4  foaf:name '<>?x=\'%20\'&param[]="${^}"#'.
+:h5  foaf:name '<>?x=\'%20\'&param[]="${^}"#'^^xsd:string.
+:h6  foaf:name '<>?x=\'%20\'&param[]="${^}"#'@pt-BR.
+:h7  foaf:name """<>?x='%20'&param[]="${^}"#""".
+:h8  foaf:name """<>?x='%20'&param[]="${^}"#"""^^xsd:string.
+:h9  foaf:name """<>?x='%20'&param[]="${^}"#"""@pt-BR.
+:h10 foaf:name '''<>?x='%20'&param[]="${^}"#'''.
+:h11 foaf:name '''<>?x='%20'&param[]="${^}"#'''^^xsd:string.
+:h12 foaf:name '''<>?x='%20'&param[]="${^}"#'''@pt-BR.
+

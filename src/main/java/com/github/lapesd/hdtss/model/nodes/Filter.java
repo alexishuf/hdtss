@@ -1,6 +1,7 @@
 package com.github.lapesd.hdtss.model.nodes;
 
 import com.github.lapesd.hdtss.model.Term;
+import com.github.lapesd.hdtss.utils.TokenPatterns;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -13,7 +14,7 @@ import static java.util.regex.Pattern.compile;
 public final class Filter extends AbstractOp {
     /* --- --- --- constants --- --- --- */
 
-    private static final @NonNull Pattern VAR_NAME_RX = compile("[a-zA-Z_0-9\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0300-\u037D\u037F-\u1FFF\u200C\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u10000-\uEFFFF]+");
+
     private static final @NonNull Pattern S_RX = compile("(\"(\"\")?|'('')?|<[= ?$]?|\\?|\\$)");
     private static final @NonNull Pattern CL_SHORT_SINGLE_RX = compile("[^\\\\]'");
     private static final @NonNull Pattern CL_SHORT_DOUBLE_RX = compile("[^\\\\]\"");
@@ -39,7 +40,7 @@ public final class Filter extends AbstractOp {
             }
         },
         VAR_NAME {
-            @Override public @NonNull Pattern pattern() {return VAR_NAME_RX;}
+            @Override public @NonNull Pattern pattern() {return TokenPatterns.VAR_NAME_RX;}
             @Override public @NonNull State next(@NonNull Matcher matchedMatcher) {return S;}
         },
         CL_SHORT_SINGLE {

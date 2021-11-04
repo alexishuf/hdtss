@@ -7,6 +7,11 @@ import com.github.lapesd.hdtss.model.nodes.TriplePattern;
 import com.github.lapesd.hdtss.vocab.FOAF;
 import com.github.lapesd.hdtss.vocab.RDF;
 import com.github.lapesd.hdtss.vocab.XSD;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.lang.CollectorStreamRDF;
+import org.apache.jena.riot.writer.NTriplesWriter;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -22,7 +27,9 @@ import org.rdfhdt.hdt.triples.IteratorTripleString;
 import org.rdfhdt.hdt.triples.TripleID;
 import org.rdfhdt.hdt.triples.TripleString;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,13 +37,15 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.github.lapesd.hdtss.TestVocab.EX;
+import static com.github.lapesd.hdtss.TestVocab.x;
+import static com.github.lapesd.hdtss.utils.JenaUtils.fromNode;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
+@SuppressWarnings("unused")
 @Tag("fast")
 class HDTUtilsTest {
     private static HDT foaf;
-
     @BeforeAll
     static void beforeAll() throws IOException {
         foaf = TestUtils.openHDTResource(HDTUtilsTest.class, "../foaf-graph.hdt");
@@ -239,5 +248,39 @@ class HDTUtilsTest {
         var sv = TriplePattern.SharedVars.valueOf(args[1]);
         var tripleID = TestUtils.parseTripleID(args[2]);
         assertEquals(expected, HDTUtils.sharedVarIDFilter(sv).test(tripleID));
+    }
+
+    static Stream<Arguments> testFromHDT() throws IOException {
+        var hdt = TestUtils.openHDTResource(HDTUtilsTest.class, "../../literals.hdt");
+        List<Triple> triples;
+        try (var in = TestUtils.openResource(HDTUtilsTest.class, "../../literals.ttl")) {
+            CollectorStreamRDF sink = new CollectorStreamRDF();
+            RDFDataMgr.parse(sink, in, Lang.TTL);
+            triples = sink.getTriples();
+        }
+        List<Arguments> list = new ArrayList<>();
+        for (Triple triple : triples) {
+            Term s = fromNode(triple.getSubject()), p = fromNode(triple.getPredicate());
+            var bOS = new ByteArrayOutputStream();
+            NTriplesWriter.write(bOS, List.of(triple).iterator());
+            bOS.flush();
+            String ntTriple = bOS.toString(StandardCharsets.UTF_8);
+            String[] terms = ntTriple.split(" ", 3);
+            String exSub = terms[0];
+            String exPre = terms[1];
+            String exObj = terms[2].replaceAll("\\s*.\\s*$", "");
+            for (var it = HDTUtils.query(hdt, new TriplePattern(s, p, x)); it.hasNext(); ) {
+                TripleString tripleString = it.next();
+                list.add(arguments(tripleString.getSubject().toString(), exSub));
+                list.add(arguments(tripleString.getPredicate().toString(), exPre));
+                list.add(arguments(tripleString.getObject().toString(), exObj));
+            }
+        }
+        return list.stream();
+    }
+
+    @ParameterizedTest @MethodSource
+    public void testFromHDT(@NonNull String hdtString, @NonNull String expected) {
+        assertEquals(expected, HDTUtils.fromHDT(hdtString).toString());
     }
 }

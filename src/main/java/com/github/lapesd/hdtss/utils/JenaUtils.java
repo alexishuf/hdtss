@@ -13,6 +13,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
+import org.apache.jena.riot.out.NodeFormatterNT;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.expr.Expr;
@@ -32,7 +33,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.apache.jena.graph.NodeFactory.*;
@@ -52,6 +52,7 @@ public class JenaUtils {
             "PREFIX owl: <"+OWL2.NS+">\n" +
             "SELECT * WHERE {\n";
     private static final @NonNull Pattern UNESCAPED_D_QUOTE = Pattern.compile("([^\\\\]|^)\"");
+    private static final @NonNull NodeFormatterNT nodeFmt = new NodeFormatterNT();
     private static boolean initialized = false;
 
     public static void init() {
@@ -67,13 +68,17 @@ public class JenaUtils {
     public static Node toNode(Term term) {
         if (term == null)
             return null;
-        String str = term.content().toString(), lang = term.langAsString();
+        CharSequence value = term.content();
+        String lang = term.langAsString();
         return switch (term.type()) {
-            case VAR -> createVariable(str);
-            case URI -> createURI(str);
-            case LITERAL -> lang != null ? createLiteral(str, lang)
-                                         : createLiteral(str, toDatatype(term.datatype()));
-            case BLANK -> str.isEmpty() ? createBlankNode() : createBlankNode(str);
+            case VAR -> createVariable(value.toString());
+            case URI -> createURI(value.toString());
+            case BLANK -> value.isEmpty() ? createBlankNode() : createBlankNode(value.toString());
+            case LITERAL -> {
+                String unescaped = term.unescapedContent().toString();
+                yield lang != null ? createLiteral(unescaped, lang)
+                                   : createLiteral(unescaped, toDatatype(term.datatype()));
+            }
         };
     }
 
@@ -83,37 +88,21 @@ public class JenaUtils {
         return TypeMapper.getInstance().getSafeTypeByName(uri.toString());
     }
 
-    public static Term fromNode(Node node) {
-        CharSequence sparql;
-        if (node == null) {
+    public static Term fromNode(@Nullable Node node) {
+        if (node == null)
             return null;
-        } else if (node.isURI()) {
-            sparql = "<"+node.getURI()+">";
-        } else if (node.isBlank()) {
-            sparql = "_:"+node.getBlankNodeLabel();
-        } else if (node.isVariable()) {
-            sparql = node.toString();
-        } else if (node.isLiteral()) {
-            String lang = node.getLiteralLanguage();
-            String dt = node.getLiteralDatatypeURI();
-            String lexicalForm = node.getLiteralLexicalForm();
-            StringBuilder sb = new StringBuilder(lexicalForm.length()+50);
-            sb.append('"');
-            Matcher m = UNESCAPED_D_QUOTE.matcher(lexicalForm);
-            while (m.find())
-                m.appendReplacement(sb, "$1\\\"");
-            m.appendTail(sb);
-            sb.append('"');
-            if (lang != null && !lang.isEmpty())
-                sb.append('@').append(lang);
-            else if (dt != null)
-                sb.append("^^<").append(dt).append('>');
-            sparql = sb.toString();
+        else if (node.isBlank())
+            return new Term("_:" + node.getBlankNodeLabel());
+        else if (node.isVariable())
+            return Term.fromVar(node.getName());
+        else if (node.isURI())
+            return Term.fromURI(node.getURI());
+        else if (node.isLiteral()) {
+            String lang = node.getLiteralLanguage(), dt = node.getLiteralDatatypeURI();
+            return Term.fromUnescapedLiteralParts(node.getLiteralLexicalForm(), lang, dt);
         } else {
-            String msg = "Cannot convert " + node + " of " + node.getClass() + " to a Term object";
-            throw new IllegalArgumentException(msg);
+            throw new UnsupportedOperationException("Cannot convert "+node+" to a Term: unsupported Node type");
         }
-        return new Term(sparql);
     }
 
     public static @NonNull TriplePattern fromTriple(@NonNull Triple triple) {

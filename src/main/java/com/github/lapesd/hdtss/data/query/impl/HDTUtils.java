@@ -34,11 +34,11 @@ public class HDTUtils {
      */
     public static @NonNull Term fromHDT(@NonNull CharSequence hdtString) {
         char first = hdtString.isEmpty() ? '\0' : hdtString.charAt(0);
-        return new Term(switch (first) {
-            case '"', '_' -> hdtString;
-            case '\0' -> "[]";
-            default -> "<"+hdtString+">";
-        });
+        return switch (first) {
+            case '"' -> Term.fromNonXSDAbbrevDoubleQuotedUnescapedLiteral(hdtString);
+            case '_', '\0' -> Term.fromBlank(hdtString);
+            default -> Term.fromURI(hdtString);
+        };
     }
 
     /**
@@ -47,11 +47,11 @@ public class HDTUtils {
      * @param term the {@link Term} to convert
      * @return the equivalent string that would be indexed in HDT.
      */
-    public static @NonNull CharSequence toHDT(@NonNull Term term) {
+    public static @NonNull String toHDT(@NonNull Term term) {
         if      (!term.isGround()       ) return "";
-        else if ( term.isURI()          ) return term.content();
-        else if ( term.isStringLiteral()) return term.quoted();
-        return term.sparql();
+        else if ( term.isURI()          ) return term.content().toString();
+        else if ( term.isStringLiteral()) return term.quoted().toString();
+        return term.sparql().toString();
     }
 
     /**
