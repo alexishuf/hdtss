@@ -570,4 +570,40 @@ class TermTest {
             assertSame(term, term.withExplicitString());
         }
     }
+
+    @ParameterizedTest @ValueSource(strings = {
+            "<http://example.org/Alice>   |   <http://example.org/Alice>      | true",
+            "<http://example.org/Alice>   |   <http://example.org/Alic>       | false",
+            "<http://example.org/Alice>   |   <http://example.org/Alicee>     | false",
+            "<http://example.org/Alice>   |   \"http://example.org/Alice\"    | false",
+            "<http://example.org/Alice>   |   \"http://example.org/Alice\"@en | false",
+            "<http://example.org/Alice>   |   \"http://example.org/Alice\"@en | false",
+
+            "\"alice\"    |  \"alice\"                                            | true",
+            "\"alice\"    |  \"alice\"^^<http://www.w3.org/2001/XMLSchema#string> | true",
+            "\"alice\"    |  \"alice\"@en                                         | false",
+            "\"alice\"@en |  \"alice\"@en                                         | true",
+            "\"alice\"@en |  \"alice\"@en-US                                      | false",
+            "\"alice\"    |  \"alice\"@pt-BR                                      | false",
+            "\"alice\"    |  \"Alice\"                                            | false",
+            "\"al ice\"   |  \"al ice\"                                           | true",
+            "\"alice\"    |  \"alicee\"                                           | false",
+            "\"alice\"    |  \"alic\"                                             | false",
+
+            "\"\"  | \"\"                                             | true",
+            "\"\"  | \" \"                                            | false",
+            "\"\"  | \" \"^^<http://www.w3.org/2001/XMLSchema#string> | false",
+            "\"\"  | \" \"@en                                         | false",
+            "\"\"  | \" \"@pt-BR                                      | false",
+            "\" \" | \" \"                                            | true",
+            "\" \" | \"  \"                                           | false",
+            "\" \" | \"\t\"                                           | false",
+    })
+    void testEquals(String data) {
+        String[] split = data.split(" +\\| +", 3);
+        Term left = new Term(split[0]), right = new Term(split[1]);
+        boolean expected = Boolean.parseBoolean(split[2]);
+        assertEquals(expected, left.equals(right));
+        assertEquals(expected, right.equals(left));
+    }
 }

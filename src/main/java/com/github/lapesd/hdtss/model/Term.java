@@ -703,10 +703,19 @@ public record Term(@lombok.NonNull @NonNull CharSequence sparql) {
     @Override public boolean equals(Object obj) {
         if (!(obj instanceof Term rt)) return false;
         CharSequence rs = rt.sparql;
-        if (sparql instanceof String && rs instanceof String)
+        int length = sparql.length(), rLength = rs.length();
+        boolean fullCompare = true;
+        if (isStringLiteral() && rt.isStringLiteral()) {
+            char end = sparql.charAt(length - 1), rEnd = rs.charAt(rLength - 1);
+            if (end != rEnd) {
+                if (end != '"') length = contentEnd()+1;
+                else            rLength = rt.contentEnd()+1;
+                fullCompare = false;
+            }
+        }
+        if (fullCompare && sparql instanceof String && rs instanceof String)
             return sparql.equals(rs);
-        int length = sparql.length();
-        if (rs.length() != length)
+        if (length != rLength)
             return false;
         for (int i = 0; i < length; i++) {
             if (sparql.charAt(i) != rs.charAt(i))
