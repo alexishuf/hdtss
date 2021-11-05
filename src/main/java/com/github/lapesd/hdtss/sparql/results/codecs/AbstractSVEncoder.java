@@ -10,10 +10,12 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.codec.CodecConfiguration;
 import io.micronaut.http.codec.CodecException;
 import io.micronaut.http.codec.MediaTypeCodec;
+import lombok.SneakyThrows;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -38,7 +40,15 @@ public abstract class AbstractSVEncoder implements MediaTypeCodec {
             mediaTypes.addAll(configuration.getAdditionalTypes());
     }
 
-    abstract protected void encode(@NonNull Term term, @NonNull ByteBuffer<?> buffer);
+    @SneakyThrows protected void encode(@NonNull Term term, @NonNull ByteBuffer<?> bb) {
+        OutputStream os = new OutputStream() {
+            @Override public void write(int b) { bb.write((byte) (b & 0xFF)); }
+            @Override public void write(byte @NonNull [] b, int off, int len) { bb.write(b, off, len); }
+        };
+        try (OutputStreamWriter w = new OutputStreamWriter(os, StandardCharsets.UTF_8)) {
+            encode(term, w);
+        }
+    }
     abstract protected void encode(@NonNull Term term, @NonNull Writer writer) throws IOException;
 
     @Override public boolean supportsType(Class<?> type) {

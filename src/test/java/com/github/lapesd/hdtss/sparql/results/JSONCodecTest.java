@@ -30,7 +30,11 @@ class JSONCodecTest extends CodecTestBase {
                 arguments(ONE_ROW, """
                         {"head":{"vars":["x","y","z","w"]},"results":{"bindings":[{"x":{"type":"literal","value":"Alice","xml:lang":"en"},"y":{"type":"literal","value":"bob","datatype":"http://www.w3.org/2001/XMLSchema#string"},"z":{"type":"literal","value":"23","datatype":"http://www.w3.org/2001/XMLSchema#integer"},"w":{"type":"bnode","value":"blank1"}}]}}"""),
                 arguments(TWO_ROWS, """
-                        {"head":{"vars":["x"]},"results":{"bindings":[{},{"x":{"type":"uri","value":"http://example.org/Charlie"}}]}}""")
+                        {"head":{"vars":["x"]},"results":{"bindings":[{},{"x":{"type":"uri","value":"http://example.org/Charlie"}}]}}"""),
+                arguments(XML_PROBLEMATIC, """
+                        {"head":{"vars":["x","y"]},"results":{"bindings":[{"x":{"type":"literal","value":"&","datatype":"http://www.w3.org/2001/XMLSchema#string"},"y":{"type":"literal","value":"<&>","datatype":"http://www.w3.org/2001/XMLSchema#string"}},{"x":{"type":"uri","value":"http://example.org/search?q=1&o=2"},"y":{"type":"literal","value":"x > 2\\n&& y < 3","datatype":"http://www.w3.org/2001/XMLSchema#string"}}]}}"""),
+                arguments(CSV_PROBLEMATIC, """
+                        {"head":{"vars":["x","y"]},"results":{"bindings":[{"x":{"type":"literal","value":"\\"1\\n2\\"","datatype":"http://www.w3.org/2001/XMLSchema#string"},"y":{"type":"literal","value":"a,b","xml:lang":"en"}}]}}""")
         );
     }
 

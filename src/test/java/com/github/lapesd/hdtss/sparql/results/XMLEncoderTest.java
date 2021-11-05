@@ -75,12 +75,46 @@ class XMLEncoderTest extends CodecTestBase {
                               <binding name="x"><uri>http://example.org/Charlie</uri></binding>
                             </result>
                           </results>
+                        </sparql>"""),
+                arguments(XML_PROBLEMATIC, """
+                        <?xml version="1.0" encoding="UTF-8"?>
+                        <sparql xmlns="http://www.w3.org/2005/sparql-results#">
+                          <head>
+                            <variable name="x"/>
+                            <variable name="y"/>
+                          </head>
+                          <results>
+                            <result>
+                              <binding name="x"><literal datatype="http://www.w3.org/2001/XMLSchema#string">&amp;</literal></binding>
+                              <binding name="y"><literal datatype="http://www.w3.org/2001/XMLSchema#string">&lt;&amp;&gt;</literal></binding>
+                            </result>
+                            <result>
+                              <binding name="x"><uri>http://example.org/search?q=1&amp;o=2</uri></binding>
+                              <binding name="y"><literal datatype="http://www.w3.org/2001/XMLSchema#string">x &gt; 2
+                        ${{FORCE_LF}}&amp;&amp; y &lt; 3</literal></binding>
+                            </result>
+                          </results>
+                        </sparql>"""),
+                arguments(CSV_PROBLEMATIC, """
+                        <?xml version="1.0" encoding="UTF-8"?>
+                        <sparql xmlns="http://www.w3.org/2005/sparql-results#">
+                          <head>
+                            <variable name="x"/>
+                            <variable name="y"/>
+                          </head>
+                          <results>
+                            <result>
+                              <binding name="x"><literal datatype="http://www.w3.org/2001/XMLSchema#string">"1
+                        ${{FORCE_LF}}2"</literal></binding>
+                              <binding name="y"><literal xml:lang="en">a,b</literal></binding>
+                            </result>
+                          </results>
                         </sparql>""")
         );
     }
 
     private @NonNull String strip(@NonNull String s) {
-        return s.replaceAll(" *\n *", "");
+        return s.replaceAll(" *\n *", "").replaceAll("\\$\\{\\{FORCE_LF}}", "\n");
     }
 
     @ParameterizedTest @MethodSource("data")

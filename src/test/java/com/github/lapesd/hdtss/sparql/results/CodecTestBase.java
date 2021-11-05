@@ -4,6 +4,7 @@ import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.SolutionRow;
+import com.github.lapesd.hdtss.vocab.XSD;
 import io.micronaut.buffer.netty.NettyByteBufferFactory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.io.buffer.ByteBuffer;
@@ -29,6 +30,13 @@ public class CodecTestBase {
             List.of(SolutionRow.of(AliceEN, bob, i23, blank1)));
     public static QuerySolutions TWO_ROWS = new BatchQuerySolutions(List.of("x"),
             asList(new SolutionRow(new Term[]{null}), SolutionRow.of(Charlie)));
+    public static QuerySolutions XML_PROBLEMATIC = new BatchQuerySolutions(asList("x", "y"),
+            asList(SolutionRow.of(new Term("\"&\""), new Term("\"<&>\"")),
+                   SolutionRow.of(new Term("<http://example.org/search?q=1&o=2>"),
+                                  new Term("\"x > 2\\n&& y < 3\"^^<"+ XSD.string+">"))));
+    public static QuerySolutions CSV_PROBLEMATIC = new BatchQuerySolutions(asList("x", "y"),
+            List.of(SolutionRow.of(new Term("\"\\\"1\\n2\\\"\""),
+                                   new Term("\"a,b\"@en"))));
     ApplicationContext applicationContext;
     MediaTypeCodec codec;
     final Class<? extends MediaTypeCodec> encoderClass;

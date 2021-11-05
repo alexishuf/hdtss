@@ -5,6 +5,7 @@ import com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes;
 import com.github.lapesd.hdtss.sparql.results.codecs.CSVEncoder;
 import com.github.lapesd.hdtss.utils.ByteArrayWriter;
 import jakarta.inject.Singleton;
+import lombok.SneakyThrows;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -14,8 +15,8 @@ public class CSVChunkedEncoder extends AbstractSVChunkedEncoder {
         super(SparqlMediaTypes.RESULTS_CSV_TYPE, ',', "\r\n", "");
     }
 
-    @Override protected void writeTerm(@Nullable Term term, @NonNull ByteArrayWriter builder) {
+    @Override @SneakyThrows protected void writeTerm(@Nullable Term term, @NonNull ByteArrayWriter builder) {
         if (term != null)
-            builder.append(CSVEncoder.sanitize(term));
+            CSVEncoder.writeTerm(builder, term);
     }
 }

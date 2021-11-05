@@ -8,7 +8,6 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.io.buffer.ByteBufferFactory;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.util.functional.ThrowingFunction;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.codec.CodecConfiguration;
 import io.micronaut.http.codec.CodecException;
@@ -16,7 +15,6 @@ import io.micronaut.http.codec.MediaTypeCodec;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import lombok.SneakyThrows;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.*;
@@ -24,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 @Singleton
 public class XMLEncoder implements MediaTypeCodec {
@@ -50,63 +47,62 @@ public class XMLEncoder implements MediaTypeCodec {
         throw new CodecException(this+" does not support decode()");
     }
 
-    @SneakyThrows public static void writeRow(@NonNull List<@NonNull String> vars,
-                                              Term @NonNull[] terms,
-                                              @NonNull StringBuilder builder) {
-        writeRow(vars, terms, builder::append);
+    private static @NonNull Writer writeEscapedContent(@NonNull Writer w,
+                                                       @NonNull Term term) throws IOException {
+        CharSequence sparql = term.sparql();
+        int start = term.contentStart(), end = term.contentEnd();
+        boolean escaped = false;
+        for (int j = start; j < end; j++) {
+            char c = sparql.charAt(j);
+            if (escaped) {
+                escaped = false;
+                char expanded = Term.expandEscape(c);
+                if (expanded != 0) {
+                    w.append(sparql, start, j-1).append(expanded);
+                    start = j+1;
+                }
+            } else {
+                switch (c) {
+                    case '&'  -> { w.append(sparql, start, j).append("&amp;"); start = j + 1; }
+                    case '<'  -> { w.append(sparql, start, j).append("&lt;");  start = j + 1; }
+                    case '>'  -> { w.append(sparql, start, j).append("&gt;");  start = j + 1; }
+                    case '\\' ->  escaped = true;
+                }
+            }
+        }
+        return w.append(sparql, start, end);
     }
 
-    private static final @NonNull Pattern ANGLE_RX = Pattern.compile("[<>\r\n\t]");
-
     public static void writeRow(@NonNull List<@NonNull String> vars, Term @NonNull[] terms,
-                                @NonNull ThrowingFunction<CharSequence, ?, IOException> writer)
+                                @NonNull Writer w)
             throws IOException {
-        writer.apply("<result>");
+        w.append("<result>");
         for (int i = 0; i < terms.length; i++) {
             Term term = terms[i];
             if (term == null)
                 continue;
-            writer.apply("<binding name=\"");
-            writer.apply(vars.get(i));
-            writer.apply("\">");
+            w.append("<binding name=\"").append(vars.get(i)).append("\">");
             switch (term.type()) {
-                case URI -> {
-                    writer.apply("<uri>");
-                    writer.apply(term.content());
-                    writer.apply("</uri>");
-                }
+                case URI -> writeEscapedContent(w.append("<uri>"), term).append("</uri>");
                 case BLANK -> {
-                    writer.apply("<bnode>");
-                    writer.apply(term.sparql().charAt(0) == '['
-                            ? UUID.randomUUID().toString() : term.content());
-                    writer.apply("</bnode>");
+                    boolean anon = term.sparql().charAt(0) == '[';
+                    w.append("<bnode>")
+                            .append(anon ? UUID.randomUUID().toString() : term.content())
+                            .append("</bnode>");
                 }
                 case LITERAL -> {
-                    writer.apply("<literal");
+                    w.append("<literal");
                     if (term.isLangStringLiteral()) {
-                        writer.apply(" xml:lang=\"");
-                        writer.apply(term.lang());
-                        writer.apply("\"");
+                        w.append(" xml:lang=\"").append(term.lang()).append("\"");
                     } else {
-                        writer.apply(" datatype=\"");
-                        writer.apply(term.datatype());
-                        writer.apply("\"");
+                        w.append(" datatype=\"").append(term.datatype()).append("\"");
                     }
-                    writer.apply(">");
-                    CharSequence content = term.content();
-                    if (ANGLE_RX.matcher(content).find()) {
-                        writer.apply("<![CDATA[");
-                        writer.apply(content);
-                        writer.apply("]]>");
-                    } else {
-                        writer.apply(content);
-                    }
-                    writer.apply("</literal>");
+                    writeEscapedContent(w.append(">"), term).append("</literal>");
                 }
             }
-            writer.apply("</binding>");
+            w.append("</binding>");
         }
-        writer.apply("</result>");
+        w.write("</result>");
     }
 
     @Override public <T> void encode(T object, OutputStream outputStream) throws CodecException {
@@ -127,7 +123,7 @@ public class XMLEncoder implements MediaTypeCodec {
             } else {
                 w.append("<results>");
                 for (SolutionRow row : solutions)
-                    writeRow(vars, row.terms(), w::append);
+                    writeRow(vars, row.terms(), w);
                 w.append("</results>");
             }
             w.append("</sparql>");

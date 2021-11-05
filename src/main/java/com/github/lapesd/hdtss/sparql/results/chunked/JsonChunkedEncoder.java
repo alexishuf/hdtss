@@ -53,7 +53,7 @@ public class JsonChunkedEncoder implements ChunkedEncoder{
             if (!first.compareAndExchange(true, false))
                 w.append(',');
             try {
-                JSONCodec.writeRow(names, r.terms(), w::append);
+                JSONCodec.writeRow(names, r.terms(), w);
             } catch (IOException e) {
                 throw new RuntimeException("Unexpected IOException", e);
             }

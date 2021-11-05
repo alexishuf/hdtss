@@ -32,7 +32,7 @@ public class TSVCodec extends AbstractSVEncoder {
     }
 
     public static @NonNull CharSequence sanitize(@NonNull Term term) {
-        CharSequence s = term.sparql();
+        CharSequence s = term.withImplicitString().sparql();
         if (s.charAt(0) == '[')
             return "_:"+ UUID.randomUUID();
         return s;

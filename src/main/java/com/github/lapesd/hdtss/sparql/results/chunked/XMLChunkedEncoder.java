@@ -57,7 +57,7 @@ public class XMLChunkedEncoder implements ChunkedEncoder {
         return solutions.flux().map(r -> {
             ByteArrayWriter w = writerTL.get().reset();
             try {
-                XMLEncoder.writeRow(varNames, r.terms(), w::append);
+                XMLEncoder.writeRow(varNames, r.terms(), w);
             } catch (IOException e) {
                 throw new RuntimeException("Unexpected IOException", e);
             }

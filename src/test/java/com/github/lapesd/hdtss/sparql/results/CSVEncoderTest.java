@@ -35,6 +35,17 @@ class CSVEncoderTest extends CodecTestBase {
                         x\r
                         \r
                         http://example.org/Charlie\r
+                        """),
+                arguments(XML_PROBLEMATIC, """
+                        x,y\r
+                        &,<&>\r
+                        http://example.org/search?q=1&o=2,"x > 2
+                        && y < 3"\r
+                        """),
+                arguments(CSV_PROBLEMATIC, """
+                        x,y\r
+                        \"""1
+                        2""\","a,b"\r
                         """)
         );
     }

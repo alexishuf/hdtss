@@ -7,14 +7,12 @@ import com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes;
-import com.github.lapesd.hdtss.vocab.XSD;
 import io.micronaut.context.BeanProvider;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.io.buffer.ByteBufferFactory;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.util.functional.ThrowingFunction;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.codec.CodecConfiguration;
 import io.micronaut.http.codec.CodecException;
@@ -27,8 +25,6 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions.ASK_FALSE;
 import static com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions.ASK_TRUE;
@@ -70,44 +66,16 @@ public class JSONCodec implements MediaTypeCodec  {
                                       String datatype,
                                       @JsonProperty("xml:lang") String lang) {
         public static final Value NULL = new Value(null, null, null, null);
-        private static final Pattern ESCAPE_RX = Pattern.compile("\"\\\\\r\n");
-
-        private @NonNull String quote() {
-            String string = value == null ? "" : value;
-            Matcher m = ESCAPE_RX.matcher(string);
-            StringBuilder builder = new StringBuilder(string.length() + 8).append('"');
-            while (m.find()) {
-                m.appendReplacement(builder, switch (string.charAt(m.start())) {
-                    case '"' -> "\\\"";
-                    case '\\' -> "\\\\";
-                    case '\r' -> "\\r";
-                    case '\n' -> "\\n";
-                    default -> throw new RuntimeException("unexpected char");
-                });
-            }
-            return m.appendTail(builder).append('"').toString();
-        }
 
         public Term asTerm() {
             if (type == null)
                 return null;
-            switch (type.strip().toLowerCase()) {
-                case "literal" -> {
-                    if (lang != null)
-                        return new Term(quote()+"@"+lang);
-                    else if (datatype == null || datatype.equals(XSD.string))
-                        return new Term(quote());
-                    else
-                        return new Term(quote()+"^^<"+datatype+">");
-                }
-                case "uri" -> {
-                    return new Term("<"+value+">");
-                }
-                case "bnode" -> {
-                    return value.startsWith("_:") ? new Term(value) : new Term("_:"+value);
-                }
+            return switch (type.strip().toLowerCase()) {
+                case "literal" -> Term.fromUnescapedLiteralParts(value, lang, datatype);
+                case "uri" -> Term.fromURI(value);
+                case "bnode" -> Term.fromBlank(value);
                 default -> throw new CodecException("Illegal binding value type="+type);
-            }
+            };
         }
     }
     @Introspected static record ResultsObj(List<Map<String, Value>> bindings) {}
@@ -147,10 +115,10 @@ public class JSONCodec implements MediaTypeCodec  {
     }
 
     public static void writeRow(@NonNull List<@NonNull String> vars, @NonNull Term[] terms,
-                                 @NonNull ThrowingFunction<CharSequence, ?, IOException> writer)
+                                @NonNull Writer writer)
             throws IOException {
         boolean first = true;
-        writer.apply("{");
+        writer.append("{");
         for (int i = 0; i < terms.length; i++) {
             Term term = terms[i];
             if (term == null)
@@ -159,31 +127,22 @@ public class JSONCodec implements MediaTypeCodec  {
             if (term.isBlank() && content.isEmpty())
                 content = UUID.randomUUID().toString();
             if (first) first = false;
-            else       writer.apply(",");
-            writer.apply(D_QUOTE);
-            writer.apply(vars.get(i));
-            writer.apply("\":{\"type\":\"");
-            writer.apply(switch (term.type()) {
-                case URI -> "uri";
-                case LITERAL -> "literal";
-                case BLANK -> "bnode";
-                default -> "unknown"; //unreachable
-            });
-            writer.apply("\",\"value\":\"");
-            writer.apply(content);
-            writer.apply(D_QUOTE);
+            else       writer.append(",");
+            writer.append(D_QUOTE).append(vars.get(i)).append("\":{\"type\":\"")
+                    .append(switch (term.type()) {
+                            case URI -> "uri";
+                            case LITERAL -> "literal";
+                            case BLANK -> "bnode";
+                            default -> "unknown"; //unreachable
+                        }).append("\",\"value\":\"").append(content).append(D_QUOTE);
             if (term.isLangStringLiteral()) {
-                writer.apply(",\"xml:lang\":\"");
-                writer.apply(term.lang());
-                writer.apply(D_QUOTE);
+                writer.append(",\"xml:lang\":\"").append(term.lang()).append(D_QUOTE);
             } else if (term.isLiteral()) {
-                writer.apply(",\"datatype\":\"");
-                writer.apply(term.datatype());
-                writer.apply(D_QUOTE);
+                writer.append(",\"datatype\":\"").append(term.datatype()).append(D_QUOTE);
             }
-            writer.apply("}");
+            writer.append("}");
         }
-        writer.apply("}");
+        writer.append("}");
     }
 
     @Override public <T> void
@@ -204,7 +163,7 @@ public class JSONCodec implements MediaTypeCodec  {
                 w.append("]},\"results\":{\"bindings\":[");
                 count = 0;
                 for (SolutionRow row : solutions)
-                    writeRow(vars, row.terms(), (count++ == 0 ? w : w.append(','))::append);
+                    writeRow(vars, row.terms(), count++ == 0 ? w : w.append(','));
                 w.append("]}}");
             }
         } catch (IOException e) {

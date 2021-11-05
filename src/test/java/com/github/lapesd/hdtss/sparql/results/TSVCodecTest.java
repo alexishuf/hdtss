@@ -30,7 +30,16 @@ class TSVCodecTest extends CodecTestBase {
                         AliceEN+"\t"+bob+"\t"+i23+"\t"+blank1+"\n"),
                 arguments(TWO_ROWS, "?x\n"+
                         "\n"+
-                        Charlie+"\n")
+                        Charlie+"\n"),
+                arguments(XML_PROBLEMATIC, """
+                        ?x\t?y
+                        "&"\t"<&>"
+                        <http://example.org/search?q=1&o=2>\t"x > 2\\n&& y < 3"
+                        """),
+                arguments(CSV_PROBLEMATIC, """
+                        ?x\t?y
+                        "\\"1\\n2\\""\t"a,b"@en
+                        """)
         );
     }
 

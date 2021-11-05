@@ -332,6 +332,17 @@ public record Term(@lombok.NonNull @NonNull CharSequence sparql) {
         return appendLiteralTypeOrLangTagSuffix(b, literal, quoteLen, closeIdx);
     }
 
+    /**
+     * Get the original (unescaped) char represented by \{@code escapeCode}.
+     *
+     * @param escapeCode the char following a backslash in a NT escape sequence.
+     * @return The unescaped char or {@code '\0'} if {@code escapeCode} is not a valid escape char
+     */
+    public static char expandEscape(char escapeCode) {
+        int idx = Arrays.binarySearch(ESCAPE_CHARS, escapeCode);
+        return idx < 0 ? '\0' : ESCAPE_CHARS_REVERSE[idx];
+    }
+
     private static @NonNull CharSequence
     appendLiteralTypeOrLangTagSuffix(@NonNull StringBuilder b,
                                      @NonNull CharSequence literal, int quoteLen, int closeIdx) {
@@ -484,7 +495,7 @@ public record Term(@lombok.NonNull @NonNull CharSequence sparql) {
      * @return the end position (last char position +1) of the content
      * @throws IllegalArgumentException if the {@link Term#sparql()} is malformed
      */
-    int contentEnd() {
+    public int contentEnd() {
         switch (type()) {
             case VAR -> { return sparql.length(); }
             case BLANK -> { return sparql.charAt(0) == '_' ? sparql.length() : 1; }
@@ -525,20 +536,33 @@ public record Term(@lombok.NonNull @NonNull CharSequence sparql) {
     }
 
     /**
-     * Get the main string representation of the term: the URI, the var name, the blank node
-     * label or the lexical form.
+     * Get the index of the char at which {@link Term#content()} starts.
      *
-     * @return A {@link CharSequence} with the content string. Only literals and blank nodes may
-     *         have empty content strings.
+     * @return the index of the first {@link Term#content()} char.
+     * @throws IllegalArgumentException if this Term wraps an empty string (not to be confused
+     *                                  with {@code "\"\""}), which is invalid.
      */
-    public @NonNull CharSequence content() {
+    public int contentStart() {
         char first;
         try {
             first = sparql.charAt(0);
         } catch (IndexOutOfBoundsException e) {
             throw new IllegalArgumentException("Term wraps an empty string, which is not a valid SPARQL term");
         }
-        return sparql.subSequence(first == '_' ? 2 : 1, contentEnd());
+        return first == '_' ? 2 : 1;
+    }
+
+    /**
+     * Get the main string representation of the term: the URI, the var name, the blank node
+     * label or the lexical form.
+     *
+     * @return A {@link CharSequence} with the content string. Only literals and blank nodes may
+     *         have empty content strings.
+     * @throws IllegalArgumentException if this Term wraps an empty string (not to be confused
+     *                                  with {@code "\"\""}), which is invalid.
+     */
+    public @NonNull CharSequence content() {
+        return sparql.subSequence(contentStart(), contentEnd());
     }
 
     /**
