@@ -165,7 +165,15 @@ class SparqlControllerTest {
                              ?y foaf:age ?age FILTER(?age < 25)
                           }
                         }
-                        """, positive)
+                        """, positive),
+                // bogus projected variable is kept
+    /* 16 */    arguments(prolog+"SELECT ?x ?y ?z WHERE {?x foaf:age ?y}",
+                          asList(asList(Alice, i23, null),
+                                 asList(Bob, i25, null))),
+                // bogus projected variable is kept at the first position
+    /* 17 */    arguments(prolog+"SELECT ?z ?x ?y WHERE {?x foaf:age ?y}",
+                          asList(asList(null, Alice, i23),
+                                 asList(null, Bob, i25)))
         );
     }
 

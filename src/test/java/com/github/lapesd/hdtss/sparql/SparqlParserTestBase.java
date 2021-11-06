@@ -1,6 +1,7 @@
 package com.github.lapesd.hdtss.sparql;
 
 import com.github.lapesd.hdtss.TestVocab;
+import com.github.lapesd.hdtss.model.nodes.Project;
 import com.github.lapesd.hdtss.model.nodes.*;
 import com.github.lapesd.hdtss.vocab.FOAF;
 import com.github.lapesd.hdtss.vocab.RDF;
@@ -64,7 +65,9 @@ public abstract class SparqlParserTestBase {
                           new Ask(new Union(
                                   new TriplePattern(x, mboxTerm, y),
                                   new Filter(new TriplePattern(x, ageTerm, y),
-                                             "?y > 23"))))
+                                             "?y > 23")))),
+    /* 11 */    arguments(prolog+"SELECT ?x ?y ?z WHERE {?x foaf:age ?y}",
+                          new Project(asList("x", "y", "z"), new TriplePattern(x, ageTerm, y)))
         );
     }
 
