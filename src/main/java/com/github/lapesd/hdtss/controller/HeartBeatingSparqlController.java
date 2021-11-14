@@ -11,8 +11,8 @@ import org.slf4j.event.Level;
 
 @Slf4j
 public abstract class HeartBeatingSparqlController implements SparqlController {
-    private long nQueries = 0;
-    private double avgQueryLen = 0;
+    private long nQueries = 0, lastNQueries = -1;
+    private double avgQueryLen = 0, lastAvgQueryLen = 0;
 
     @Value("${sparql.heartbeat.level:INFO}")
     private @Getter @Setter Level heartBeatLevel;
@@ -27,7 +27,11 @@ public abstract class HeartBeatingSparqlController implements SparqlController {
     @Scheduled(initialDelay = "${sparql.heartbeat.period:1m}",
                fixedRate = "${sparql.heartbeat.period:1m}")
     public void heartBeat() {
-        final String msg = "Received {} queries with an average length of {} chars";
-        LogUtils.log(log, heartBeatLevel, msg, nQueries, avgQueryLen);
+        if (lastAvgQueryLen != avgQueryLen || lastNQueries != nQueries) {
+            lastAvgQueryLen = avgQueryLen;
+            lastNQueries = nQueries;
+            final String msg = "Received {} queries with an average length of {} chars";
+            LogUtils.log(log, heartBeatLevel, msg, nQueries, avgQueryLen);
+        }
     }
 }
