@@ -1,0 +1,215 @@
+<http://data.linkedmdb.org/resource/interlink/6598> <http://data.linkedmdb.org/resource/oddlinker/link_target> <http://dbpedia.org/resource/L%27ultimo_bacio> .
+<http://data.linkedmdb.org/resource/interlink/25131> <http://data.linkedmdb.org/resource/oddlinker/link_target> <http://mpii.de/yago/resource/L%27ultimo_bacio> .
+<http://data.linkedmdb.org/resource/interlink/43664> <http://data.linkedmdb.org/resource/oddlinker/link_target> <http://www4.wiwiss.fu-berlin.de/flickrwrappr/photos/L%27ultimo_bacio> .
+<http://data.linkedmdb.org/resource/film/15188> <http://dbpedia.org/property/hasPhotoCollection> <http://www4.wiwiss.fu-berlin.de/flickrwrappr/photos/L'ultimo_bacio> .
+<http://data.linkedmdb.org/resource/film/15188> <http://www.w3.org/2002/07/owl#sameAs> <http://mpii.de/yago/resource/L%27ultimo_bacio> .
+<http://data.linkedmdb.org/resource/film/15188> <http://www.w3.org/2002/07/owl#sameAs> <http://dbpedia.org/resource/L%27ultimo_bacio> .
+<http://data.linkedmdb.org/resource/interlink/4138> <http://data.linkedmdb.org/resource/oddlinker/link_target> <http://dbpedia.org/resource/Remember_Me_This_Way_%28film%29> .
+<http://data.linkedmdb.org/resource/interlink/6595> <http://data.linkedmdb.org/resource/oddlinker/link_target> <http://dbpedia.org/resource/Remember_Me%2C_My_Love> .
+<http://data.linkedmdb.org/resource/film/9525> <http://www.w3.org/2002/07/owl#sameAs> <http://dbpedia.org/resource/Remember_Me_This_Way_%28film%29> .
+<http://data.linkedmdb.org/resource/film/15183> <http://www.w3.org/2002/07/owl#sameAs> <http://dbpedia.org/resource/Remember_Me%2C_My_Love> .
+<http://data.linkedmdb.org/resource/interlink/4138> <http://data.linkedmdb.org/resource/oddlinker/link_source> <http://data.linkedmdb.org/resource/film/9525> .
+<http://data.linkedmdb.org/resource/interlink/6595> <http://data.linkedmdb.org/resource/oddlinker/link_source> <http://data.linkedmdb.org/resource/film/15183> .
+<http://data.linkedmdb.org/resource/interlink/6598> <http://data.linkedmdb.org/resource/oddlinker/link_source> <http://data.linkedmdb.org/resource/film/15188> .
+<http://data.linkedmdb.org/resource/interlink/22671> <http://data.linkedmdb.org/resource/oddlinker/link_source> <http://data.linkedmdb.org/resource/film/9525> .
+<http://data.linkedmdb.org/resource/interlink/25128> <http://data.linkedmdb.org/resource/oddlinker/link_source> <http://data.linkedmdb.org/resource/film/15183> .
+<http://data.linkedmdb.org/resource/interlink/25131> <http://data.linkedmdb.org/resource/oddlinker/link_source> <http://data.linkedmdb.org/resource/film/15188> .
+<http://data.linkedmdb.org/resource/interlink/41204> <http://data.linkedmdb.org/resource/oddlinker/link_source> <http://data.linkedmdb.org/resource/film/9525> .
+<http://data.linkedmdb.org/resource/interlink/43661> <http://data.linkedmdb.org/resource/oddlinker/link_source> <http://data.linkedmdb.org/resource/film/15183> .
+<http://data.linkedmdb.org/resource/interlink/43664> <http://data.linkedmdb.org/resource/oddlinker/link_source> <http://data.linkedmdb.org/resource/film/15188> .
+<http://data.linkedmdb.org/resource/interlink/63735> <http://data.linkedmdb.org/resource/oddlinker/link_source> <http://data.linkedmdb.org/resource/film/9525> .
+<http://data.linkedmdb.org/resource/interlink/68075> <http://data.linkedmdb.org/resource/oddlinker/link_source> <http://data.linkedmdb.org/resource/film/15183> .
+<http://data.linkedmdb.org/resource/interlink/68076> <http://data.linkedmdb.org/resource/oddlinker/link_source> <http://data.linkedmdb.org/resource/film/15188> .
+<http://data.linkedmdb.org/resource/interlink/141780> <http://data.linkedmdb.org/resource/oddlinker/link_source> <http://data.linkedmdb.org/resource/film/9525> .
+<http://data.linkedmdb.org/resource/interlink/145916> <http://data.linkedmdb.org/resource/oddlinker/link_source> <http://data.linkedmdb.org/resource/film/15183> .
+<http://data.linkedmdb.org/resource/interlink/145919> <http://data.linkedmdb.org/resource/oddlinker/link_source> <http://data.linkedmdb.org/resource/film/15188> .
+<http://data.linkedmdb.org/resource/film/15183> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/31421> .
+<http://data.linkedmdb.org/resource/film/15183> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/42327> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/43931> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/45633> .
+<http://data.linkedmdb.org/resource/film/15183> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/45880> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/48805> .
+<http://data.linkedmdb.org/resource/film/15183> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/48910> .
+<http://data.linkedmdb.org/resource/film/9525> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/49626> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/9306> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/10609> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/10808> .
+<http://data.linkedmdb.org/resource/film/15183> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/53015> .
+<http://data.linkedmdb.org/resource/film/95258> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/59419> .
+<http://data.linkedmdb.org/resource/film/95259> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/59905> .
+<http://data.linkedmdb.org/resource/film/95258> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/59920> .
+<http://data.linkedmdb.org/resource/film/95259> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/59920> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/65570> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/65578> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/66729> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/66730> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/66731> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/66732> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/66733> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/66734> .
+<http://data.linkedmdb.org/resource/film/95259> <http://data.linkedmdb.org/resource/movie/actor> <http://data.linkedmdb.org/resource/actor/67371> .
+<http://data.linkedmdb.org/resource/film/95251> <http://data.linkedmdb.org/resource/movie/director> <http://data.linkedmdb.org/resource/director/12659> .
+<http://data.linkedmdb.org/resource/film/15183> <http://data.linkedmdb.org/resource/movie/director> <http://data.linkedmdb.org/resource/director/13229> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/director> <http://data.linkedmdb.org/resource/director/13229> .
+<http://data.linkedmdb.org/resource/film/95254> <http://data.linkedmdb.org/resource/movie/director> <http://data.linkedmdb.org/resource/director/19261> .
+<http://data.linkedmdb.org/resource/film/95255> <http://data.linkedmdb.org/resource/movie/director> <http://data.linkedmdb.org/resource/director/19261> .
+<http://data.linkedmdb.org/resource/film/95256> <http://data.linkedmdb.org/resource/movie/director> <http://data.linkedmdb.org/resource/director/19261> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/director> <http://data.linkedmdb.org/resource/director/19914> .
+<http://data.linkedmdb.org/resource/film/95250> <http://data.linkedmdb.org/resource/movie/director> <http://data.linkedmdb.org/resource/director/21427> .
+<http://data.linkedmdb.org/resource/film/95253> <http://data.linkedmdb.org/resource/movie/director> <http://data.linkedmdb.org/resource/director/21428> .
+<http://data.linkedmdb.org/resource/film/9525> <http://data.linkedmdb.org/resource/movie/film_cut> <http://data.linkedmdb.org/resource/film_cut/17043> .
+<http://data.linkedmdb.org/resource/film/15183> <http://data.linkedmdb.org/resource/movie/film_cut> <http://data.linkedmdb.org/resource/film_cut/20262> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/film_cut> <http://data.linkedmdb.org/resource/film_cut/20264> .
+<http://data.linkedmdb.org/resource/film/95253> <http://data.linkedmdb.org/resource/movie/editor> <http://data.linkedmdb.org/resource/editor/3474> .
+<http://data.linkedmdb.org/resource/film/95258> <http://data.linkedmdb.org/resource/movie/production_company> <http://data.linkedmdb.org/resource/production_company/255> .
+<http://data.linkedmdb.org/resource/film/95259> <http://data.linkedmdb.org/resource/movie/production_company> <http://data.linkedmdb.org/resource/production_company/255> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/production_company> <http://data.linkedmdb.org/resource/production_company/349> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/production_company> <http://data.linkedmdb.org/resource/production_company/1048> .
+<http://data.linkedmdb.org/resource/film/95253> <http://data.linkedmdb.org/resource/movie/producer> <http://data.linkedmdb.org/resource/producer/17245> .
+<http://data.linkedmdb.org/resource/film/9525> <http://data.linkedmdb.org/resource/movie/country> <http://data.linkedmdb.org/resource/country/GB> .
+<http://data.linkedmdb.org/resource/film/15183> <http://data.linkedmdb.org/resource/movie/country> <http://data.linkedmdb.org/resource/country/IT> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/country> <http://data.linkedmdb.org/resource/country/IT> .
+<http://data.linkedmdb.org/resource/film/15183> <http://data.linkedmdb.org/resource/movie/genre> <http://data.linkedmdb.org/resource/film_genre/4> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/genre> <http://data.linkedmdb.org/resource/film_genre/4> .
+<http://data.linkedmdb.org/resource/film/95253> <http://data.linkedmdb.org/resource/movie/music_contributor> <http://data.linkedmdb.org/resource/music_contributor/6076> .
+<http://data.linkedmdb.org/resource/film/95250> <http://data.linkedmdb.org/resource/movie/music_contributor> <http://data.linkedmdb.org/resource/music_contributor/6481> .
+<http://data.linkedmdb.org/resource/film/9525> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/43671> .
+<http://data.linkedmdb.org/resource/film/15183> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/46443> .
+<http://data.linkedmdb.org/resource/film/15183> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/48544> .
+<http://data.linkedmdb.org/resource/film/15183> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/53351> .
+<http://data.linkedmdb.org/resource/film/15183> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/74691> .
+<http://data.linkedmdb.org/resource/film/15183> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/177880> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/44512> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/50586> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/58523> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/59231> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/59830> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/67714> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/182494> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/182495> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/182496> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/182497> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/182498> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/182499> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/182500> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/182501> .
+<http://data.linkedmdb.org/resource/film/95258> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/182617> .
+<http://data.linkedmdb.org/resource/film/95258> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/182618> .
+<http://data.linkedmdb.org/resource/film/95259> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/182619> .
+<http://data.linkedmdb.org/resource/film/95259> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/182620> .
+<http://data.linkedmdb.org/resource/film/95259> <http://data.linkedmdb.org/resource/movie/performance> <http://data.linkedmdb.org/resource/performance/186123> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/featured_film_location> <http://data.linkedmdb.org/resource/film_location/303> .
+<http://data.linkedmdb.org/resource/director/12659> <http://xmlns.com/foaf/0.1/made> <http://data.linkedmdb.org/resource/film/95251> .
+<http://data.linkedmdb.org/resource/director/13229> <http://xmlns.com/foaf/0.1/made> <http://data.linkedmdb.org/resource/film/15183> .
+<http://data.linkedmdb.org/resource/director/13229> <http://xmlns.com/foaf/0.1/made> <http://data.linkedmdb.org/resource/film/15188> .
+<http://data.linkedmdb.org/resource/director/19261> <http://xmlns.com/foaf/0.1/made> <http://data.linkedmdb.org/resource/film/95254> .
+<http://data.linkedmdb.org/resource/director/19261> <http://xmlns.com/foaf/0.1/made> <http://data.linkedmdb.org/resource/film/95255> .
+<http://data.linkedmdb.org/resource/director/19261> <http://xmlns.com/foaf/0.1/made> <http://data.linkedmdb.org/resource/film/95256> .
+<http://data.linkedmdb.org/resource/director/19914> <http://xmlns.com/foaf/0.1/made> <http://data.linkedmdb.org/resource/film/95257> .
+<http://data.linkedmdb.org/resource/director/21427> <http://xmlns.com/foaf/0.1/made> <http://data.linkedmdb.org/resource/film/95250> .
+<http://data.linkedmdb.org/resource/director/21428> <http://xmlns.com/foaf/0.1/made> <http://data.linkedmdb.org/resource/film/95253> .
+<http://data.linkedmdb.org/resource/film/9525> <http://data.linkedmdb.org/resource/movie/initial_release_date> "1974" .
+<http://data.linkedmdb.org/resource/film/9525> <http://purl.org/dc/terms/date> "1974" .
+<http://data.linkedmdb.org/resource/film/9525> <http://data.linkedmdb.org/resource/movie/filmid> "9525"^^<http://www.w3.org/2001/XMLSchema#int> .
+<http://data.linkedmdb.org/resource/film/9525> <http://purl.org/dc/terms/title> "Remember Me This Way" .
+<http://data.linkedmdb.org/resource/film/9525> <http://www.w3.org/2000/01/rdf-schema#label> "Remember Me This Way" .
+<http://data.linkedmdb.org/resource/film/9525> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://data.linkedmdb.org/resource/movie/film> .
+<http://data.linkedmdb.org/resource/film/9525> <http://xmlns.com/foaf/0.1/page> <http://www.freebase.com/view/guid/9202a8c04000641f80000000011d06bf> .
+<http://data.linkedmdb.org/resource/film/15183> <http://data.linkedmdb.org/resource/movie/filmid> "15183"^^<http://www.w3.org/2001/XMLSchema#int> .
+<http://data.linkedmdb.org/resource/film/15183> <http://purl.org/dc/terms/title> "Remember Me, My Love" .
+<http://data.linkedmdb.org/resource/film/15183> <http://www.w3.org/2000/01/rdf-schema#label> "Remember Me, My Love" .
+<http://data.linkedmdb.org/resource/film/15183> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://data.linkedmdb.org/resource/movie/film> .
+<http://data.linkedmdb.org/resource/film/15183> <http://xmlns.com/foaf/0.1/page> <http://www.freebase.com/view/guid/9202a8c04000641f80000000055ef29a> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/filmid> "15188"^^<http://www.w3.org/2001/XMLSchema#int> .
+<http://data.linkedmdb.org/resource/film/15188> <http://purl.org/dc/terms/title> "L'ultimo bacio" .
+<http://data.linkedmdb.org/resource/film/15188> <http://www.w3.org/2000/01/rdf-schema#label> "L'ultimo bacio" .
+<http://data.linkedmdb.org/resource/film/15188> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://data.linkedmdb.org/resource/movie/film> .
+<http://data.linkedmdb.org/resource/film/15188> <http://xmlns.com/foaf/0.1/page> <http://www.freebase.com/view/guid/9202a8c04000641f80000000055ef468> .
+<http://data.linkedmdb.org/resource/film/95250> <http://data.linkedmdb.org/resource/movie/initial_release_date> "1959" .
+<http://data.linkedmdb.org/resource/film/95250> <http://purl.org/dc/terms/date> "1959" .
+<http://data.linkedmdb.org/resource/film/95250> <http://data.linkedmdb.org/resource/movie/filmid> "95250"^^<http://www.w3.org/2001/XMLSchema#int> .
+<http://data.linkedmdb.org/resource/film/95250> <http://purl.org/dc/terms/title> "Tragedy of Love" .
+<http://data.linkedmdb.org/resource/film/95250> <http://www.w3.org/2000/01/rdf-schema#label> "Tragedy of Love" .
+<http://data.linkedmdb.org/resource/film/95250> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://data.linkedmdb.org/resource/movie/film> .
+<http://data.linkedmdb.org/resource/film/95250> <http://xmlns.com/foaf/0.1/page> <http://www.freebase.com/view/guid/9202a8c04000641f800000000f9948b5> .
+<http://data.linkedmdb.org/resource/film/95251> <http://data.linkedmdb.org/resource/movie/initial_release_date> "1957" .
+<http://data.linkedmdb.org/resource/film/95251> <http://purl.org/dc/terms/date> "1957" .
+<http://data.linkedmdb.org/resource/film/95251> <http://data.linkedmdb.org/resource/movie/filmid> "95251"^^<http://www.w3.org/2001/XMLSchema#int> .
+<http://data.linkedmdb.org/resource/film/95251> <http://purl.org/dc/terms/title> "Waterloo" .
+<http://data.linkedmdb.org/resource/film/95251> <http://www.w3.org/2000/01/rdf-schema#label> "Waterloo" .
+<http://data.linkedmdb.org/resource/film/95251> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://data.linkedmdb.org/resource/movie/film> .
+<http://data.linkedmdb.org/resource/film/95251> <http://xmlns.com/foaf/0.1/page> <http://www.freebase.com/view/guid/9202a8c04000641f800000000f9948d0> .
+<http://data.linkedmdb.org/resource/film/95252> <http://data.linkedmdb.org/resource/movie/initial_release_date> "1959" .
+<http://data.linkedmdb.org/resource/film/95252> <http://purl.org/dc/terms/date> "1959" .
+<http://data.linkedmdb.org/resource/film/95252> <http://data.linkedmdb.org/resource/movie/filmid> "95252"^^<http://www.w3.org/2001/XMLSchema#int> .
+<http://data.linkedmdb.org/resource/film/95252> <http://purl.org/dc/terms/title> "What We Cannot Buy" .
+<http://data.linkedmdb.org/resource/film/95252> <http://www.w3.org/2000/01/rdf-schema#label> "What We Cannot Buy" .
+<http://data.linkedmdb.org/resource/film/95252> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://data.linkedmdb.org/resource/movie/film> .
+<http://data.linkedmdb.org/resource/film/95252> <http://xmlns.com/foaf/0.1/page> <http://www.freebase.com/view/guid/9202a8c04000641f800000000f9948e0> .
+<http://data.linkedmdb.org/resource/film/95253> <http://data.linkedmdb.org/resource/movie/initial_release_date> "1956" .
+<http://data.linkedmdb.org/resource/film/95253> <http://purl.org/dc/terms/date> "1956" .
+<http://data.linkedmdb.org/resource/film/95253> <http://data.linkedmdb.org/resource/movie/filmid> "95253"^^<http://www.w3.org/2001/XMLSchema#int> .
+<http://data.linkedmdb.org/resource/film/95253> <http://purl.org/dc/terms/title> "Young Have No Time" .
+<http://data.linkedmdb.org/resource/film/95253> <http://www.w3.org/2000/01/rdf-schema#label> "Young Have No Time" .
+<http://data.linkedmdb.org/resource/film/95253> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://data.linkedmdb.org/resource/movie/film> .
+<http://data.linkedmdb.org/resource/film/95253> <http://xmlns.com/foaf/0.1/page> <http://www.freebase.com/view/guid/9202a8c04000641f800000000f9948e9> .
+<http://data.linkedmdb.org/resource/film/95254> <http://data.linkedmdb.org/resource/movie/initial_release_date> "1958" .
+<http://data.linkedmdb.org/resource/film/95254> <http://purl.org/dc/terms/date> "1958" .
+<http://data.linkedmdb.org/resource/film/95254> <http://data.linkedmdb.org/resource/movie/filmid> "95254"^^<http://www.w3.org/2001/XMLSchema#int> .
+<http://data.linkedmdb.org/resource/film/95254> <http://purl.org/dc/terms/title> "Rooney" .
+<http://data.linkedmdb.org/resource/film/95254> <http://www.w3.org/2000/01/rdf-schema#label> "Rooney" .
+<http://data.linkedmdb.org/resource/film/95254> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://data.linkedmdb.org/resource/movie/film> .
+<http://data.linkedmdb.org/resource/film/95254> <http://xmlns.com/foaf/0.1/page> <http://www.freebase.com/view/guid/9202a8c04000641f800000000f995aca> .
+<http://data.linkedmdb.org/resource/film/95255> <http://data.linkedmdb.org/resource/movie/initial_release_date> "1960" .
+<http://data.linkedmdb.org/resource/film/95255> <http://purl.org/dc/terms/date> "1960" .
+<http://data.linkedmdb.org/resource/film/95255> <http://data.linkedmdb.org/resource/movie/filmid> "95255"^^<http://www.w3.org/2001/XMLSchema#int> .
+<http://data.linkedmdb.org/resource/film/95255> <http://purl.org/dc/terms/title> "And the Same to You" .
+<http://data.linkedmdb.org/resource/film/95255> <http://www.w3.org/2000/01/rdf-schema#label> "And the Same to You" .
+<http://data.linkedmdb.org/resource/film/95255> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://data.linkedmdb.org/resource/movie/film> .
+<http://data.linkedmdb.org/resource/film/95255> <http://xmlns.com/foaf/0.1/page> <http://www.freebase.com/view/guid/9202a8c04000641f800000000f995ad1> .
+<http://data.linkedmdb.org/resource/film/95256> <http://data.linkedmdb.org/resource/movie/initial_release_date> "1958" .
+<http://data.linkedmdb.org/resource/film/95256> <http://purl.org/dc/terms/date> "1958" .
+<http://data.linkedmdb.org/resource/film/95256> <http://data.linkedmdb.org/resource/movie/filmid> "95256"^^<http://www.w3.org/2001/XMLSchema#int> .
+<http://data.linkedmdb.org/resource/film/95256> <http://purl.org/dc/terms/title> "Sally's Irish Rogue" .
+<http://data.linkedmdb.org/resource/film/95256> <http://www.w3.org/2000/01/rdf-schema#label> "Sally's Irish Rogue" .
+<http://data.linkedmdb.org/resource/film/95256> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://data.linkedmdb.org/resource/movie/film> .
+<http://data.linkedmdb.org/resource/film/95256> <http://xmlns.com/foaf/0.1/page> <http://www.freebase.com/view/guid/9202a8c04000641f800000000f995ad8> .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/initial_release_date> "2009-11-20" .
+<http://data.linkedmdb.org/resource/film/95257> <http://purl.org/dc/terms/date> "2009-11-20" .
+<http://data.linkedmdb.org/resource/film/95257> <http://data.linkedmdb.org/resource/movie/filmid> "95257"^^<http://www.w3.org/2001/XMLSchema#int> .
+<http://data.linkedmdb.org/resource/film/95257> <http://purl.org/dc/terms/title> "Twink Confessions" .
+<http://data.linkedmdb.org/resource/film/95257> <http://www.w3.org/2000/01/rdf-schema#label> "Twink Confessions" .
+<http://data.linkedmdb.org/resource/film/95257> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://data.linkedmdb.org/resource/movie/film> .
+<http://data.linkedmdb.org/resource/film/95257> <http://xmlns.com/foaf/0.1/page> <http://www.freebase.com/view/guid/9202a8c04000641f800000000f99a95b> .
+<http://data.linkedmdb.org/resource/film/95258> <http://data.linkedmdb.org/resource/movie/initial_release_date> "1982" .
+<http://data.linkedmdb.org/resource/film/95258> <http://purl.org/dc/terms/date> "1982" .
+<http://data.linkedmdb.org/resource/film/95258> <http://data.linkedmdb.org/resource/movie/filmid> "95258"^^<http://www.w3.org/2001/XMLSchema#int> .
+<http://data.linkedmdb.org/resource/film/95258> <http://purl.org/dc/terms/title> "Down on the Farm" .
+<http://data.linkedmdb.org/resource/film/95258> <http://www.w3.org/2000/01/rdf-schema#label> "Down on the Farm" .
+<http://data.linkedmdb.org/resource/film/95258> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://data.linkedmdb.org/resource/movie/film> .
+<http://data.linkedmdb.org/resource/film/95258> <http://xmlns.com/foaf/0.1/page> <http://www.freebase.com/view/guid/9202a8c04000641f800000000f9da679> .
+<http://data.linkedmdb.org/resource/film/95259> <http://data.linkedmdb.org/resource/movie/initial_release_date> "1984" .
+<http://data.linkedmdb.org/resource/film/95259> <http://purl.org/dc/terms/date> "1984" .
+<http://data.linkedmdb.org/resource/film/95259> <http://data.linkedmdb.org/resource/movie/filmid> "95259"^^<http://www.w3.org/2001/XMLSchema#int> .
+<http://data.linkedmdb.org/resource/film/95259> <http://purl.org/dc/terms/title> "Little Brother's Coming Out" .
+<http://data.linkedmdb.org/resource/film/95259> <http://www.w3.org/2000/01/rdf-schema#label> "Little Brother's Coming Out" .
+<http://data.linkedmdb.org/resource/film/95259> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://data.linkedmdb.org/resource/movie/film> .
+<http://data.linkedmdb.org/resource/film/95259> <http://xmlns.com/foaf/0.1/page> <http://www.freebase.com/view/guid/9202a8c04000641f800000000f9daaec> .
+<http://data.linkedmdb.org/resource/film/9525> <http://data.linkedmdb.org/resource/movie/runtime> "57" .
+<http://data.linkedmdb.org/resource/film/15183> <http://data.linkedmdb.org/resource/movie/runtime> "125" .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/runtime> "115" .
+<http://data.linkedmdb.org/resource/film/9525> <http://xmlns.com/foaf/0.1/based_near> <http://sws.geonames.org/2635167/> .
+<http://data.linkedmdb.org/resource/film/15183> <http://xmlns.com/foaf/0.1/based_near> <http://sws.geonames.org/3175395/> .
+<http://data.linkedmdb.org/resource/film/15188> <http://xmlns.com/foaf/0.1/based_near> <http://sws.geonames.org/3175395/> .
+<http://data.linkedmdb.org/resource/film/9525> <http://dbpedia.org/property/hasPhotoCollection> <http://www4.wiwiss.fu-berlin.de/flickrwrappr/photos/Remember_Me_This_Way_(film)> .
+<http://data.linkedmdb.org/resource/film/15183> <http://dbpedia.org/property/hasPhotoCollection> <http://www4.wiwiss.fu-berlin.de/flickrwrappr/photos/Remember_Me,_My_Love> .
+<http://data.linkedmdb.org/resource/film/15188> <http://dbpedia.org/property/hasPhotoCollection> <http://www4.wiwiss.fu-berlin.de/flickrwrappr/photos/L'ultimo_bacio> .
+<http://data.linkedmdb.org/resource/film/9525> <http://www.w3.org/2002/07/owl#sameAs> <http://mpii.de/yago/resource/Remember_Me_This_Way_%28film%29> .
+<http://data.linkedmdb.org/resource/film/15183> <http://www.w3.org/2002/07/owl#sameAs> <http://mpii.de/yago/resource/Remember_Me%2C_My_Love> .
+<http://data.linkedmdb.org/resource/film/15188> <http://www.w3.org/2002/07/owl#sameAs> <http://mpii.de/yago/resource/L%27ultimo_bacio> .
+<http://data.linkedmdb.org/resource/film/9525> <http://www.w3.org/2002/07/owl#sameAs> <http://dbpedia.org/resource/Remember_Me_This_Way_%28film%29> .
+<http://data.linkedmdb.org/resource/film/15183> <http://www.w3.org/2002/07/owl#sameAs> <http://dbpedia.org/resource/Remember_Me%2C_My_Love> .
+<http://data.linkedmdb.org/resource/film/15188> <http://www.w3.org/2002/07/owl#sameAs> <http://dbpedia.org/resource/L%27ultimo_bacio> .
+<http://data.linkedmdb.org/resource/film/9525> <http://data.linkedmdb.org/resource/movie/language> <http://www.lingvoj.org/lingvo/en> .
+<http://data.linkedmdb.org/resource/film/15183> <http://data.linkedmdb.org/resource/movie/language> <http://www.lingvoj.org/lingvo/it> .
+<http://data.linkedmdb.org/resource/film/15188> <http://data.linkedmdb.org/resource/movie/language> <http://www.lingvoj.org/lingvo/it> .

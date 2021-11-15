@@ -1,0 +1,66 @@
+package com.github.lapesd.hdtss;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.http.MediaType;
+import lombok.Getter;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import static com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes.RESULTS_JSON;
+import static com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes.RESULTS_TSV;
+import static java.util.Arrays.asList;
+
+public class TestConfigPermutations implements Iterable<ApplicationContext>, Closeable {
+    private final @Getter Map<String, List<Object>> choices;
+    private @Nullable TempFile tempFile = null;
+    private static final @NonNull String FMT_PROP = "sparql.test.results.format";
+
+    public TestConfigPermutations(@NonNull String hdtLocation) {
+        choices = createChoices(hdtLocation);
+    }
+    public TestConfigPermutations(@NonNull File hdtFile) {
+        this(hdtFile.getAbsolutePath());
+    }
+
+    public TestConfigPermutations(@NonNull Class<?> refClass,
+                                  @NonNull String hdtResourcePath) throws IOException {
+        tempFile = new TempFile(".hdt").initFromResource(refClass, hdtResourcePath);
+        choices = createChoices(tempFile.getAbsolutePath());
+    }
+
+    private static @NonNull Map<String, List<Object>> createChoices(@NonNull String hdtLocation) {
+        Map<String, List<Object>> choices = new HashMap<>();
+        choices.put("hdt.location", List.of(hdtLocation));
+        choices.put("sparql.endpoint.flow", List.of("BATCH", "CHUNKED"));
+        for (String op : asList("hdt", "join", "filter"))
+            choices.put("sparql."+op+".flow", asList("REACTIVE", "ITERATOR"));
+
+        choices.put("sparql.join.reorder", List.of("NONE"));
+        choices.put("sparql.reactive.scheduler", asList("IO", "ELASTIC"));
+        choices.put("sparql.reactive.max-threads", asList("-1", "5"));
+        choices.put(FMT_PROP, List.of(RESULTS_TSV, RESULTS_JSON));
+        return choices;
+    }
+
+    public static @NonNull MediaType resultsMediaType(@NonNull ApplicationContext applicationContext) {
+        String resultsMT = applicationContext.get(FMT_PROP, String.class).orElseThrow();
+        return new MediaType(resultsMT);
+    }
+
+    @Override public Iterator<ApplicationContext> iterator() {
+        return TestUtils.listApplicationContext(choices).iterator();
+    }
+
+    @Override public void close() throws IOException {
+        if (tempFile != null)
+            tempFile.close();
+    }
+}
