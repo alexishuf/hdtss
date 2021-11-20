@@ -7,6 +7,7 @@ import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutor;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -30,12 +31,19 @@ abstract class BindJoinExecutor implements OpExecutor {
         Type type = node.type();
         if (type != Type.JOIN && type != Type.LEFT_JOIN)
             throw new IllegalArgumentException("Expected JOIN or LEFT_JOIN op");
-        if (type == Type.JOIN)
-            node = reorderStrategy.reorder((Join) node);
-        return execute(type == Type.LEFT_JOIN, node.children(), node.varNames());
+        List<@NonNull Op> operands = node.children();
+        int[] projection = null;
+        if (type == Type.JOIN) {
+            JoinReorder reorder = reorderStrategy.reorder((Join) node);
+            if (reorder != null) {
+                operands = reorder.operands();
+                projection = reorder.projection();
+            }
+        }
+        return execute(type == Type.LEFT_JOIN, operands, node.varNames(), projection);
     }
 
     protected abstract @NonNull QuerySolutions
     execute(boolean isLeft, @NonNull List<@NonNull Op> operands,
-            @NonNull List<@NonNull String> varNames);
+            @NonNull List<@NonNull String> varNames, int @Nullable [] projection);
 }

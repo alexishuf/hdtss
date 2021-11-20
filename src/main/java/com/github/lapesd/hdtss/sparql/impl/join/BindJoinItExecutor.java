@@ -124,7 +124,8 @@ public class BindJoinItExecutor extends BindJoinExecutor {
 
     @Override
     protected @NonNull QuerySolutions execute(boolean isLeft, @NonNull List<@NonNull Op> operands,
-                                              @NonNull List<String> varNames) {
+                                              @NonNull List<String> varNames,
+                                              int @Nullable[] projection) {
         final int nOperands = operands.size();
         List<State> states = new ArrayList<>(nOperands);
         return new IteratorQuerySolutions(varNames, new Iterator<>() {
@@ -146,7 +147,14 @@ public class BindJoinItExecutor extends BindJoinExecutor {
             @Override public @NonNull SolutionRow next() {
                 if (!hasNext())
                     throw new NoSuchElementException();
-                return last.next();
+                SolutionRow next = last.next();
+                if (projection != null) {
+                    Term[] unordered = next.terms();
+                    Term[] ordered = new Term[unordered.length];
+                    for (int i = 0; i < ordered.length; i++) ordered[i] = unordered[projection[i]];
+                    next = new SolutionRow(ordered);
+                }
+                return next;
             }
         });
     }

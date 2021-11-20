@@ -331,18 +331,15 @@ such implementations.
 The efficiency of join implementations relies on good join reordering. The 
 reordering strategy can be configured as such:
 
-> `sparql.join.reorder=NONE|HEURISTIC`
+> `sparql.join.reorder=NONE|VARS_POS`
 >
 > The join (re)ordering strategy to use before join execution starts. 
 > The **default** is `HEURISTIC`
 > 
 > > `NONE`: blindly execute joins in the order they appear in the query.
 > 
-> > `HEURISTIC`: apply a heuristic that does not rely on statistics nor 
-> > vocabulary information to reorder operands such that cheaper operands 
-> > are executed first and in case the operands are broken into more than 
-> > one join-connected component (connected means operands share variables), 
-> > the ensuing cartesian product execution is delayed as long as possible.
+> > `VARS_POS`: execute triple patterns with the lowest cardinality first, 
+> > estimating cardinality from the number and position of variables.
 
 SPARQL protocol configuration properties
 ----------------------------------------

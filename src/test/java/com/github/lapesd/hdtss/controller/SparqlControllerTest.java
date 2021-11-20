@@ -152,7 +152,14 @@ class SparqlControllerTest extends ControllerTestBase {
                 // bogus projected variable is kept at the first position
     /* 17 */    arguments(prolog+"SELECT ?z ?x ?y WHERE {?x foaf:age ?y}",
                           asList(asList(null, Alice, i23),
-                                 asList(null, Bob, i25)))
+                                 asList(null, Bob, i25))),
+                // reorder of triples must keep var names order
+    /* 18 */    arguments(prolog+ """
+                        SELECT ?x ?y WHERE {
+                          ?x foaf:knows ?y .
+                          ?y foaf:name "bob"
+                        }""",
+                        asList(asList(Alice, Bob), asList(Bob, Bob)))
         );
     }
 

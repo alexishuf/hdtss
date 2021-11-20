@@ -10,6 +10,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.List;
 
@@ -26,8 +27,9 @@ public class BindJoinFluxExecutor extends BindJoinItExecutor {
 
     @Override
     protected @NonNull QuerySolutions execute(boolean isLeft, @NonNull List<@NonNull Op> operands,
-                                              @NonNull List<@NonNull String> varNames) {
-        QuerySolutions its = super.execute(isLeft, operands, varNames);
+                                              @NonNull List<@NonNull String> varNames,
+                                              int @Nullable[] projection) {
+        QuerySolutions its = super.execute(isLeft, operands, varNames, projection);
         return new FluxQuerySolutions(its.varNames(), its.flux());
     }
 }
