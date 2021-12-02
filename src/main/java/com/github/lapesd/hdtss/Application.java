@@ -18,7 +18,7 @@ public class Application {
             "^(--?)(http-version|thread-selection|default-charset|port|host|read-timeout" +
                     "|server-header|max-request-size|read-idle-timeout|write-idle-timeout" +
                     "|idle-timeout|date-header|log-handled-exeptions|client-address-header" +
-                    "|context-path|dual-protocol|http-to-https-redirect)(=|$)");
+                    "|context-path|dual-protocol|http-to-https-redirect|netty\\..*)(=|$)");
 
     public static void main(@NonNull String @NonNull[] args) {
         args = promoteOrphansToHdtLocation(args);

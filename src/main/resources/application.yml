@@ -2,4 +2,11 @@ micronaut:
   application:
     name: hdtss
   server:
-    default-charset: UTF-8
+    netty:
+      # Maximum size of the first line in an HTTP request. This configuration is
+      # relevant for GET request in the SPARQL protocol. The whole
+      # GET /sparql?query=..... line must fit in this limit. The default of 4096
+      # bytes can easily be reached with bind-join queries including large
+      # VALUES clauses as a SPARQL mediator might generate.
+      # Override this from the CLI with -netty.max-initial-line-length=BYTES
+      max-initial-line-length: 32768
