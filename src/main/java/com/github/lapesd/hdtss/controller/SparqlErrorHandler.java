@@ -36,13 +36,16 @@ public class SparqlErrorHandler {
 
     public @NonNull HttpResponse<String> handle(@NonNull HttpRequest<?> request,
                                                 @NonNull RuntimeException e) {
-        if (e instanceof FeatureNotSupportedException f)
-            return handle(request, f);
-        else if (e instanceof SparqlSyntaxException s)
-            return handle(request, s);
+        if (e instanceof FeatureNotSupportedException fns)
+            return handle(request, fns);
+        else if (e instanceof EmptySparqlException es)
+            return handle(request, es);
+        else if (e instanceof SparqlSyntaxException ss)
+            return handle(request, ss);
         var msgBuilder = new StringBuilder().append(request.getMethod())
-                .append(' ').append(request.getUri());
-        request.getContentType().ifPresent(t -> msgBuilder.append("Content-Type: ").append(t));
+                .append(' ').append(request.getUri()).append('\n');
+        request.getContentType()
+                .ifPresent(t -> msgBuilder.append("Content-Type: ").append(t).append('\n'));
         request.getBody()
                 .ifPresent(b -> msgBuilder.append("Body:\n")
                         .append(String.join("\n  ", b.toString().split("\n")))
