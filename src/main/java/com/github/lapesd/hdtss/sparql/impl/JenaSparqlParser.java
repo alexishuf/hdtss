@@ -5,6 +5,7 @@ import com.github.lapesd.hdtss.model.nodes.*;
 import com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.SolutionRow;
+import com.github.lapesd.hdtss.sparql.EmptySparqlException;
 import com.github.lapesd.hdtss.sparql.FeatureNotSupportedException;
 import com.github.lapesd.hdtss.sparql.SparqlParser;
 import com.github.lapesd.hdtss.sparql.SparqlSyntaxException;
@@ -39,6 +40,8 @@ public class JenaSparqlParser implements SparqlParser {
 
     @Override
     public @NonNull Op parse(@NonNull CharSequence sparql) throws FeatureNotSupportedException {
+        if (sparql.isEmpty() || (sparql.length() < 16 && sparql.toString().trim().isEmpty()))
+            throw new EmptySparqlException();
         String queryString = sparql.toString();
         Query query;
         try {

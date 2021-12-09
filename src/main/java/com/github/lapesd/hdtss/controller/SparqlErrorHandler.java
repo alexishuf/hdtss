@@ -1,5 +1,6 @@
 package com.github.lapesd.hdtss.controller;
 
+import com.github.lapesd.hdtss.sparql.EmptySparqlException;
 import com.github.lapesd.hdtss.sparql.FeatureNotSupportedException;
 import com.github.lapesd.hdtss.sparql.SparqlSyntaxException;
 import io.micronaut.http.HttpRequest;
@@ -20,6 +21,11 @@ public class SparqlErrorHandler {
                                                 @NonNull SparqlSyntaxException ex) {
         return HttpResponse.badRequest("Syntax error in query: "+ex.reason())
                            .contentType(TEXT_PLAIN_TYPE);
+    }
+
+    public @NonNull HttpResponse<String> handle(@NonNull HttpRequest<?> request,
+                                                @NonNull EmptySparqlException ex) {
+        return HttpResponse.badRequest("No query provided").contentType(TEXT_PLAIN_TYPE);
     }
 
     public @NonNull HttpResponse<String> handle(@NonNull HttpRequest<?> request,
