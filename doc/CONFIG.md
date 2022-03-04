@@ -4,6 +4,8 @@ Configuration properties
 Table of Contents:
 
 - [Setting properties](#setting-properties)
+- [Micronaut/netty Configuration](#micronautnetty-configuration)
+- [Logging](#logging)
 - [HDT configuration properties](#hdt-configuration-properties)
   - [Loading](#loading)
     - [Progress Listener](#progress-listener)   
@@ -51,6 +53,43 @@ properties.
 > An example yaml configuration file listing all default values can be 
 > found in the [docs directory](./application-example.yaml)
 > 
+
+
+Micronaut/netty configuration
+-----------------------------
+
+All properties under `micronaut.server` can be set from the command line 
+omitting the `micronaut.server` prefix. Examples:
+
+- `-port=8090` sets `micronaut.server.port` to 8090
+- `--netty.max-initial-line-length 8192` reduces the maximum length of GET 
+  requests to 8 KiB (the hdtss default is 32 KiB while the netty default is 
+  4 KiB). 
+
+> Unlike GNU style options, `-` is handled the same as `--`
+
+
+Logging
+-------
+
+Changing the log level for a package is handled by micronaut property 
+`logger.levels.PACKAGE`. For the `com.github.lapesd.hdtss` package, which 
+hosts hdtss code, there is a shortcut command-line option with the following 
+levels:
+
+- `-v ERROR` something went wrong, the server may continue working nevertheless
+- `-v WARN` something looks wrong, usually hdtss makes a possibly wrong guess 
+            to avoid crashing or failing completely.
+- `-v INFO` a few initialization milestones, periodic liveness status, and 
+            non-trivial situations that are not worthy of a `WARN`message
+- `-v DEBUG` coarse-grained messages per query
+- `-v TRACE` fine-grained messages for multiple steps in query processing.
+- 
+
+This `-v` (or also `--v`, `-verbosity` and `--verbosity`) expands to 
+`-logger.levels.com.github.lapesd.hdtss`. To set the level for other packages, 
+use the longer form.
+
 
 HDT configuration properties
 ----------------------------

@@ -19,11 +19,21 @@ public class Application {
                     "|server-header|max-request-size|read-idle-timeout|write-idle-timeout" +
                     "|idle-timeout|date-header|log-handled-exeptions|client-address-header" +
                     "|context-path|dual-protocol|http-to-https-redirect|netty\\..*)(=|$)");
+    private static final Pattern VERBOSITY_RX = Pattern.compile("^(--?)(v)(=|$)");
 
     public static void main(@NonNull String @NonNull[] args) {
         args = promoteOrphansToHdtLocation(args);
         scopeServerProperties(args);
+        scopeVerbosity(args);
         Micronaut.run(Application.class, args);
+    }
+
+    private static void scopeVerbosity(@NonNull String @NonNull[] args) {
+        for (int i = 0; i < args.length; i++) {
+            Matcher matcher = VERBOSITY_RX.matcher(args[i]);
+            if (matcher.find())
+                args[i] = matcher.replaceAll("$1logger.levels.com.github.lapesd.hdtss$3");
+        }
     }
 
     private static void
