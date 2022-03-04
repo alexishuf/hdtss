@@ -13,6 +13,7 @@ import io.micronaut.http.annotation.*;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.reactivestreams.Publisher;
 import reactor.core.scheduler.Scheduler;
@@ -20,7 +21,11 @@ import reactor.core.scheduler.Scheduler;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
+import static java.lang.System.nanoTime;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.stream.Collectors.joining;
 
 @Controller(value = "/sparql",
@@ -30,12 +35,14 @@ import static java.util.stream.Collectors.joining;
                         MediaType.TEXT_HTML, MediaType.TEXT_PLAIN})
 @Singleton
 @Requires(property = "sparql.endpoint.flow", value = "CHUNKED", defaultValue = "CHUNKED")
+@Slf4j
 public class ChunkedSparqlController extends HeartBeatingSparqlController {
     private final @NonNull Scheduler scheduler;
     private final @NonNull SparqlParser parser;
     private final @NonNull OpExecutorDispatcher dispatcher;
     private final Map<@NonNull MediaType, ChunkedEncoder> type2encoder;
     private final @NonNull SparqlErrorHandler errorHandler;
+    private final @NonNull AtomicLong nextQueryId = new AtomicLong(1);
 
     public static final class NoEncoderException extends RuntimeException {}
 
@@ -60,10 +67,12 @@ public class ChunkedSparqlController extends HeartBeatingSparqlController {
     @Override public @NonNull SparqlParser             parser() { return parser; }
     @Override public @NonNull OpExecutorDispatcher dispatcher() { return dispatcher; }
 
-    private @NonNull Publisher<byte[]> answer(@Nullable String query, @Nullable String out,
+    private @NonNull Publisher<byte[]> answer(@Nullable String sparql, @Nullable String out,
                                               @Nullable String output, @NonNull HttpHeaders headers) {
-        query = query == null ? "" : query;
-        logQuery(query);
+        long start = nanoTime();
+        sparql = sparql == null ? "" : sparql;
+        String finalSparql = sparql;
+        logQuery(sparql);
         MediaType mt = SparqlMediaTypes.firstResultType(headers.accept());
         if (mt == null)
             mt = SparqlMediaTypes.resultTypeFromShortName(out, output);
@@ -72,7 +81,18 @@ public class ChunkedSparqlController extends HeartBeatingSparqlController {
         ChunkedEncoder encoder = type2encoder.getOrDefault(mt, null);
         if (encoder == null)
             throw new NoEncoderException();
-        return encoder.encode(mt, dispatcher.execute(parser.parse(query))).subscribeOn(scheduler);
+        long queryId = nextQueryId.getAndIncrement();
+        log.debug("Processing query {}, mt={}, sparql={}", queryId, mt, sparql);
+        return encoder.encode(mt, dispatcher.execute(parser.parse(sparql)))
+                .subscribeOn(scheduler)
+                .doOnComplete(() ->
+                    log.debug("Query {}: completed serialization of all rows after {}ms",
+                              queryId, MILLISECONDS.convert(nanoTime()-start, NANOSECONDS)))
+                .doOnError(err -> {
+                    String name = err == null ? "null" : err.getClass().getSimpleName();
+                    log.error("Query {}: failed with {}, sparql={}",
+                              queryId, name, finalSparql, err);
+                });
     }
 
     @Get

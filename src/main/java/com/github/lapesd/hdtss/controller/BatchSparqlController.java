@@ -1,5 +1,6 @@
 package com.github.lapesd.hdtss.controller;
 
+import com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.SparqlParser;
@@ -17,6 +18,12 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+import java.util.concurrent.atomic.AtomicLong;
+
+import static java.lang.System.nanoTime;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 @Controller(value = "/sparql",
             produces = {SparqlMediaTypes.RESULTS_TSV, SparqlMediaTypes.RESULTS_JSON,
                         SparqlMediaTypes.RESULTS_XML, SparqlMediaTypes.RESULTS_CSV})
@@ -27,6 +34,7 @@ public class BatchSparqlController extends HeartBeatingSparqlController {
     private final @NonNull SparqlParser parser;
     private final @NonNull OpExecutorDispatcher dispatcher;
     private final @NonNull SparqlErrorHandler errorHandler;
+    private final @NonNull AtomicLong nextQueryId = new AtomicLong(1);
 
     @Inject public BatchSparqlController(@NonNull SparqlParser parser,
                                          @NonNull OpExecutorDispatcher dispatcher,
@@ -41,7 +49,13 @@ public class BatchSparqlController extends HeartBeatingSparqlController {
 
     private @NonNull QuerySolutions answer(@NonNull String query) {
         logQuery(query);
-        return dispatcher.execute(parser.parse(query));
+        long queryId = nextQueryId.getAndIncrement();
+        long start = nanoTime();
+        log.debug("Starting query {}, sparql={}", queryId, query);
+        var solutions = new BatchQuerySolutions(dispatcher.execute(parser.parse(query)));
+        log.debug("Completed query {} after {}ms (serialization not started yet)",
+                  queryId, MILLISECONDS.convert(nanoTime()-start, NANOSECONDS));
+        return solutions;
     }
 
     @Get
