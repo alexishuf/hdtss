@@ -159,7 +159,11 @@ class SparqlControllerTest extends ControllerTestBase {
                           ?x foaf:knows ?y .
                           ?y foaf:name "bob"
                         }""",
-                        asList(asList(Alice, Bob), asList(Bob, Bob)))
+                        asList(asList(Alice, Bob), asList(Bob, Bob))),
+                // enumerate all predicates
+    /* 19 */    arguments(prolog+"SELECT DISTINCT ?pred WHERE {?x ?pred ?y} ",
+                          asList(List.of(RDF.typeTerm), List.of(FOAF.nameTerm),
+                                 List.of(FOAF.ageTerm), List.of(FOAF.knowsTerm)))
         );
     }
 

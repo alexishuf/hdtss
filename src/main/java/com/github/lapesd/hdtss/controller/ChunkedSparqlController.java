@@ -1,5 +1,8 @@
 package com.github.lapesd.hdtss.controller;
 
+import com.github.lapesd.hdtss.model.nodes.Op;
+import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
+import com.github.lapesd.hdtss.sparql.GetPredicatesExecutor;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.SparqlParser;
 import com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes;
@@ -43,6 +46,7 @@ public class ChunkedSparqlController extends HeartBeatingSparqlController {
     private final Map<@NonNull MediaType, ChunkedEncoder> type2encoder;
     private final @NonNull SparqlErrorHandler errorHandler;
     private final @NonNull AtomicLong nextQueryId = new AtomicLong(1);
+    private final @NonNull GetPredicatesExecutor predicatesExecutor;
 
     public static final class NoEncoderException extends RuntimeException {}
 
@@ -51,11 +55,13 @@ public class ChunkedSparqlController extends HeartBeatingSparqlController {
                                    @NonNull SparqlParser parser,
                                    @NonNull OpExecutorDispatcher dispatcher,
                                    @NonNull SparqlErrorHandler errorHandler,
-                                   @NonNull List<@NonNull ChunkedEncoder> encoders) {
+                                   @NonNull List<@NonNull ChunkedEncoder> encoders,
+                                   @NonNull GetPredicatesExecutor predicatesExecutor) {
         this.scheduler = scheduler;
         this.parser = parser;
         this.dispatcher = dispatcher;
         this.errorHandler = errorHandler;
+        this.predicatesExecutor = predicatesExecutor;
         this.type2encoder = new HashMap<>();
         for (var it = encoders.listIterator(encoders.size()); it.hasPrevious(); ) {
             ChunkedEncoder encoder = it.previous();
@@ -83,7 +89,11 @@ public class ChunkedSparqlController extends HeartBeatingSparqlController {
             throw new NoEncoderException();
         long queryId = nextQueryId.getAndIncrement();
         log.debug("Processing query {}, mt={}, sparql={}", queryId, mt, sparql);
-        return encoder.encode(mt, dispatcher.execute(parser.parse(sparql)))
+        Op parsed = parser.parse(sparql);
+        QuerySolutions solutions = predicatesExecutor.tryExecute(parsed);
+        if (solutions == null)
+            solutions = dispatcher.execute(parsed);
+        return encoder.encode(mt, solutions)
                 .subscribeOn(scheduler)
                 .doOnComplete(() ->
                     log.debug("Query {}: completed serialization of all rows after {}ms",

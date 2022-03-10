@@ -1,7 +1,9 @@
 package com.github.lapesd.hdtss.controller;
 
+import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
+import com.github.lapesd.hdtss.sparql.GetPredicatesExecutor;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.SparqlParser;
 import com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes;
@@ -35,13 +37,16 @@ public class BatchSparqlController extends HeartBeatingSparqlController {
     private final @NonNull OpExecutorDispatcher dispatcher;
     private final @NonNull SparqlErrorHandler errorHandler;
     private final @NonNull AtomicLong nextQueryId = new AtomicLong(1);
+    private final @NonNull GetPredicatesExecutor predicatesExecutor;
 
     @Inject public BatchSparqlController(@NonNull SparqlParser parser,
                                          @NonNull OpExecutorDispatcher dispatcher,
-                                         @NonNull SparqlErrorHandler errorHandler) {
+                                         @NonNull SparqlErrorHandler errorHandler,
+                                         @NonNull GetPredicatesExecutor predicatesExecutor) {
         this.parser = parser;
         this.dispatcher = dispatcher;
         this.errorHandler = errorHandler;
+        this.predicatesExecutor = predicatesExecutor;
     }
 
     @Override public @NonNull SparqlParser parser() { return parser; }
@@ -52,7 +57,10 @@ public class BatchSparqlController extends HeartBeatingSparqlController {
         long queryId = nextQueryId.getAndIncrement();
         long start = nanoTime();
         log.debug("Starting query {}, sparql={}", queryId, query);
-        var solutions = new BatchQuerySolutions(dispatcher.execute(parser.parse(query)));
+        Op parsed = parser.parse(query);
+        QuerySolutions solutions = predicatesExecutor.tryExecute(parsed);
+        if (solutions == null)
+            solutions = new BatchQuerySolutions(dispatcher.execute(parsed));
         log.debug("Completed query {} after {}ms (serialization not started yet)",
                   queryId, MILLISECONDS.convert(nanoTime()-start, NANOSECONDS));
         return solutions;
