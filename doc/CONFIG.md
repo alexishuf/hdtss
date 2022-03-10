@@ -8,7 +8,8 @@ Table of Contents:
 - [Logging](#logging)
 - [HDT configuration properties](#hdt-configuration-properties)
   - [Loading](#loading)
-    - [Progress Listener](#progress-listener)   
+    - [Progress Listener](#progress-listener)
+  - [Cardinality Estimation](#cardinality-estimation) 
 - [Querying configuration properties](#querying-configuration-properties)
   - [Flow Control](#flow-control) 
   - [Implementation Strategies](#implementation-strategies) 
@@ -216,6 +217,55 @@ These properties choose the implementation and configure it.
 > satisfied. If `false`, the last progress event will only trigger a progress
 > message to be logged if the  minimum period constraint is satisfied. 
 
+### Cardinality estimation
+
+Estimating how many results a triple pattern will yield is a core service 
+required to implement query optimization. While HDT files do not have advanced
+statistics a triple store would collect, some estimation is possible.
+The following property controls how cardinality estimation will be done:
+
+> `hdt.estimator=string`
+> Select the `CardinalityEstimator` implementation.
+> 
+> > `NONE`
+> > All triple patterns will be estimated as having 1 result. 
+>
+> > `PATTERN`
+> > Cardinality will be estimated using a hard-coded heuristic taking into 
+> > account the number of variables in the pattern and their positions:
+> > - ` s  p  o`: 1
+> > - `?s  p  o`: 1000
+> > - ` s ?p  o`: 10
+> > - ` s  p ?o`: 20
+> > - `?s ?p  o`: 2000
+> > - `?s  p ?o`: 10000
+> > - ` s ?p ?o`: 100
+> > - `?s ?p ?o`: 100000
+>
+> > `PEEK`
+> > For every triple pattern will use HDTs own cardinality estimation. 
+> > This will incur the cost of looking up grounded terms in the HDT 
+> > dictionary, selecting the best index and building an iterator over that 
+> > index. Queries with the form `?s <p> ?o` or `?s rdf:type <class>` will 
+> > have their estimations cached, thus reducing the overall estimation cost. 
+> > When the HDT estimation is not available, an heuristic based on number 
+> > of subject, predicates, objects and triples will be used. If the HDT 
+> > estimation is overestimating, it will be averaged with the number of terms
+> > heuristic.
+> > 
+> > > To disable all lookup-based estimations, set `hdt.estimator.lookup=NEVER`
+> >
+> > > To restrict lookup-based estimation to cacheable query patterns, 
+> > > set `hdt.estimator.lookup=CACHED`. The default is `ALWAYS`
+> > 
+> > > By default, predicates and classes will be enumerated on background to 
+> > > fill caches. During this process, the estimator is responsive, although 
+> > > there might be some background load affecting I/O. To disable this, set
+> > > `hdt.estimator.prefetch=false` (the default is `true`). Without a 
+> > > complete prefetch, the estimator may apply smaller bonuses to triple 
+> > > patterns mentioning infrequent predicates or classes (since the most 
+> > > frequent class/predicates may not be known yet). 
+
  
 Querying configuration properties
 ---------------------------------
@@ -370,15 +420,18 @@ such implementations.
 The efficiency of join implementations relies on good join reordering. The 
 reordering strategy can be configured as such:
 
-> `sparql.join.reorder=NONE|VARS_POS`
+> `sparql.join.reorder=NONE|VARS_POS|TRIPLE_CARD`
 >
 > The join (re)ordering strategy to use before join execution starts. 
-> The **default** is `HEURISTIC`
+> The **default** is `TRIPLE_CARD`
 > 
 > > `NONE`: blindly execute joins in the order they appear in the query.
 > 
 > > `VARS_POS`: execute triple patterns with the lowest cardinality first, 
 > > estimating cardinality from the number and position of variables.
+> 
+> > `TRIPLE_CARD`: execute smallest cardinality triple patterns first, 
+> > as estimated by the configured `hdt.estimator`.  
 
 SPARQL protocol configuration properties
 ----------------------------------------

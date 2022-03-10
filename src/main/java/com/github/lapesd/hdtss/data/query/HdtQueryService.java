@@ -4,10 +4,16 @@ import com.github.lapesd.hdtss.model.FlowType;
 import com.github.lapesd.hdtss.model.nodes.TriplePattern;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.rdfhdt.hdt.hdt.HDT;
 
 import javax.validation.constraints.NotNull;
 
 public interface HdtQueryService {
+    /**
+     * Get the underlying HDT object.
+     */
+    @NonNull HDT hdt();
+
     /**
      * Call {@link HdtQueryService#query(TriplePattern, FlowType)} with this implementation's
      * default {@link FlowType}.

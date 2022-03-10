@@ -49,7 +49,8 @@ class OpExecutorTest {
         hdtFile = new TempFile(".hdt").initFromResource(TempFile.class, path);
         sharedPropertyChoices = Map.of(
                 "sparql.hdt.flow", asList("REACTIVE", "ITERATOR"),
-                "hdt.location", singletonList(hdtFile.getAbsolutePath())
+                "hdt.location", singletonList(hdtFile.getAbsolutePath()),
+                "hdt.estimator", asList("PATTERN", "PEEK")
         );
     }
 

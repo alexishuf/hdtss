@@ -101,6 +101,10 @@ public class HdtQueryServiceImpl implements HdtQueryService, Closeable {
         return new NamesAndIt(query.varNames(), it);
     }
 
+    @Override public @NonNull HDT hdt() {
+        return hdt;
+    }
+
     @Override public @NonNull QuerySolutions query(@NotNull TriplePattern query) {
         return query(query, flowType);
     }

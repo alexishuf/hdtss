@@ -13,8 +13,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Stream;
 
 import static com.github.lapesd.hdtss.TestVocab.*;
@@ -27,7 +25,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 @Tag("fast")
 class VarPositionsJoinReorderStrategyTest {
     @ParameterizedTest @ValueSource(strings = {
-            "0      :: <a> <b> <c>",
+            "1      :: <a> <b> <c>",
             "10     :: <a> ?x  <c>",
             "20     :: <a> <b> ?x",
             "10     :: <a> ?x  <c>",
@@ -43,7 +41,7 @@ class VarPositionsJoinReorderStrategyTest {
         assertEquals(2, parts.length);
         int expected = Integer.parseInt(parts[0]);
         Op op = new JenaSparqlParser().parse("SELECT * WHERE { " + parts[1] + " }");
-        assertEquals(expected, VarPositionsJoinReorderStrategy.estimate(op));
+        assertEquals(expected, new VarPositionsJoinReorderStrategy().estimate(op));
     }
 
     static Stream<Arguments> testReorder() {
@@ -159,58 +157,6 @@ class VarPositionsJoinReorderStrategyTest {
                 assertTrue(ac.deepEquals(ex), "i="+i);
             }
         }
-    }
-
-    static Stream<Arguments> testProjection() {
-        return Stream.of(
-                arguments(List.of("x"),
-                          List.of(new TriplePattern(x, knowsTerm, Bob)),
-                          null),
-                arguments(asList("x", "y"),
-                          List.of(new TriplePattern(x, knowsTerm, y)),
-                          null),
-                arguments(asList("x", "y"),
-                          asList(new TriplePattern(x, knowsTerm, Bob),
-                                 new TriplePattern(y, knowsTerm, Bob)),
-                          null),
-                arguments(asList("x", "y"),
-                          asList(new TriplePattern(x, nameTerm, AliceEN),
-                                 new TriplePattern(x, knowsTerm, y)),
-                          null),
-                arguments(asList("x", "y"),
-                          asList(new TriplePattern(y, nameTerm, bob),
-                                 new TriplePattern(x, knowsTerm, y)),
-                          new int[]{1, 0}),
-                arguments(asList("x", "y", "z"),
-                          asList(new TriplePattern(y, nameTerm, bob),
-                                 new TriplePattern(y, ageTerm, z),
-                                 new TriplePattern(x, knowsTerm, y)),
-                          new int[] {2, 0, 1})
-        );
-    }
-
-    @ParameterizedTest @MethodSource
-    void testProjection(List<String> exposed, List<Op> reordered, int[] expected) {
-        int[] actual = VarPositionsJoinReorderStrategy.getProjection(exposed, reordered);
-        assertArrayEquals(expected, actual);
-    }
-
-    @ParameterizedTest @ValueSource(strings = {
-            "true  :: ",
-            "true  :: 0",
-            "false :: 1",
-            "true  :: 0, 1",
-            "false :: 1, 0",
-            "true  :: 0, 1, 2",
-            "false :: 0, 2, 1",
-    })
-    void testIsNoOp(String data) {
-        String[] parts = data.split(" +:: +");
-        boolean expected = Boolean.parseBoolean(parts[0]);
-        long[] input = Arrays.stream((parts.length > 1 ? parts[1] : "").split(" *, *"))
-                            .filter(s -> !s.isBlank())
-                            .mapToLong(Integer::parseInt).toArray();
-        assertEquals(expected, VarPositionsJoinReorderStrategy.isNoOp(input));
     }
 
 }
