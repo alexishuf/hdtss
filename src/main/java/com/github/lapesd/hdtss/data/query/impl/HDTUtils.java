@@ -91,7 +91,7 @@ public class HDTUtils {
      */
     public static @NonNull Term fromHDTId(@NonNull Dictionary dictionary, long id,
                                           @NonNull TermPosition position) {
-        return fromHDT(dictionary.idToString(id, pos2role(position)));
+        return fromHDT(dictionary.idToString(id, pos2role(position)).toString());
     }
 
     /**
