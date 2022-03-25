@@ -7,6 +7,7 @@ import com.github.lapesd.hdtss.vocab.XSD;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.checkerframework.checker.index.qual.Positive;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -612,7 +613,7 @@ public record Term(@lombok.NonNull @NonNull CharSequence sparql) {
      *
      * @return A non-null and non-empty datatype IRI if {@link Term#isLiteral()} or null otherwise.
      */
-    public @Nullable CharSequence datatype() {
+    public @Nullable String datatype() {
         if (!isLiteral())
             return null;
         int end = contentEnd();
@@ -622,13 +623,19 @@ public record Term(@lombok.NonNull @NonNull CharSequence sparql) {
             if (sparql.charAt(end+1) == '@')
                 return RDF.langString;
             if (sparql.charAt(end+3) == '<') {
-                return sparql.subSequence(end+4, sparql.length()-1); // "^^<...
+                String intern = XSD.intern(sparql, end + 4, sparql.length() - 1);
+                if (intern != null)
+                    return intern;
+                return sparql.subSequence(end+4, sparql.length()-1).toString(); // "^^<...
             } else { // ^^PREFIX:LOCAL_NAME
                 String dt = sparql.subSequence(end + 3, sparql.length()).toString();
-                if (dt.startsWith("xsd:"))
-                    return XSD.NS+dt.substring(4);
-                if (dt.startsWith("rdf:"))
-                    return RDF.NS+dt.substring(4);
+                if (dt.startsWith("xsd:")) {
+                    String uri = XSD.NS + dt.substring(4);
+                    String interned = XSD.intern(uri, 0, uri.length());
+                    return interned != null ? interned : uri.intern();
+                } else if (dt.startsWith("rdf:")) {
+                    return (RDF.NS + dt.substring(4)).intern();
+                }
                 log.warn("Invalid datatype syntax in {}. Returning datatype()={}", sparql, dt);
                 return dt;
             }
@@ -697,7 +704,22 @@ public record Term(@lombok.NonNull @NonNull CharSequence sparql) {
      * @return true iff this is a lang string (has a language tag).
      */
     public boolean isLangStringLiteral() {
-        return lang() != null;
+        return langStart() != sparql.length();
+    }
+
+    /**
+     * Where the language tag starts in {@link Term#sparql()} or {@code sparql().length()}
+     * if this is not a literal or has no language tag.
+     *
+     * If the language tag is present, its end is always {@code sparql().end}.
+     *
+     * @return index of the first char of the language tag (not including the '@').
+     */
+    public @Positive int langStart() {
+        int length = sparql.length();
+        if (!isLiteral()) return length;
+        int contentEnd = contentEnd();
+        return contentEnd < length -2 && sparql.charAt(contentEnd+1) == '@' ? contentEnd+2 : length;
     }
 
     /**
@@ -707,12 +729,8 @@ public record Term(@lombok.NonNull @NonNull CharSequence sparql) {
      *         is a lang-tagged literal, or null otherwise.
      */
     public @Nullable CharSequence lang() {
-        if (!isLiteral())
-            return null;
-        int end = contentEnd();
-        return end < sparql.length()-2 && sparql.charAt(end+1) == '@'
-                ? sparql.subSequence(end+2, sparql.length())
-                : null;
+        int start = langStart(), end = sparql.length();
+        return  start == end ? null : sparql.subSequence(start, end);
     }
 
     public @Nullable String langAsString() {

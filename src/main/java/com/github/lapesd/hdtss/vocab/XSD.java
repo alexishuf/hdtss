@@ -2,6 +2,7 @@ package com.github.lapesd.hdtss.vocab;
 
 import com.github.lapesd.hdtss.model.Term;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 @SuppressWarnings("unused")
 public class XSD {
@@ -30,6 +31,43 @@ public class XSD {
     public static final @NonNull String hexBinary  = NS+"hexBinary";
     public static final @NonNull String anyURI  = NS+"anyURI";
 
+    public static @Nullable String intern(CharSequence cs, int begin, int end) {
+        // http://www.w3.org/2001/XMLSchema#
+        // 012345678901234567890123456789012
+        // 0         1         2         3
+        if (end-begin <= 32) return null;
+        if (cs.charAt(begin+23) != 'X' || cs.charAt(begin+24) != 'M') return null;
+        if (cs.charAt(begin+25) != 'L' || cs.charAt(begin+32) != '#') return null;
+        char e1 = cs.charAt(end - 1), e2 = cs.charAt(end - 2);
+        @Nullable String candidate = switch (e1) {
+            case 'g' -> string;
+            case 'n' -> switch (e2) {case 'a'->xboolean; case 'o'->duration; default->null;};
+            case 'r' -> switch (e2) {case 'e'->integer; case 'a'->gYear; default->null;};
+            case 't' -> switch (e2) {case 'n'->xint; case 'r'->xshort; case 'a'->xfloat; default->null;};
+            case 'e' -> switch (e2) {
+                case 'l' -> xdouble;
+                case 't' -> date;
+                case 'p' -> cs.charAt(end-5) == 'y' ? anyType : anySimpleType;
+                case 'm' -> cs.charAt(end-5) == 'e' ? dateTime : time;
+                default -> null;
+            };
+            case 'I' -> anyURI;
+            case 'l' -> decimal;
+            case 'h' -> cs.charAt(end-6) == 'r' ? gYearMonth : gMonth;
+            case 'y' -> switch (e2) {
+                case 'a' -> cs.charAt(end-4) == 'h' ? gMonthDay : gDay;
+                case 'r' -> cs.charAt(end-7) == '4' ? base64Binary : hexBinary;
+                default -> null;
+            };
+            default -> null;
+        };
+        if (candidate == null)
+            return null;
+        for (int i = 33, len = candidate.length(); i < len; i++) {
+            if (cs.charAt(begin+i) != candidate.charAt(i)) return null;
+        }
+        return candidate; // candidate equals cs subsequence
+    }
 
     public static final @NonNull Term xbooleanTerm = new Term("<"+xboolean+">");
     public static final @NonNull Term integerTerm = new Term("<"+integer+">");
