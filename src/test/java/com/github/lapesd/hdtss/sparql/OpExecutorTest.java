@@ -2,14 +2,45 @@ package com.github.lapesd.hdtss.sparql;
 
 import com.github.lapesd.hdtss.TempFile;
 import com.github.lapesd.hdtss.TestUtils;
+import com.github.lapesd.hdtss.data.query.HdtQueryService;
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.Project;
 import com.github.lapesd.hdtss.model.nodes.*;
 import com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.SolutionRow;
+import com.github.lapesd.hdtss.sparql.impl.IdentityExecutor;
+import com.github.lapesd.hdtss.sparql.impl.ask.AskFluxExecutor;
+import com.github.lapesd.hdtss.sparql.impl.ask.AskItExecutor;
+import com.github.lapesd.hdtss.sparql.impl.assign.JenaAssignFluxExecutor;
+import com.github.lapesd.hdtss.sparql.impl.assign.JenaAssignItExecutor;
+import com.github.lapesd.hdtss.sparql.impl.distinct.DistinctFluxExecutor;
+import com.github.lapesd.hdtss.sparql.impl.distinct.DistinctItExecutor;
+import com.github.lapesd.hdtss.sparql.impl.exists.ExistsFluxExecutor;
+import com.github.lapesd.hdtss.sparql.impl.exists.ExistsItExecutor;
+import com.github.lapesd.hdtss.sparql.impl.exists.NotExistsFluxExecutor;
+import com.github.lapesd.hdtss.sparql.impl.exists.NotExistsItExecutor;
+import com.github.lapesd.hdtss.sparql.impl.filter.JenaFilterFluxExecutor;
+import com.github.lapesd.hdtss.sparql.impl.filter.JenaFilterItExecutor;
+import com.github.lapesd.hdtss.sparql.impl.join.BindJoinFluxExecutor;
+import com.github.lapesd.hdtss.sparql.impl.join.BindJoinItExecutor;
+import com.github.lapesd.hdtss.sparql.impl.join.BindLeftJoinFluxExecutor;
+import com.github.lapesd.hdtss.sparql.impl.join.BindLeftJoinItExecutor;
+import com.github.lapesd.hdtss.sparql.impl.limit.LimitFluxExecutor;
+import com.github.lapesd.hdtss.sparql.impl.limit.LimitItExecutor;
+import com.github.lapesd.hdtss.sparql.impl.minus.MinusFluxExecutor;
+import com.github.lapesd.hdtss.sparql.impl.minus.MinusItExecutor;
+import com.github.lapesd.hdtss.sparql.impl.offset.OffsetFluxExecutor;
+import com.github.lapesd.hdtss.sparql.impl.offset.OffsetItExecutor;
+import com.github.lapesd.hdtss.sparql.impl.project.ProjectFluxExecutor;
+import com.github.lapesd.hdtss.sparql.impl.project.ProjectItExecutor;
+import com.github.lapesd.hdtss.sparql.impl.union.UnionFluxExecutor;
+import com.github.lapesd.hdtss.sparql.impl.union.UnionItExecutor;
+import com.github.lapesd.hdtss.sparql.impl.values.ValuesFluxExecutor;
+import com.github.lapesd.hdtss.sparql.impl.values.ValuesItExecutor;
 import com.github.lapesd.hdtss.vocab.RDF;
 import com.github.lapesd.hdtss.vocab.XSD;
 import io.micronaut.context.ApplicationContext;
+import jakarta.inject.Named;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -34,7 +65,7 @@ import static com.github.lapesd.hdtss.vocab.RDF.typeTerm;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @Tag("fast")
@@ -72,9 +103,17 @@ class OpExecutorTest {
         testInContexts(op, expected, Map.of());
     }
 
+    private String opConfigName(Op op) {
+        return opConfigName(op.type());
+    }
+    private String opConfigName(Op.Type type) {
+        String lower = type.name().toLowerCase();
+        return (lower.contains("_")) ? lower.split("_")[1] : lower;
+    }
+
     private void testInContexts(@NonNull Op op, @NonNull Collection<@NonNull List<Term>> expected,
                                 @NonNull Map<String, List<Object>> propertyChoices) {
-        String opConfigName = op.getClass().getSimpleName().toLowerCase();
+        String opConfigName = opConfigName(op);
         for (ApplicationContext ctx : applicationContexts(opConfigName, propertyChoices)) {
             try (ctx) {
                 var actual = ctx.createBean(OpExecutorDispatcher.class).execute(op)
@@ -83,6 +122,71 @@ class OpExecutorTest {
                 assertEquals(expected.size(), actual.size());
             }
         }
+    }
+
+    private ApplicationContext createFlowSelectionContext(Op.Type type, String flow) {
+        return ApplicationContext.builder().args(
+                "-hdt.location=" + hdtFile.getAbsolutePath(),
+                "-hdt.estimator=NONE",
+                "-sparql." + opConfigName(type) + ".flow="+flow.toUpperCase()
+        ).start();
+    }
+
+    private @NonNull OpExecutor findExecutorFor(Op.Type op, ApplicationContext ctx) {
+        OpExecutor single = null;
+        for (OpExecutor ex : ctx.getBeansOfType(OpExecutor.class)) {
+            if (ex.supportedTypes().contains(op)) {
+                Named named = ex.getClass().getAnnotation(Named.class);
+                assertNotNull(named, "Bean "+ex+" not annotated with @Named");
+                if (named.value().toLowerCase().equals(op.name().toLowerCase().replace("_", ""))) {
+                    String msg = "More than one candidate executor for " + op + ". old=" + single +
+                            ", new candidate=" + ex;
+                    assertNull(single, msg);
+                    single = ex;
+                }
+            }
+        }
+        assertNotNull(single, "No executor for "+op);
+        return single;
+    }
+
+    @Test
+    void testFlowSelection() {
+        //this will index the temp HDT file, subsequent calls will reuse the index
+        try (var ctx = createFlowSelectionContext(Op.Type.ASK, "ITERATOR")) {
+            ctx.getBean(HdtQueryService.class);
+        }
+
+        record Params(Op.Type op, Class<?> expectedIterator, Class<?> expectedFlux) {}
+        List<Params> paramsList = List.of(
+                new Params(Op.Type.ASK,        AskItExecutor.class,           AskFluxExecutor.class),
+                new Params(Op.Type.ASSIGN,     JenaAssignItExecutor.class,    JenaAssignFluxExecutor.class),
+                new Params(Op.Type.DISTINCT,   DistinctItExecutor.class,      DistinctFluxExecutor.class),
+                new Params(Op.Type.EXISTS,     ExistsItExecutor.class,        ExistsFluxExecutor.class),
+                new Params(Op.Type.FILTER,     JenaFilterItExecutor.class,    JenaFilterFluxExecutor.class),
+                new Params(Op.Type.IDENTITY,   IdentityExecutor.class,        IdentityExecutor.class),
+                new Params(Op.Type.JOIN,       BindJoinItExecutor.class,      BindJoinFluxExecutor.class),
+                new Params(Op.Type.LEFT_JOIN,  BindLeftJoinItExecutor.class,  BindLeftJoinFluxExecutor.class),
+                new Params(Op.Type.LIMIT,      LimitItExecutor.class,         LimitFluxExecutor.class),
+                new Params(Op.Type.MINUS,      MinusItExecutor.class,         MinusFluxExecutor.class),
+                new Params(Op.Type.NOT_EXISTS, NotExistsItExecutor.class,     NotExistsFluxExecutor.class),
+                new Params(Op.Type.OFFSET,     OffsetItExecutor.class,        OffsetFluxExecutor.class),
+                new Params(Op.Type.PROJECT,    ProjectItExecutor.class,       ProjectFluxExecutor.class),
+                new Params(Op.Type.UNION,      UnionItExecutor.class,         UnionFluxExecutor.class),
+                new Params(Op.Type.VALUES,     ValuesItExecutor.class,        ValuesFluxExecutor.class)
+        );
+        paramsList.parallelStream().forEach(p -> {
+            try (ApplicationContext ctx = createFlowSelectionContext(p.op, "ITERATOR")) {
+                var actual = findExecutorFor(p.op, ctx).getClass();
+                assertTrue(p.expectedIterator.isAssignableFrom(actual),
+                           "Expected "+p.expectedIterator+", got "+actual);
+            }
+            try (ApplicationContext ctx = createFlowSelectionContext(p.op, "REACTIVE")) {
+                var actual = findExecutorFor(p.op, ctx).getClass();
+                assertTrue(p.expectedFlux.isAssignableFrom(actual),
+                           "Expected "+p.expectedFlux+", got "+actual);
+            }
+        });
     }
 
     static @NonNull Stream<Arguments> testProjection() {

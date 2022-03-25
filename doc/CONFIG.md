@@ -292,12 +292,21 @@ for the processing of triple pattern queries against an HDT file.
 > 
 > Sets the flow control pattern for all SPARQL intermediary operators (for 
 > `REACTIVE|ITERATOR|BATCH`). The `*_REACTIVE` apply reactive flow control to 
-> subsets of the operators. The **default** is `HEAVY_REACTIVE`.
+> subsets of the operators. The **default** is `ITERATOR`.
 > 
-> > `HDT_REACTIVE` only triple pattern processing is made reactive and 
+> While REACTIVE flow is the selling point of hdtss having only 
+> `sparql.endpoint.flow=REACTIVE` with all algebra operators being purely 
+> pull-based (`ITERATOR`) gives the best performance for most scenarios since 
+> the overhead of flow control is paid only once. However, reactive algebra 
+> operators might provide a performance boost if there is few query 
+> concurrency and queries have deep join trees or UNIONs. In that scenario, 
+> the reactive operators will better exploit parallelism that is not being 
+> explored by due to lack of concurrent SPARQL queries.   
+> 
+> > With `HDT_REACTIVE` only triple pattern processing is made reactive and 
 > > offloaded to a worker thread in the `sparql.reactive.scheduler`.
 > 
-> > `HEAVY_REACTIVE` only triple pattern processing and SPARQL intermediary 
+> > With `HEAVY_REACTIVE` only triple pattern processing and SPARQL intermediary 
 > > operators with heaver "self" processing are made reactive (and offloaded):
 > > `hdt`, `join`, `filter`, `assign`, `exists` and `minus`.
 

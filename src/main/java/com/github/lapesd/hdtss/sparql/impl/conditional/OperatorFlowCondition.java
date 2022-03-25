@@ -58,7 +58,7 @@ public class OperatorFlowCondition implements Condition {
         if (value.isEmpty())
             value = resolver.getProperty("sparql.flow", String.class).orElse("");
         if (value.isEmpty())
-            value = "HEAVY_REACTIVE";
+            value = "ITERATOR";
         return value;
     }
 }
