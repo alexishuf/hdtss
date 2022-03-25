@@ -1,17 +1,19 @@
 package com.github.lapesd.hdtss.sparql.results.chunked;
 
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
+import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes;
 import com.github.lapesd.hdtss.sparql.results.codecs.XMLEncoder;
 import com.github.lapesd.hdtss.utils.ByteArrayWriter;
 import io.micronaut.http.MediaType;
 import jakarta.inject.Singleton;
+import lombok.SneakyThrows;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -19,15 +21,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class XMLChunkedEncoder implements ChunkedEncoder {
     private static final @NonNull List<@NonNull MediaType> mediaTypes
             = List.of(SparqlMediaTypes.RESULTS_XML_TYPE);
-    private static final String BEGIN_HEAD =
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-            "<sparql xmlns=\"http://www.w3.org/2005/sparql-results#\">" +
-            "<head>";
-    private static final byte @NonNull [] BEGIN_ASK =
-            (BEGIN_HEAD + "</head><boolean>").getBytes(UTF_8);
-    private static final byte @NonNull [] ASK_TRUE  =  "true</boolean></sparql>".getBytes(UTF_8);
-    private static final byte @NonNull [] ASK_FALSE = "false</boolean></sparql>".getBytes(UTF_8);
-    private static final byte @NonNull [] ROWS_END = "</results></sparql>".getBytes(UTF_8);
+
 
 
     @Override public @NonNull List<@NonNull MediaType> mediaTypes() {
@@ -35,41 +29,62 @@ public class XMLChunkedEncoder implements ChunkedEncoder {
     }
 
     @Override
-    public @NonNull Flux<byte[]> encode(@NonNull MediaType mediaType,
-                                        @NonNull QuerySolutions solutions) {
-        if (solutions.isAsk()) {
-            return Flux.concat(
-                    Mono.just(BEGIN_ASK),
-                    solutions.flux().singleOrEmpty().map(r        -> ASK_TRUE)
-                                                    .defaultIfEmpty(ASK_FALSE));
+    public @NonNull ChunkedPublisher encode(@NonNull MediaType mediaType,
+                                            @NonNull QuerySolutions solutions) {
+        return new XMLChunkedPublisher(solutions);
+    }
+
+    private static final class XMLChunkedPublisher extends SimpleChunkedPublisher {
+        /* --- --- --- helper fields --- --- --- */
+        private final @NonNull List<@NonNull String> names = solutions.varNames();
+        private static final @NonNull AtomicReference<@Nullable ByteArrayWriter> FREE_WRITER
+                = new AtomicReference<>();
+        private final ByteArrayWriter writer;
+
+        /* --- --- --- constant pre-encoded segments --- --- --- */
+        private static final byte @NonNull[] BEGIN_HEAD =
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?><sparql xmlns=\"http://www.w3.org/2005/sparql-results#\"><head>".getBytes(UTF_8);
+        private static final byte @NonNull [] ASK_PROLOGUE;
+        private static final byte @NonNull [] ASK_TRUE  =  "true</boolean></sparql>".getBytes(UTF_8);
+        private static final byte @NonNull [] ASK_FALSE = "false</boolean></sparql>".getBytes(UTF_8);
+        private static final byte @NonNull [] END_EPILOGUE = "</results></sparql>".getBytes(UTF_8);
+        private static final byte @NonNull [] OPEN_VAR = "<variable name=\"".getBytes(UTF_8);
+        private static final byte @NonNull [] CLOSE_VAR = "\"/>".getBytes(UTF_8);
+        private static final byte @NonNull [] CLOSE_HEAD = "</head><results>".getBytes(UTF_8);
+
+        static {
+            byte[] suffix = "</head><boolean>".getBytes(UTF_8);
+            byte[] copy = Arrays.copyOf(BEGIN_HEAD, BEGIN_HEAD.length + suffix.length);
+            System.arraycopy(suffix, 0, copy, BEGIN_HEAD.length, suffix.length);
+            ASK_PROLOGUE = copy;
         }
-        return Flux.concat(
-                Mono.just(createPrologue(solutions.varNames())),
-                mapSolutions(solutions),
-                Mono.just(ROWS_END)
-        );
-    }
 
-    private @NonNull Flux<byte @NonNull []>
-    mapSolutions(@NonNull QuerySolutions solutions) {
-        List<@NonNull String> varNames = solutions.varNames();
-        var writerTL = ThreadLocal.withInitial(ByteArrayWriter::new);
-        return solutions.flux().map(r -> {
-            ByteArrayWriter w = writerTL.get().reset();
-            try {
-                XMLEncoder.writeRow(varNames, r.terms(), w);
-            } catch (IOException e) {
-                throw new RuntimeException("Unexpected IOException", e);
-            }
-            return w.toByteArray();
-        });
-    }
+        /* --- --- --- implementation --- --- --- */
 
-    private byte @NonNull [] createPrologue(@NonNull List<@NonNull String> names) {
-        if (names.isEmpty())
-            throw new IllegalArgumentException("Empty vars list");
-        var w = new ByteArrayWriter(BEGIN_HEAD.length()+8*names.size()).append(BEGIN_HEAD);
-        for (String name : names) w.append("<variable name=\"").append(name).append("\"/>");
-        return w.append("</head><results>").toByteArray();
+        public XMLChunkedPublisher(@NonNull QuerySolutions solutions) {
+            super(solutions);
+            ByteArrayWriter observed = FREE_WRITER.get();
+            if (observed != null && FREE_WRITER.compareAndSet(observed, null))
+                this.writer = observed;
+            else
+                this.writer = new ByteArrayWriter();
+        }
+
+        @Override protected byte[]  askPrologue() {return ASK_PROLOGUE;}
+        @Override protected byte[] rowsEpilogue() {return END_EPILOGUE;}
+        @Override protected byte[] askBodyAndPrologue(boolean v) {return v ? ASK_TRUE : ASK_FALSE;}
+        @Override protected void   release() {FREE_WRITER.compareAndSet(null, writer);}
+
+        @Override protected byte[] rowsPrologue() {
+            writer.reset().append(BEGIN_HEAD);
+            for (String name : names)
+                writer.append(OPEN_VAR).append(name).append(CLOSE_VAR);
+            return writer.append(CLOSE_HEAD).toByteArray();
+        }
+
+        @SneakyThrows @Override protected byte[] rowBytes(@NonNull SolutionRow row) {
+            XMLEncoder.writeRow(names, row.terms(), writer.reset());
+            return writer.toByteArray();
+        }
     }
 }

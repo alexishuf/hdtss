@@ -7,19 +7,17 @@ import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.SparqlParser;
 import com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes;
 import com.github.lapesd.hdtss.sparql.results.chunked.ChunkedEncoder;
-import com.github.lapesd.hdtss.utils.QueryExecutionScheduler;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.*;
 import io.micronaut.http.annotation.Error;
 import io.micronaut.http.annotation.*;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.reactivestreams.Publisher;
-import reactor.core.scheduler.Scheduler;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +25,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.lang.System.nanoTime;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.stream.Collectors.joining;
 
@@ -40,24 +37,21 @@ import static java.util.stream.Collectors.joining;
 @Requires(property = "sparql.endpoint.flow", value = "CHUNKED", defaultValue = "CHUNKED")
 @Slf4j
 public class ChunkedSparqlController extends HeartBeatingSparqlController {
-    private final @NonNull Scheduler scheduler;
     private final @NonNull SparqlParser parser;
     private final @NonNull OpExecutorDispatcher dispatcher;
     private final Map<@NonNull MediaType, ChunkedEncoder> type2encoder;
     private final @NonNull SparqlErrorHandler errorHandler;
     private final @NonNull AtomicLong nextQueryId = new AtomicLong(1);
-    private final @NonNull GetPredicatesExecutor predicatesExecutor;
+    @Getter private final @NonNull GetPredicatesExecutor predicatesExecutor;
 
     public static final class NoEncoderException extends RuntimeException {}
 
     @Inject
-    public ChunkedSparqlController(@Named(QueryExecutionScheduler.NAME) @NonNull Scheduler scheduler,
-                                   @NonNull SparqlParser parser,
+    public ChunkedSparqlController(@NonNull SparqlParser parser,
                                    @NonNull OpExecutorDispatcher dispatcher,
                                    @NonNull SparqlErrorHandler errorHandler,
                                    @NonNull List<@NonNull ChunkedEncoder> encoders,
                                    @NonNull GetPredicatesExecutor predicatesExecutor) {
-        this.scheduler = scheduler;
         this.parser = parser;
         this.dispatcher = dispatcher;
         this.errorHandler = errorHandler;
@@ -94,14 +88,21 @@ public class ChunkedSparqlController extends HeartBeatingSparqlController {
         if (solutions == null)
             solutions = dispatcher.execute(parsed);
         return encoder.encode(mt, solutions)
-                .subscribeOn(scheduler)
-                .doOnComplete(() ->
-                    log.debug("Query {}: completed serialization of all rows after {}ms",
-                              queryId, MILLISECONDS.convert(nanoTime()-start, NANOSECONDS)))
-                .doOnError(err -> {
-                    String name = err == null ? "null" : err.getClass().getSimpleName();
-                    log.error("Query {}: failed with {}, sparql={}",
-                              queryId, name, finalSparql, err);
+                .onTermination((err, cancelled, rows, items, nanos) -> {
+                    double all = NANOSECONDS.toMicros(nanoTime() - start)/1000.0;
+                    double consume = NANOSECONDS.toMicros(nanos)/1000.0;
+                    double parseAndDispatch = all-consume;
+                    if (err != null) {
+                        log.error("Query {}: failed with {} after {}ms, parse_dispatch={}ms, sparql={}",
+                                  queryId, err.getClass().getSimpleName(), all, parseAndDispatch,
+                                  finalSparql, err);
+                    } else if (cancelled) {
+                        log.info("Query {}: cancelled after {}ms, parse+dispatch={}ms",
+                                 queryId, all, parseAndDispatch);
+                    } else {
+                        log.debug("Query {}: completed after {}ms, parse+dispatch={}ms",
+                                  queryId, all, parseAndDispatch);
+                    }
                 });
     }
 

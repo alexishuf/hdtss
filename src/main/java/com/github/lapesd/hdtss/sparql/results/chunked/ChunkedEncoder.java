@@ -31,5 +31,6 @@ public interface ChunkedEncoder {
      * @param solutions the query solutions to be encoded.
      * @return a non-empty Flux of non-null and non-empty String chunks, as described above.
      */
-    @NonNull Flux<byte[]> encode(@NonNull MediaType mediaType, @NonNull QuerySolutions solutions);
+    @NonNull ChunkedPublisher encode(@NonNull MediaType mediaType,
+                                     @NonNull QuerySolutions solutions);
 }

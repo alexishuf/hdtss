@@ -14,13 +14,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes.RESULTS_CSV_TYPE;
-import static com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes.RESULTS_TSV_TYPE;
+import static com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.*;
@@ -69,7 +69,7 @@ class ChunkedEncoderTest {
 
     @ParameterizedTest @MethodSource
     public void testSameSerialization(@NonNull BatchQuerySolutions solutions) {
-        Set<MediaType> svTypes = Set.of(RESULTS_TSV_TYPE, RESULTS_CSV_TYPE);
+        Set<MediaType> svTypes = Set.of(RESULTS_TSV_TYPE, RESULTS_CSV_TYPE, RESULTS_BAD_TSV_TYPE);
         for (ChunkedEncoder cEncoder : encoders) {
             for (MediaType mediaType : cEncoder.mediaTypes()) {
 
@@ -79,7 +79,7 @@ class ChunkedEncoderTest {
                     continue;
                 }
                 var expected = new String(codec.encode(solutions), UTF_8);
-                List<String> chunks = cEncoder.encode(mediaType, solutions)
+                List<String> chunks = Flux.from(cEncoder.encode(mediaType, solutions))
                                               .map(b -> new String(b, UTF_8))
                                               .collectList().block();
                 assertNotNull(chunks, msgPrefix);

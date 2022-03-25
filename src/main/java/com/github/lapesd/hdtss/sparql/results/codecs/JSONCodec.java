@@ -7,6 +7,7 @@ import com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes;
+import com.github.lapesd.hdtss.utils.ByteArrayWriter;
 import io.micronaut.context.BeanProvider;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
@@ -23,11 +24,11 @@ import jakarta.inject.Singleton;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions.ASK_FALSE;
 import static com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions.ASK_TRUE;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Singleton
 public class JSONCodec implements MediaTypeCodec  {
@@ -60,11 +61,11 @@ public class JSONCodec implements MediaTypeCodec  {
         return typeList;
     }
 
-    @Introspected static record Head(List<String> vars) {}
-    @Introspected static record Value(String type,
-                                      String value,
-                                      String datatype,
-                                      @JsonProperty("xml:lang") String lang) {
+    @Introspected record Head(List<String> vars) {}
+    @Introspected record Value(String type,
+                               String value,
+                               String datatype,
+                               @JsonProperty("xml:lang") String lang) {
         public static final Value NULL = new Value(null, null, null, null);
 
         public Term asTerm() {
@@ -78,8 +79,8 @@ public class JSONCodec implements MediaTypeCodec  {
             };
         }
     }
-    @Introspected static record ResultsObj(List<Map<String, Value>> bindings) {}
-    @Introspected static record Results(Head head,
+    @Introspected record ResultsObj(List<Map<String, Value>> bindings) {}
+    @Introspected record Results(Head head,
                                         @JsonProperty("boolean") Boolean boolResult,
                                         ResultsObj results) {
         @NonNull List<String> vars() {
@@ -114,11 +115,53 @@ public class JSONCodec implements MediaTypeCodec  {
         }
     }
 
+    private static final byte[] TERM_TYPE = "\":{\"type\":\"".getBytes(UTF_8);
+    private static final byte[] TERM_VALUE = "\",\"value\":\"".getBytes(UTF_8);
+    private static final byte[] TERM_LANG = ",\"xml:lang\":\"".getBytes(UTF_8);
+    private static final byte[] TERM_DATATYPE = ",\"datatype\":\"".getBytes(UTF_8);
+
+    public static void writeRowToBytes(@NonNull List<@NonNull String> vars, @NonNull Term[] terms,
+                                       @NonNull ByteArrayWriter writer) {
+        boolean first = true;
+        writer.append('{');
+        for (int i = 0; i < terms.length; i++) {
+            Term term = terms[i];
+            if (term == null)
+                continue;
+
+            CharSequence content = term.sparql();
+            int contentStart = term.contentStart(), contentEnd = term.contentEnd();
+            if (term.isBlank() && contentEnd == contentStart) {
+                content = UUID.randomUUID().toString();
+                contentStart = 0;
+                contentEnd = content.length();
+            }
+            if (first) first = false;
+            else       writer.append(',');
+            writer.append(D_QUOTE).append(vars.get(i)).append(TERM_TYPE)
+                    .append(switch (term.type()) {
+                        case URI -> "uri";
+                        case LITERAL -> "literal";
+                        case BLANK -> "bnode";
+                        default -> "unknown"; //unreachable
+                    }).append(TERM_VALUE).append(content, contentStart, contentEnd).append(D_QUOTE);
+
+            if (term.isLangStringLiteral()) {
+                CharSequence cs = term.sparql();
+                writer.append(TERM_LANG).append(cs, term.langStart(), cs.length()).append(D_QUOTE);
+            } else if (term.isLiteral()) {
+                writer.append(TERM_DATATYPE).append(term.datatype()).append(D_QUOTE);
+            }
+            writer.append('}');
+        }
+        writer.append('}');
+    }
+
     public static void writeRow(@NonNull List<@NonNull String> vars, @NonNull Term[] terms,
                                 @NonNull Writer writer)
             throws IOException {
         boolean first = true;
-        writer.append("{");
+        writer.append('{');
         for (int i = 0; i < terms.length; i++) {
             Term term = terms[i];
             if (term == null)
@@ -127,7 +170,7 @@ public class JSONCodec implements MediaTypeCodec  {
             if (term.isBlank() && content.isEmpty())
                 content = UUID.randomUUID().toString();
             if (first) first = false;
-            else       writer.append(",");
+            else       writer.append(',');
             writer.append(D_QUOTE).append(vars.get(i)).append("\":{\"type\":\"")
                     .append(switch (term.type()) {
                             case URI -> "uri";
@@ -140,9 +183,9 @@ public class JSONCodec implements MediaTypeCodec  {
             } else if (term.isLiteral()) {
                 writer.append(",\"datatype\":\"").append(term.datatype()).append(D_QUOTE);
             }
-            writer.append("}");
+            writer.append('}');
         }
-        writer.append("}");
+        writer.append('}');
     }
 
     @Override public <T> void
@@ -150,7 +193,7 @@ public class JSONCodec implements MediaTypeCodec  {
         if (!QuerySolutions.class.isAssignableFrom(object.getClass()))
             throw new CodecException(this+" only encodes QuerySolutions instances");
         QuerySolutions solutions = (QuerySolutions) object;
-        try (Writer w = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
+        try (Writer w = new OutputStreamWriter(outputStream, UTF_8)) {
             if (solutions.isAsk()) {
                 w.append("{\"head\":{\"vars\":[]},\"boolean\":")
                         .append(Boolean.toString(solutions.askResult())).append("}");

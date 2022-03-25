@@ -15,7 +15,6 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes.QUERY_TYPE;
 import static java.util.Arrays.asList;
@@ -94,13 +93,12 @@ abstract class ControllerTestBase {
     }
 
     protected void doTest(@NonNull List<List<Term>> expected,
-                        @NonNull Function<TestContext, HttpRequest<?>> requestFactory) {
+                          @NonNull Function<TestContext, HttpRequest<?>> requestFactory) {
         for (ApplicationContext appCtx : getPermutations()) {
             try (TestContext ctx = new TestContext(appCtx)) {
                 HttpRequest<?> request = requestFactory.apply(ctx);
                 QuerySolutions solutions = ctx.bClient.retrieve(request, QuerySolutions.class);
-                List<List<Term>> actual = solutions.list().stream().map(r -> asList(r.terms()))
-                        .collect(Collectors.toList());
+                var actual = solutions.list().stream().map(r -> asList(r.terms())).toList();
                 assertEquals(new HashSet<>(expected), new HashSet<>(actual));
                 for (List<Term> row : expected) {
                     long exCount = expected.stream().filter(row::equals).count();

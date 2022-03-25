@@ -1,72 +1,92 @@
 package com.github.lapesd.hdtss.sparql.results.chunked;
 
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
-import com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes;
+import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.sparql.results.codecs.JSONCodec;
 import com.github.lapesd.hdtss.utils.ByteArrayWriter;
 import io.micronaut.http.MediaType;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes.RESULTS_JSON_TYPE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Singleton
-public class JsonChunkedEncoder implements ChunkedEncoder{
-    private static final @NonNull List<MediaType> mediaTypes =
-            List.of(SparqlMediaTypes.RESULTS_JSON_TYPE);
-    private static final byte @NonNull [] ASK_PROLOGUE =
-            "{\"head\":{\"vars\":[]},\"boolean\":".getBytes(UTF_8);
-    private static final byte @NonNull [] ASK_TRUE = "true}".getBytes(UTF_8);
-    private static final byte @NonNull [] ASK_FALSE = "false}".getBytes(UTF_8);
-    private static final byte @NonNull [] ROWS_EPILOGUE = "]}}".getBytes(UTF_8);
+@Slf4j
+public class JsonChunkedEncoder implements ChunkedEncoder {
+    private static final @NonNull List<MediaType> mediaTypes = List.of(RESULTS_JSON_TYPE);
 
     @Override public @NonNull List<@NonNull MediaType> mediaTypes() {
         return mediaTypes;
     }
 
     @Override
-    public @NonNull Flux<byte[]> encode(@NonNull MediaType mediaType,
-                                        @NonNull QuerySolutions solutions) {
-        if (solutions.isAsk()) {
-            return Flux.concat(
-                    Mono.just(ASK_PROLOGUE),
-                    solutions.flux().singleOrEmpty().map(r -> ASK_TRUE).defaultIfEmpty(ASK_FALSE));
+    public @NonNull ChunkedPublisher encode(@NonNull MediaType mediaType,
+                                            @NonNull QuerySolutions solutions) {
+        return new JsonChunkedPublisher(solutions);
+    }
+
+    private static final class JsonChunkedPublisher extends SimpleChunkedPublisher {
+        /* --- --- --- helper fields --- --- --- */
+        private final List<@NonNull String> varNames = solutions.varNames();
+        private static final @NonNull AtomicReference<@Nullable ByteArrayWriter> FREE_WRITER
+                = new AtomicReference<>();
+        private final ByteArrayWriter writer;
+
+        /* --- --- --- state --- --- --- */
+        private boolean firstBinding = true;
+
+        /* --- --- --- constant pre-encoded segments --- --- --- */
+        private static final byte @NonNull [] ASK_PROLOGUE = "{\"head\":{\"vars\":[]},\"boolean\":".getBytes(UTF_8);
+        private static final byte @NonNull [] ASK_TRUE = "true}".getBytes(UTF_8);
+        private static final byte @NonNull [] ASK_FALSE = "false}".getBytes(UTF_8);
+        private static final byte @NonNull [] ROWS_EPILOGUE = "]}}".getBytes(UTF_8);
+        private static final byte @NonNull [] HEAD_VARS = "{\"head\":{\"vars\":[".getBytes(UTF_8);
+        private static final byte @NonNull [] EMPTY_BINDINGS = "]},\"results\":{\"bindings\":[]}}".getBytes(UTF_8);
+        private static final byte @NonNull [] BINDINGS = "]},\"results\":{\"bindings\":[".getBytes(UTF_8);
+
+        /* --- --- --- implementation --- --- --- */
+
+        public JsonChunkedPublisher(@NonNull QuerySolutions solutions) {
+            super(solutions);
+            ByteArrayWriter observed = FREE_WRITER.get();
+            if (observed != null && FREE_WRITER.compareAndSet(observed, null))
+                this.writer = observed;
+            else
+                this.writer = new ByteArrayWriter();
         }
-        return Flux.concat(Mono.just(createPrologue(solutions.varNames())),
-                           encodeRows(solutions),
-                           Mono.just(ROWS_EPILOGUE));
-    }
 
-    private @NonNull Flux<byte @NonNull []>
-    encodeRows(@NonNull QuerySolutions solutions) {
-        var names = solutions.varNames();
-        var writerTL = ThreadLocal.withInitial(ByteArrayWriter::new);
-        AtomicBoolean first = new AtomicBoolean(true);
-        return solutions.flux().map(r -> {
-            ByteArrayWriter w = writerTL.get().reset();
-            if (!first.compareAndExchange(true, false))
-                w.append(',');
-            try {
-                JSONCodec.writeRow(names, r.terms(), w);
-            } catch (IOException e) {
-                throw new RuntimeException("Unexpected IOException", e);
+        @Override protected byte[]  askPrologue() {return  ASK_PROLOGUE;}
+        @Override protected byte[] rowsEpilogue() {return ROWS_EPILOGUE;}
+        @Override protected byte[] askBodyAndPrologue(boolean v) {return v ? ASK_TRUE : ASK_FALSE;}
+        @Override protected void   release() {FREE_WRITER.compareAndSet(null, writer);}
+
+        @Override protected byte[] rowsPrologue() {
+            writer.reset().append(HEAD_VARS);
+            if (varNames.isEmpty()) {
+                writer.append(EMPTY_BINDINGS);
+            } else {
+                writer.append('"').append(varNames.get(0)).append('"');
+                for (int i = 1, size = varNames.size(); i < size; i++)
+                    writer.append(',').append('"').append(varNames.get(i)).append('"');
+                writer.append(BINDINGS);
             }
-            return w.toByteArray();
-        });
-    }
+            return writer.toByteArray();
+        }
 
-    private byte @NonNull [] createPrologue(@NonNull List<String> names) {
-        if (names.isEmpty())
-            throw new IllegalArgumentException("empty var names list");
-        var w = new ByteArrayWriter(44 + 8 * names.size()).append("{\"head\":{\"vars\":[");
-        for (int i = 0, size = names.size(); i < size; i++)
-            (i == 0 ? w.append("\"") : w.append(",\"")).append(names.get(i)).append("\"");
-        return w.append("]},\"results\":{\"bindings\":[").toByteArray();
+        @Override protected byte[] rowBytes(@NonNull SolutionRow row) {
+            writer.reset();
+            if (firstBinding)
+                firstBinding = false;
+            else
+                writer.append(',');
+            JSONCodec.writeRowToBytes(varNames, row.terms(), writer);
+            return writer.toByteArray();
+        }
     }
 }
