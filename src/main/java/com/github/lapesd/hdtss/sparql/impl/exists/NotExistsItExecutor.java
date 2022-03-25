@@ -1,5 +1,6 @@
 package com.github.lapesd.hdtss.sparql.impl.exists;
 
+import com.github.lapesd.hdtss.model.nodes.IdentityNode;
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.model.solutions.IteratorQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
@@ -13,7 +14,6 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.NoSuchElementException;
 
 @Singleton
@@ -29,13 +29,15 @@ public class NotExistsItExecutor extends NotExistsExecutor {
         Op outer = node.children().get(0), inner = node.children().get(1);
         var outerVars = outer.varNames();
         var it = dispatcher.execute(outer).iterator();
-        return new IteratorQuerySolutions(List.of(), new Iterator<>() {
+        if (IdentityNode.is(inner))
+            return new IteratorQuerySolutions(outerVars, it);
+        return new IteratorQuerySolutions(node.varNames(), new Iterator<>() {
             private @Nullable SolutionRow next;
 
             @Override public boolean hasNext() {
                 while (next == null && it.hasNext()) {
                     SolutionRow outerRow = it.next();
-                    if (dispatcher.execute(inner.bind(outerVars, outerRow.terms())).askResult())
+                    if (!dispatcher.execute(inner.bind(outerVars, outerRow.terms())).askResult())
                         this.next = outerRow;
                 }
                 return next != null;
