@@ -1,7 +1,7 @@
 package com.github.lapesd.hdtss.sparql.results.chunked;
 
+import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes;
 import com.github.lapesd.hdtss.sparql.results.codecs.XMLEncoder;
 import com.github.lapesd.hdtss.utils.ByteArrayWriter;
@@ -82,8 +82,8 @@ public class XMLChunkedEncoder implements ChunkedEncoder {
             return writer.append(CLOSE_HEAD).toByteArray();
         }
 
-        @SneakyThrows @Override protected byte[] rowBytes(@NonNull SolutionRow row) {
-            XMLEncoder.writeRow(names, row.terms(), writer.reset());
+        @SneakyThrows @Override protected byte[] rowBytes(@Nullable Term @NonNull[] row) {
+            XMLEncoder.writeRow(names, row, writer.reset());
             return writer.toByteArray();
         }
     }

@@ -18,8 +18,7 @@ class FluxQuerySolutionsTest extends BaseQuerySolutionsTest {
     @Override
     protected @NonNull QuerySolutions createFor(@NonNull List<@NonNull String> names,
                                                 @NonNull List<Term[]> rows) {
-        var flux = Flux.fromStream(rows.stream().map(SolutionRow::new));
-        return new FluxQuerySolutions(names, flux);
+        return new FluxQuerySolutions(names, Flux.fromStream(rows.stream()));
     }
 
     @Test

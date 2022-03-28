@@ -2,10 +2,11 @@ package com.github.lapesd.hdtss.sparql.impl.union;
 
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.Op.Type;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.sparql.OpExecutor;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
+import com.github.lapesd.hdtss.sparql.impl.ExecutorUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -24,35 +25,25 @@ abstract class UnionExecutor implements OpExecutor {
     }
 
     protected static final class TermsOrder
-            implements Function<@NonNull SolutionRow, @NonNull SolutionRow> {
-        private final int[] indices;
+            implements Function<@Nullable Term @NonNull[], @Nullable Term @NonNull[]> {
+        private int @Nullable[] indices;
         private final @NonNull List<@NonNull String> exposedVars;
-        private boolean passThrough = false;
 
         public TermsOrder(@NonNull List<@NonNull String> exposedVars) {
-            this.indices = new int[exposedVars.size()];
+            this.indices = null;
             this.exposedVars = exposedVars;
         }
 
         public @NonNull TermsOrder reset(@NonNull List<@NonNull String> currentVars) {
-            passThrough = true;
-            for (int i = 0; i < indices.length; i++) {
-                int idx = currentVars.indexOf(exposedVars.get(i));
-                indices[i] = idx;
-                if (idx != i)
-                    passThrough = false;
-            }
+            if (exposedVars.equals(currentVars))
+                indices = null;
+            else
+                indices = ExecutorUtils.findIndices(exposedVars, currentVars);
             return this;
         }
 
-        @Override public @NonNull SolutionRow apply(@NonNull SolutionRow row) {
-            if (passThrough)
-                return row;
-            Term[] reordered = new Term[indices.length], terms = row.terms();
-            for (int i = 0; i < indices.length; i++) {
-                reordered[i] = indices[i] < 0 ? null : terms[indices[i]];
-            }
-            return new SolutionRow(reordered);
+        @Override public @Nullable Term @NonNull[] apply(@Nullable Term @NonNull[] row) {
+            return ExecutorUtils.project(indices, row);
         }
     }
 }

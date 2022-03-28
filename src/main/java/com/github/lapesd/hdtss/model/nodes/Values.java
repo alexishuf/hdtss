@@ -3,6 +3,7 @@ package com.github.lapesd.hdtss.model.nodes;
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
+import com.github.lapesd.hdtss.sparql.impl.ExecutorUtils;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -57,12 +58,10 @@ public class Values extends AbstractOp {
         } else if (newLen == varNamesSize) {
             return new Values(values, inner.bind(varNames, row));
         } else {
+            Term[] newRow = ExecutorUtils.project(indices, row);
             List<@NonNull String> newVars = new ArrayList<>(newLen);
-            Term[] newRow = new Term[newLen];
-            for (int i = 0; i < newLen; i++) {
+            for (int i = 0; i < newLen; i++)
                 newVars.add(varNames.get(indices[i]));
-                newRow[i] = row[indices[i]];
-            }
             return new Values(values, inner.bind(newVars, newRow));
         }
     }
@@ -82,7 +81,7 @@ public class Values extends AbstractOp {
     }
 
     @Override public boolean deepEquals(@NonNull Op other) {
-        if (!(other instanceof Values v)) return false;
-        return v.values.equals(values) && v.inner().deepEquals(inner());
+        if (!(other instanceof Values rhs)) return false;
+        return rhs.values.deepEquals(values) && rhs.inner().deepEquals(inner());
     }
 }

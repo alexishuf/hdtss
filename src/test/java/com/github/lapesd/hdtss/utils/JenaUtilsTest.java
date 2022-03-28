@@ -1,9 +1,9 @@
 package com.github.lapesd.hdtss.utils;
 
 import com.github.lapesd.hdtss.TestUtils;
+import com.github.lapesd.hdtss.model.Row;
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.TriplePattern;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.vocab.FOAF;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
@@ -21,6 +21,7 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -205,24 +206,23 @@ class JenaUtilsTest {
         b.add(Var.alloc("y"), JenaUtils.toNode(Bob));
         b.add(Var.alloc("w"), JenaUtils.toNode(Charlie));
         return Stream.of(
-                arguments(b, asList("x", "y", "w"), SolutionRow.of(Alice, Bob, Charlie)),
-                arguments(b, asList("w", "x", "y"), SolutionRow.of(Charlie, Alice, Bob)),
-                arguments(b, List.of("x"), SolutionRow.of(Alice)),
-                arguments(b, asList("y", "w"), SolutionRow.of(Bob, Charlie)),
-                arguments(b, asList("x", "y", "z"), SolutionRow.of(Alice, Bob, null))
+                arguments(b, asList("x", "y", "w"), Row.raw(Alice, Bob, Charlie)),
+                arguments(b, asList("w", "x", "y"), Row.raw(Charlie, Alice, Bob)),
+                arguments(b, List.of("x"), Row.raw(Alice)),
+                arguments(b, asList("y", "w"), Row.raw(Bob, Charlie)),
+                arguments(b, asList("x", "y", "z"), Row.raw(Alice, Bob, null))
         );
     }
 
     @ParameterizedTest @MethodSource("bindingsAndRows")
     public void testFromBinding(@NonNull Binding binding, @NonNull List<@NonNull String> varNames,
-                                @NonNull SolutionRow row) {
-        assertEquals(row, JenaUtils.fromBinding(varNames, binding));
-        assertArrayEquals(row.terms(), JenaUtils.fromBindingToArray(varNames, binding));
+                                @Nullable Term @NonNull[] row) {
+        assertArrayEquals(row, JenaUtils.fromBinding(varNames, binding));
     }
 
     @ParameterizedTest @MethodSource("bindingsAndRows")
     public void testToBinding(@NonNull Binding binding, @NonNull List<@NonNull String> varNames,
-                              @NonNull SolutionRow row) {
+                              @Nullable Term @NonNull[] row) {
         RowJenaBinding converted = JenaUtils.toBinding(row, varNames);
 
         List<@NonNull Var> acVars = new ArrayList<>();

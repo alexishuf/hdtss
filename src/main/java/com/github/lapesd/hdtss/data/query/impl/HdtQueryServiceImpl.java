@@ -6,13 +6,17 @@ import com.github.lapesd.hdtss.model.FlowType;
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.TermPosition;
 import com.github.lapesd.hdtss.model.nodes.TriplePattern;
-import com.github.lapesd.hdtss.model.solutions.*;
+import com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions;
+import com.github.lapesd.hdtss.model.solutions.FluxQuerySolutions;
+import com.github.lapesd.hdtss.model.solutions.IteratorQuerySolutions;
+import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.utils.QueryExecutionScheduler;
 import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
+import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.rdfhdt.hdt.dictionary.Dictionary;
@@ -49,22 +53,23 @@ public class HdtQueryServiceImpl implements HdtQueryService, Closeable {
     }
 
     @RequiredArgsConstructor
-    public static class SolutionIterator implements Iterator<SolutionRow> {
+    public static class SolutionIterator implements Iterator<@Nullable Term @NonNull[]> {
         private final @NonNull Dictionary dictionary;
         private final @NonNull IteratorTripleID source;
         private final @NonNull TermPosition[] order;
         private final @NonNull Predicate<TripleID> filter;
-        private @Nullable SolutionRow next;
+        private @Nullable Term @Nullable[] next;
 
 
-        private @NonNull SolutionRow lift(@NonNull TripleID tid) {
+        private @Nullable Term @NonNull[] lift(@NonNull TripleID tid) {
             int len = order.length;
             Term[] terms = new Term[len];
             for (int i = 0; i < len; i++)
                 terms[i] = HDTUtils.fromHDTId(dictionary, HDTUtils.get(tid, order[i]), order[i]);
-            return new SolutionRow(terms);
+            return terms;
         }
 
+        @EnsuresNonNullIf(expression = "this.next", result = true)
         @Override public boolean hasNext() {
             while (next == null && source.hasNext()) {
                 TripleID candidate = source.next();
@@ -74,19 +79,19 @@ public class HdtQueryServiceImpl implements HdtQueryService, Closeable {
             return next != null;
         }
 
-        @Override public @NonNull SolutionRow next() {
+        @Override public @Nullable Term @NonNull[] next() {
             if (!hasNext())
                 throw new NoSuchElementException();
-            SolutionRow row = this.next;
-            assert row != null;
+            var row = this.next;
             this.next = null;
+            assert row != null;
             return row;
         }
     }
 
     private record NamesAndIt(@NonNull List<@NonNull String> names,
-                              @NonNull SolutionIterator it) implements Iterable<SolutionRow> {
-        @Override public @NonNull Iterator<SolutionRow> iterator() {
+                              @NonNull SolutionIterator it) implements Iterable<@Nullable Term @NonNull[]> {
+        @Override public @NonNull Iterator<@Nullable Term @NonNull[]> iterator() {
             return it;
         }
     }
@@ -116,7 +121,7 @@ public class HdtQueryServiceImpl implements HdtQueryService, Closeable {
 
     @Override public @NonNull QuerySolutions queryBatch(@NotNull TriplePattern query) {
         var ni = getSolutionIt(query);
-        List<SolutionRow> list = new ArrayList<>();
+        List<@Nullable Term @NonNull[]> list = new ArrayList<>();
         ni.it.forEachRemaining(list::add);
         return new BatchQuerySolutions(ni.names, list);
     }

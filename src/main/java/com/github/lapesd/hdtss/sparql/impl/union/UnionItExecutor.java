@@ -1,14 +1,15 @@
 package com.github.lapesd.hdtss.sparql.impl.union;
 
+import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.model.solutions.IteratorQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.impl.conditional.RequiresOperatorFlow;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -29,10 +30,11 @@ public class UnionItExecutor extends UnionExecutor {
         List<@NonNull String> exposedVars = node.varNames();
         return new IteratorQuerySolutions(node.varNames(), new Iterator<>() {
             private final Iterator<@NonNull Op> nodeIt = node.children().iterator();
-            TermsOrder order = new TermsOrder(exposedVars);
-            private Iterator<@NonNull SolutionRow> solutionIt;
-            private @Nullable SolutionRow next;
+            private final TermsOrder order = new TermsOrder(exposedVars);
+            private Iterator<@Nullable Term @NonNull[]> solutionIt;
+            private @Nullable Term @Nullable[] next;
 
+            @EnsuresNonNullIf(expression = "this.next", result = true)
             @Override public boolean hasNext() {
                 while (next == null) {
                     if (solutionIt == null || !solutionIt.hasNext()) {
@@ -49,10 +51,10 @@ public class UnionItExecutor extends UnionExecutor {
                 return true;
             }
 
-            @Override public @NonNull SolutionRow next() {
+            @Override public @Nullable Term @NonNull[] next() {
                 if (!hasNext())
                     throw new NoSuchElementException();
-                SolutionRow row = this.next;
+                var row = this.next;
                 assert row != null;
                 this.next = null;
                 return order.apply(row);

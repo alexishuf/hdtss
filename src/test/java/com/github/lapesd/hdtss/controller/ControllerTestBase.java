@@ -12,12 +12,12 @@ import io.micronaut.http.client.HttpClient;
 import io.micronaut.runtime.server.EmbeddedServer;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Function;
 
 import static com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes.QUERY_TYPE;
-import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 abstract class ControllerTestBase {
@@ -98,7 +98,7 @@ abstract class ControllerTestBase {
             try (TestContext ctx = new TestContext(appCtx)) {
                 HttpRequest<?> request = requestFactory.apply(ctx);
                 QuerySolutions solutions = ctx.bClient.retrieve(request, QuerySolutions.class);
-                var actual = solutions.list().stream().map(r -> asList(r.terms())).toList();
+                var actual = solutions.list().stream().map(Arrays::asList).toList();
                 assertEquals(new HashSet<>(expected), new HashSet<>(actual));
                 for (List<Term> row : expected) {
                     long exCount = expected.stream().filter(row::equals).count();

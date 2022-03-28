@@ -1,6 +1,6 @@
 package com.github.lapesd.hdtss.sparql.impl.minus;
 
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
+import com.github.lapesd.hdtss.model.Row;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Named;
@@ -15,9 +15,9 @@ import java.util.function.Supplier;
 public class MinusSetSuppliers {
     @Bean @Singleton @Named("minusSet")
     @Requires(property = "sparql.minus.set", value = "HASH", defaultValue = "HASH")
-    public @NonNull Supplier<Set<SolutionRow>> hashSet() { return HashSet::new; }
+    public @NonNull Supplier<Set<Row>> hashSet() { return HashSet::new; }
 
     @Bean @Singleton @Named("minusSet")
     @Requires(property = "sparql.minus.set", value = "TREE")
-    public @NonNull Supplier<Set<SolutionRow>> treeSet() { return TreeSet::new; }
+    public @NonNull Supplier<Set<Row>> treeSet() { return TreeSet::new; }
 }

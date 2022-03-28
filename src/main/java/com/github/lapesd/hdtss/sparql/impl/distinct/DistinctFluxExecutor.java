@@ -1,5 +1,6 @@
 package com.github.lapesd.hdtss.sparql.impl.distinct;
 
+import com.github.lapesd.hdtss.model.Row;
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.model.solutions.FluxQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
@@ -24,6 +25,6 @@ public class DistinctFluxExecutor extends DistinctExecutor {
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
         var set = distinctStrategy.createSet();
         return new FluxQuerySolutions(node.varNames(),
-                dispatcher.execute(node.children().get(0)).flux().filter(set::add));
+                dispatcher.execute(node.children().get(0)).flux().filter(r -> set.add(new Row(r))));
     }
 }

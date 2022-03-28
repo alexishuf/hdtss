@@ -4,23 +4,20 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.MediaType;
 import lombok.Getter;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes.RESULTS_JSON;
 import static com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes.RESULTS_TSV;
 import static java.util.Arrays.asList;
 
 public class TestConfigPermutations implements Iterable<ApplicationContext>, Closeable {
-    private final @Getter Map<String, List<Object>> choices;
-    private @Nullable final TempFile tempFile;
     private static final @NonNull String FMT_PROP = "sparql.test.results.format";
+    private final @Getter Map<String, List<Object>> choices;
+    private final @NonNull TempFile tempFile;
+    private boolean closed = false;
 
     public TestConfigPermutations(@NonNull Class<?> refClass,
                                   @NonNull String hdtResourcePath) throws IOException {
@@ -45,11 +42,27 @@ public class TestConfigPermutations implements Iterable<ApplicationContext>, Clo
     }
 
     @Override public Iterator<ApplicationContext> iterator() {
-        return TestUtils.listApplicationContext(choices).iterator();
+        var it = TestUtils.listApplicationContext(choices).iterator();
+        return new Iterator<>() {
+            @Override public boolean hasNext() {
+                return it.hasNext();
+            }
+
+            @Override public ApplicationContext next() {
+                if (!hasNext()) throw new NoSuchElementException();
+                if (closed)
+                    throw new IllegalStateException("already close()ed");
+                if (!tempFile.exists())
+                    throw new IllegalStateException("tempFile deleted!");
+                return it.next();
+            }
+        };
     }
 
     @Override public void close() throws IOException {
-        if (tempFile != null)
+        if (!closed) {
+            closed = true;
             tempFile.close();
+        }
     }
 }

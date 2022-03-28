@@ -2,12 +2,13 @@ package com.github.lapesd.hdtss.data.query;
 
 import com.github.lapesd.hdtss.TestUtils;
 import com.github.lapesd.hdtss.model.FlowType;
+import com.github.lapesd.hdtss.model.Row;
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.TriplePattern;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.vocab.FOAF;
 import com.github.lapesd.hdtss.vocab.XSD;
+import io.micronaut.context.ApplicationContext;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -17,11 +18,10 @@ import reactor.core.scheduler.Schedulers;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.github.lapesd.hdtss.TestVocab.EX;
 import static com.github.lapesd.hdtss.TestUtils.fixEquals;
+import static com.github.lapesd.hdtss.TestVocab.EX;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -69,7 +69,7 @@ public abstract class BaseHdtQueryServiceTest {
             Object queryString = a.get()[0];
             var results = (List<List<String>>)a.get()[1];
             var expected = results.stream().map(row ->
-                    new SolutionRow(row.stream().map(Term::new).toArray(Term[]::new))
+                    new Row(row.stream().map(Term::new).toArray(Term[]::new))
             ).collect(toSet());
             return arguments(queryString, expected);
         });
@@ -77,7 +77,7 @@ public abstract class BaseHdtQueryServiceTest {
 
     @ParameterizedTest
     @MethodSource("testQuery")
-    void testIterateQuery(@NonNull String queryString, @NonNull Set<SolutionRow> expected) {
+    void testIterateQuery(@NonNull String queryString, @NonNull Set<Row> expected) {
         TriplePattern query = TestUtils.parseTriplePattern(queryString);
         for (Implementation impl : createImplementations()) {
             try (impl) {
@@ -85,8 +85,7 @@ public abstract class BaseHdtQueryServiceTest {
                     QuerySolutions sols = impl.service.query(query, flowType);
                     for (int i = 0, rounds = sols.isHot() ? 1 : 2; i < rounds; i++) {
                         var msg = format("flowType=%s, round=%d, impl=%s", flowType, i, impl.name);
-                        Set<SolutionRow> actual = new HashSet<>();
-                        sols.forEach(actual::add);
+                        Set<Row> actual = sols.toSet();
                         assertEquals(expected, fixEquals(actual), msg);
                     }
                 }
@@ -96,7 +95,7 @@ public abstract class BaseHdtQueryServiceTest {
 
     @ParameterizedTest
     @MethodSource("testQuery")
-    void testListQuery(@NonNull String queryString, @NonNull Set<SolutionRow> expected) {
+    void testListQuery(@NonNull String queryString, @NonNull Set<Row> expected) {
         TriplePattern query = TestUtils.parseTriplePattern(queryString);
         for (Implementation impl : createImplementations()) {
             try (impl) {
@@ -104,7 +103,7 @@ public abstract class BaseHdtQueryServiceTest {
                     QuerySolutions sols = impl.service.query(query, flowType);
                     for (int i = 0, rounds = sols.isHot() ? 1 : 2; i < rounds; i++) {
                         var msg = format("flowType=%s, round=%d, impl=%s", flowType, i, impl.name);
-                        assertEquals(expected, new HashSet<>(fixEquals(sols.list())), msg);
+                        assertEquals(expected, new HashSet<>(fixEquals(sols.wrappedList())), msg);
                     }
                 }
             }
@@ -113,7 +112,7 @@ public abstract class BaseHdtQueryServiceTest {
 
     @ParameterizedTest
     @MethodSource("testQuery")
-    void testStreamQuery(@NonNull String queryString, @NonNull Set<SolutionRow> expected) {
+    void testStreamQuery(@NonNull String queryString, @NonNull Set<Row> expected) {
         TriplePattern query = TestUtils.parseTriplePattern(queryString);
         for (Implementation impl : createImplementations()) {
             try (impl) {
@@ -121,7 +120,7 @@ public abstract class BaseHdtQueryServiceTest {
                     QuerySolutions sols = impl.service.query(query, flowType);
                     for (int i = 0, rounds = sols.isHot() ? 1 : 2; i < rounds; i++) {
                         var msg = format("flowType=%s, round=%d, impl=%s", flowType, i, impl.name);
-                        var ac = sols.stream().map(TestUtils::fixEquals).collect(Collectors.toSet());
+                        var ac = sols.stream().map(TestUtils::fixEquals).map(Row::new).collect(toSet());
                         assertEquals(expected, ac, msg);
                     }
                 }
@@ -131,7 +130,7 @@ public abstract class BaseHdtQueryServiceTest {
 
     @ParameterizedTest
     @MethodSource("testQuery")
-    void testSubscribeQuery(@NonNull String queryString, @NonNull Set<SolutionRow> expected){
+    void testSubscribeQuery(@NonNull String queryString, @NonNull Set<Row> expected){
         TriplePattern query = TestUtils.parseTriplePattern(queryString);
         for (Implementation impl : createImplementations()) {
             try (impl) {
@@ -141,7 +140,7 @@ public abstract class BaseHdtQueryServiceTest {
                         var msg = format("flowType=%s, round=%d, impl=%s", flowType, i, impl.name);
                         var actual = solutions.flux()
                                 .subscribeOn(Schedulers.single())
-                                .collect(toSet()).block();
+                                .map(Row::new).collect(toSet()).block();
                         assertNotNull(actual);
                         assertEquals(expected, fixEquals(actual), msg);
                     }

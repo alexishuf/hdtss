@@ -1,7 +1,7 @@
 package com.github.lapesd.hdtss.sparql.results.chunked;
 
+import com.github.lapesd.hdtss.model.Row;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import io.micronaut.http.MediaType;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import reactor.core.publisher.Flux;
@@ -23,7 +23,7 @@ public interface ChunkedEncoder {
      * <ol>
      *     <li>A header chunk: contains all the initial encoding including the whole header section</li>
      *     <li>An optional introduction chunk with encoding boilerplate separating the header section from the results section</li>
-     *     <li>Zero or more chunks containing at least the serialization of at least one {@link SolutionRow}</li>
+     *     <li>Zero or more chunks containing at least the serialization of at least one {@link Row}</li>
      *     <li>An optional final chunk with encoding boilerplate (e.g., closing braces and tags)</li>
      * </ol>
      *

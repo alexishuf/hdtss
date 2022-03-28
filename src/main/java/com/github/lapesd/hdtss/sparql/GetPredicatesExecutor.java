@@ -7,7 +7,6 @@ import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.model.nodes.TriplePattern;
 import com.github.lapesd.hdtss.model.solutions.IteratorQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import jakarta.inject.Singleton;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -53,8 +52,8 @@ public class GetPredicatesExecutor {
             long next = 1;
             final long last = dict.getNpredicates();
             @Override public boolean hasNext() { return next <= last; }
-            @Override public SolutionRow next() {
-                return new SolutionRow(new Term[]{HDTUtils.fromHDTId(dict, next++, PRE)});
+            @Override public @Nullable Term @NonNull[] next() {
+                return new Term[]{HDTUtils.fromHDTId(dict, next++, PRE)};
             }
         });
     }

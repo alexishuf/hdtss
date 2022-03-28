@@ -4,6 +4,7 @@ import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.model.solutions.FluxQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
+import com.github.lapesd.hdtss.sparql.impl.ExecutorUtils;
 import com.github.lapesd.hdtss.sparql.impl.conditional.RequiresOperatorFlow;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -18,8 +19,9 @@ public class ProjectFluxExecutor extends ProjectExecutor {
     public ProjectFluxExecutor(@NonNull OpExecutorDispatcher dispatcher) { super(dispatcher); }
 
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
-        int[] indices = findIndices(node);
+        Op inner = node.children().get(0);
+        int[] indices = ExecutorUtils.findIndices(node.varNames(), inner.varNames());
         return new FluxQuerySolutions(node.varNames(),
-                dispatcher.execute(node.children().get(0)).flux().map(r -> project(r, indices)));
+                dispatcher.execute(inner).flux().map(r -> ExecutorUtils.project(indices, r)));
     }
 }

@@ -4,7 +4,6 @@ import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.*;
 import com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.sparql.EmptySparqlException;
 import com.github.lapesd.hdtss.sparql.FeatureNotSupportedException;
 import com.github.lapesd.hdtss.sparql.SparqlParser;
@@ -106,9 +105,8 @@ public class JenaSparqlParser implements SparqlParser {
             }
 
             @Override public void visit(ElementData el) {
-                List<String> names = el.getVars().stream().map(Var::getVarName).collect(toList());
-                List<SolutionRow> list = el.getRows().stream().map(b -> fromBinding(names, b))
-                                                              .collect(toList());
+                List<String> names = el.getVars().stream().map(Var::getVarName).toList();
+                var list = el.getRows().stream().map(b -> fromBinding(names, b)).toList();
                 op[0] =  new Values(new BatchQuerySolutions(names, list), op[0]);
             }
 
@@ -214,7 +212,7 @@ public class JenaSparqlParser implements SparqlParser {
             Term[] terms = new Term[vars.size()];
             for (int i = 0; i < terms.length; i++)
                 terms[i] = JenaUtils.fromNode(b.get(vars.get(i)));
-            return new SolutionRow(terms);
+            return terms;
         }).collect(toList());
         return new BatchQuerySolutions(vars.stream().map(Var::getName).collect(toList()), rows);
     }

@@ -2,7 +2,6 @@ package com.github.lapesd.hdtss.model.nodes;
 
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.google.common.collect.Collections2;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.Tag;
@@ -24,47 +23,47 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 @Tag("fast")
 class ValuesTest {
 
-    static Stream<Arguments> testEquals() {
+    @SuppressWarnings("unused") static Stream<Arguments> testEquals() {
         return Stream.of(
                 arguments(
                         new Values(
                                 new BatchQuerySolutions(List.of("x"),
-                                        asList(SolutionRow.of(Alice),
-                                               SolutionRow.of(Bob))),
+                                        asList(new Term[] {Alice},
+                                               new Term[] {Bob})),
                                 new TriplePattern(x, knowsTerm, y)
                         ),
                         new Values(
                                 new BatchQuerySolutions(List.of("x"),
-                                        asList(SolutionRow.of(Alice),
-                                               SolutionRow.of(Bob))),
+                                        asList(new Term[] {Alice},
+                                               new Term[] {Bob})),
                                 new TriplePattern(x, knowsTerm, y)
                         ),
                         true),
                 arguments(
                         new Values(
                                 new BatchQuerySolutions(List.of("x"),
-                                        asList(SolutionRow.of(Alice),
-                                               SolutionRow.of(Bob))),
+                                        asList(new Term[] {Alice},
+                                               new Term[] {Bob})),
                                 new TriplePattern(x, knowsTerm, y)
                         ),
                         new Values(
                                 new BatchQuerySolutions(List.of("x"),
-                                        asList(SolutionRow.of(Bob),
-                                               SolutionRow.of(Alice))),
+                                        asList(new Term[] {Bob},
+                                               new Term[] {Alice})),
                                 new TriplePattern(x, knowsTerm, y)
                         ),
                         false),
                 arguments(
                         new Values(
                                 new BatchQuerySolutions(List.of("x"),
-                                        asList(SolutionRow.of(Alice),
-                                               SolutionRow.of(Bob))),
+                                        asList(new Term[] {Alice},
+                                               new Term[] {Bob})),
                                 new TriplePattern(x, knowsTerm, y)
                         ),
                         new Values(
                                 new BatchQuerySolutions(List.of("x"),
-                                        asList(SolutionRow.of(Alice),
-                                               SolutionRow.of(Bob))),
+                                        asList(new Term[] {Alice},
+                                               new Term[] {Bob})),
                                 new TriplePattern(y, knowsTerm, x)
                         ),
                         false),
@@ -72,14 +71,14 @@ class ValuesTest {
                 arguments(
                         new Values(
                                 new BatchQuerySolutions(asList("x", "y"),
-                                        asList(SolutionRow.of(Alice, Charlie),
-                                               SolutionRow.of(Bob, Charlie))),
+                                        asList(new Term[]{Alice, Charlie},
+                                               new Term[]{Bob, Charlie})),
                                 new TriplePattern(x, knowsTerm, y)
                         ),
                         new Values(
                                 new BatchQuerySolutions(asList("y", "x"),
-                                        asList(SolutionRow.of(Charlie, Alice),
-                                               SolutionRow.of(Charlie, Bob))),
+                                        asList(new Term[]{Charlie, Alice},
+                                               new Term[]{Charlie, Bob})),
                                 new TriplePattern(x, knowsTerm, y)
                         ),
                         false)
@@ -92,20 +91,20 @@ class ValuesTest {
         assertEquals(expected, b.deepEquals(a));
     }
 
-    static Stream<Arguments> testBind() {
+    @SuppressWarnings("unused") static Stream<Arguments> testBind() {
         return Stream.of(
                 // no effect bind
    /* 1 */      arguments(
                         new Values(
                                 new BatchQuerySolutions(
                                         List.of("x"),
-                                        List.of(SolutionRow.of(Alice))),
+                                        List.of(new Term[][]{{Alice}})),
                                 new TriplePattern(x, knowsTerm, y)),
                         Map.of("z", Charlie),
                         new Values(
                                 new BatchQuerySolutions(
                                         List.of("x"),
-                                        List.of(SolutionRow.of(Alice))),
+                                        List.of(new Term[][]{{Alice}})),
                                 new TriplePattern(x, knowsTerm, y))
                         ),
                 // non-conflicting bind
@@ -113,13 +112,13 @@ class ValuesTest {
                         new Values(
                                 new BatchQuerySolutions(
                                         List.of("x"),
-                                        List.of(SolutionRow.of(Alice))),
+                                        List.of(new Term[][]{{Alice}})),
                                 new TriplePattern(x, knowsTerm, y)),
                         Map.of("y", Charlie, "z", Alice),
                         new Values(
                                 new BatchQuerySolutions(
                                         List.of("x"),
-                                        List.of(SolutionRow.of(Alice))),
+                                        List.of(new Term[][]{{Alice}})),
                                 new TriplePattern(x, knowsTerm, Charlie))
                 ),
                 // bind overlaps with value but affects inner
@@ -127,13 +126,13 @@ class ValuesTest {
                         new Values(
                                 new BatchQuerySolutions(
                                         List.of("x"),
-                                        List.of(SolutionRow.of(Alice))),
+                                        List.of(new Term[][]{{Alice}})),
                                 new TriplePattern(x, knowsTerm, y)),
                         Map.of("x", Bob, "y", Charlie),
                         new Values(
                                 new BatchQuerySolutions(
                                         List.of("x"),
-                                        List.of(SolutionRow.of(Alice))),
+                                        List.of(new Term[][]{{Alice}})),
                                 new TriplePattern(x, knowsTerm, Charlie)
                         )
                 ),
@@ -142,14 +141,14 @@ class ValuesTest {
                         new Values(
                                 new BatchQuerySolutions(
                                         List.of("x"),
-                                        List.of(SolutionRow.of(Alice))),
+                                        List.of(new Term[][]{{Alice}})),
                                 new TriplePattern(x, knowsTerm, y)
                         ),
                         Map.of("x", Alice, "z", Charlie),
                         new Values(
                                 new BatchQuerySolutions(
                                         List.of("x"),
-                                        List.of(SolutionRow.of(Alice))),
+                                        List.of(new Term[][]{{Alice}})),
                                 new TriplePattern(x, knowsTerm, y)
                         )
                 )
@@ -171,24 +170,24 @@ class ValuesTest {
         }
     }
 
-    static Stream<Arguments> testVarNames() {
+    @SuppressWarnings("unused") static Stream<Arguments> testVarNames() {
         return Stream.of(
                 // vars bound within Values are not exposed as vars
                 arguments(
                         new Values(new BatchQuerySolutions(
-                                        List.of("x"), List.of(SolutionRow.of(Alice))),
+                                        List.of("x"), List.of(new Term[][]{{Alice}})),
                                    new TriplePattern(x, knowsTerm, y)),
                         List.of("y")),
                 // bogus Values does not blow up
                 arguments(
                         new Values(new BatchQuerySolutions(
-                                        List.of("z"), List.of(SolutionRow.of(Alice))),
+                                        List.of("z"), List.of(new Term[][]{{Alice}})),
                                    new TriplePattern(x, knowsTerm, y)),
                         asList("x", "y")),
                 // No issue if Values binds all variables
                 arguments(
                         new Values(new BatchQuerySolutions(
-                                        List.of("x", "y"), List.of(SolutionRow.of(Alice, Bob))),
+                                        List.of("x", "y"), List.of(new Term[][]{{Alice, Bob}})),
                                    new TriplePattern(x, knowsTerm, y)),
                         List.of())
         );

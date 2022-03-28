@@ -3,6 +3,7 @@ package com.github.lapesd.hdtss.model.solutions;
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.vocab.XSD;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -94,7 +95,7 @@ abstract class BaseQuerySolutionsTest {
         rows.forEach(a -> expected.add(asList(Arrays.copyOf(a, a.length))));
         var solutions = createFor(varNames, rows);
         assertEquals(new ArrayList<>(varNames), solutions.varNames());
-        var actual = solutions.list().stream().map(sr -> asList(sr.terms())).collect(toList());
+        var actual = solutions.list().stream().map(Arrays::asList).collect(toList());
         assertEquals(expected, actual);
     }
 
@@ -104,7 +105,7 @@ abstract class BaseQuerySolutionsTest {
         List<List<Term>> expected = new ArrayList<>(rows.size());
         rows.forEach(a -> expected.add(asList(Arrays.copyOf(a, a.length))));
         var solutions = createFor(varNames, rows);
-        var actual = solutions.stream().map(r -> asList(r.terms())).collect(toList());
+        var actual = solutions.stream().map(Arrays::asList).collect(toList());
         assertEquals(expected, actual);
     }
 
@@ -116,18 +117,18 @@ abstract class BaseQuerySolutionsTest {
         rows.forEach(a -> expected.add(asList(Arrays.copyOf(a, a.length))));
         var solutions = createFor(varNames, rows);
         List<List<@NonNull Term>> actual = new ArrayList<>();
-        for (SolutionRow r : solutions)
-            actual.add(asList(r.terms()));
+        for (Term[] r : solutions)
+            actual.add(asList(r));
         assertEquals(expected, actual);
     }
 
     @ParameterizedTest
     @MethodSource("solutionData")
     void testFlux(@NonNull List<String> varNames, @NonNull List<Term[]> rows) {
-        List<List<@NonNull Term>> expected = new ArrayList<>(rows.size());
+        List<List<@Nullable Term>> expected = new ArrayList<>(rows.size());
         rows.forEach(a -> expected.add(asList(Arrays.copyOf(a, a.length))));
         var solutions = createFor(varNames, rows);
-        var actual = solutions.flux().toStream().map(r -> asList(r.terms())).collect(toList());
+        var actual = solutions.flux().toStream().map(Arrays::asList).collect(toList());
         assertEquals(expected, actual);
     }
 

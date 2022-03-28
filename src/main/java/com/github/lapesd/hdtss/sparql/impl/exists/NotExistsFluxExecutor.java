@@ -27,6 +27,6 @@ public class NotExistsFluxExecutor extends NotExistsExecutor {
         if (IdentityNode.is(inner))
             return outerSols;
         return new FluxQuerySolutions(node.varNames(), outerSols.flux()
-                .filter(r -> !dispatcher.execute(inner.bind(outerVars, r.terms())).askResult()));
+                .filter(r -> !dispatcher.execute(inner.bind(outerVars, r)).askResult()));
     }
 }

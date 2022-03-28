@@ -2,7 +2,6 @@ package com.github.lapesd.hdtss.utils;
 
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.TriplePattern;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.vocab.RDF;
 import com.github.lapesd.hdtss.vocab.RDFS;
 import com.github.lapesd.hdtss.vocab.XSD;
@@ -115,23 +114,19 @@ public class JenaUtils {
         return new Triple(toNode(tp.subject()), toNode(tp.predicate()), toNode(tp.object()));
     }
 
-    public static @NonNull RowJenaBinding toBinding(@NonNull SolutionRow row,
+    public static @NonNull RowJenaBinding toBinding(@Nullable Term @NonNull[] row,
                                                     @NonNull List<String> varNames) {
         RowJenaBinding binding = new RowJenaBinding(varNames);
         binding.setRow(row);
         return binding;
     }
 
-    public static @NonNull Term[] fromBindingToArray(@NonNull List<String> varNames,
-                                                     @NonNull Binding binding) {
+    public static @NonNull Term[] fromBinding(@NonNull List<String> varNames,
+                                              @NonNull Binding binding) {
         Term[] terms = new Term[varNames.size()];
         for (int i = 0; i < terms.length; i++)
             terms[i] = fromNode(binding.get(Var.alloc(varNames.get(i))));
         return terms;
-    }
-    public static @NonNull SolutionRow fromBinding(@NonNull List<String> varNames,
-                                                   @NonNull Binding binding) {
-        return new SolutionRow(fromBindingToArray(varNames, binding));
     }
 
     public static @NonNull Expr parseFilter(@NonNull String filter) {

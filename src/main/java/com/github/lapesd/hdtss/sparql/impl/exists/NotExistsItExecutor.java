@@ -1,10 +1,10 @@
 package com.github.lapesd.hdtss.sparql.impl.exists;
 
+import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.IdentityNode;
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.model.solutions.IteratorQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.impl.conditional.RequiresOperatorFlow;
 import jakarta.inject.Inject;
@@ -32,23 +32,23 @@ public class NotExistsItExecutor extends NotExistsExecutor {
         if (IdentityNode.is(inner))
             return new IteratorQuerySolutions(outerVars, it);
         return new IteratorQuerySolutions(node.varNames(), new Iterator<>() {
-            private @Nullable SolutionRow next;
+            private @Nullable Term @Nullable[] next;
 
             @Override public boolean hasNext() {
                 while (next == null && it.hasNext()) {
-                    SolutionRow outerRow = it.next();
-                    if (!dispatcher.execute(inner.bind(outerVars, outerRow.terms())).askResult())
+                    var outerRow = it.next();
+                    if (!dispatcher.execute(inner.bind(outerVars, outerRow)).askResult())
                         this.next = outerRow;
                 }
                 return next != null;
             }
 
-            @Override public @NonNull SolutionRow next() {
+            @Override public @Nullable Term @NonNull[] next() {
                 if (!hasNext())
                     throw new NoSuchElementException();
-                assert this.next != null;
-                SolutionRow next = this.next;
+                var next = this.next;
                 this.next = null;
+                assert next != null;
                 return next;
             }
         });

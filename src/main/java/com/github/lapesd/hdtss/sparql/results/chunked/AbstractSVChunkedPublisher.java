@@ -2,7 +2,6 @@ package com.github.lapesd.hdtss.sparql.results.chunked;
 
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.utils.ByteArrayWriter;
 import io.micronaut.http.MediaType;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -52,12 +51,11 @@ public abstract class AbstractSVChunkedPublisher extends SimpleChunkedPublisher 
         return writer.revert(sep.length).append(eol).toByteArray();
     }
 
-    @Override protected byte[] rowBytes(@NonNull SolutionRow row) {
-        Term[] terms = row.terms();
-        if (terms.length == 0)
+    @Override protected byte[] rowBytes(@Nullable Term @NonNull[] row) {
+        if (row.length == 0)
             return eol;
         writer.reset();
-        for (Term term : terms) {
+        for (Term term : row) {
             if (term != null)
                 writeTerm(writer, term);
             writer.append(sep);

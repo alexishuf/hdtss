@@ -2,7 +2,6 @@ package com.github.lapesd.hdtss.sparql.results.codecs;
 
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.io.buffer.ByteBufferFactory;
 import io.micronaut.core.type.Argument;
@@ -72,9 +71,9 @@ public abstract class AbstractSVEncoder implements MediaTypeCodec {
             for (String name : solutions.varNames())
                 (i++ != 0 ? w.append(sep) : w).append(varSymbol).append(name);
             w.append(eol);
-            for (SolutionRow row : solutions) {
+            for (@Nullable Term @NonNull[] row : solutions) {
                 boolean first = true;
-                for (Term term : row.terms()) {
+                for (Term term : row) {
                     if (term != null)
                         encode(term, first ? w : w.append(sep));
                     first = false;
@@ -103,9 +102,9 @@ public abstract class AbstractSVEncoder implements MediaTypeCodec {
         for (String name : solutions.varNames())
             (i++ == 0 ? b : b.write((byte) sep)).write(varSymbolBytes).write(name.getBytes(UTF_8));
         b.write(eolBytes);
-        for (SolutionRow row : solutions) {
+        for (@Nullable Term @NonNull[] row : solutions) {
             boolean first = true;
-            for (Term term : row.terms()) {
+            for (Term term : row) {
                 if (term != null)
                     encode(term, first ? b : b.write((byte) sep));
                 first = false;

@@ -4,7 +4,10 @@ import io.micronaut.http.MediaType;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class SparqlMediaTypes {
     public static final String QUERY = "application/sparql-query";

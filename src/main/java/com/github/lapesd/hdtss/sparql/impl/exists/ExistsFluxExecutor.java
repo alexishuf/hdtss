@@ -23,6 +23,6 @@ public class ExistsFluxExecutor extends ExistsExecutor {
         Op outer = node.children().get(0), inner = node.children().get(1);
         var outerVars = outer.varNames();
         return new FluxQuerySolutions(node.varNames(), dispatcher.execute(outer).flux()
-                .filter(r -> dispatcher.execute(inner.bind(outerVars, r.terms())).askResult()));
+                .filter(r -> dispatcher.execute(inner.bind(outerVars, r)).askResult()));
     }
 }

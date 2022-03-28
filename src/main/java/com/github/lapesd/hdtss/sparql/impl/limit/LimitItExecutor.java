@@ -1,16 +1,17 @@
 package com.github.lapesd.hdtss.sparql.impl.limit;
 
+import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.Limit;
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.model.solutions.IteratorQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.impl.conditional.RequiresOperatorFlow;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -35,7 +36,7 @@ public class LimitItExecutor extends LimitExecutor {
                 return it.hasNext() && count < limit;
             }
 
-            @Override public SolutionRow next() {
+            @Override public @Nullable Term @NonNull[] next() {
                 if (!hasNext())
                     throw new NoSuchElementException();
                 ++count;

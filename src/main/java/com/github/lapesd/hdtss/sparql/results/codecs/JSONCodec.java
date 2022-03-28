@@ -5,12 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes;
 import com.github.lapesd.hdtss.utils.ByteArrayWriter;
 import io.micronaut.context.BeanProvider;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.io.buffer.ByteBufferFactory;
 import io.micronaut.core.type.Argument;
@@ -22,6 +20,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.*;
 import java.util.*;
@@ -38,7 +37,8 @@ public class JSONCodec implements MediaTypeCodec  {
     private ObjectMapper objectMapper;
 
     @Inject
-    public JSONCodec(@Named("sparqlJSON") @Nullable CodecConfiguration configuration,
+    public JSONCodec(@Named("sparqlJSON") @io.micronaut.core.annotation.Nullable
+                                 CodecConfiguration configuration,
                      @NonNull BeanProvider<ObjectMapper> objectMapperProvider) {
         typeList = new ArrayList<>(1);
         typeList.add(SparqlMediaTypes.RESULTS_JSON_TYPE);
@@ -102,12 +102,12 @@ public class JSONCodec implements MediaTypeCodec  {
             var vars = results.vars();
             int nVars = vars.size();
             var bindings = results.bindings();
-            List<SolutionRow> rows = new ArrayList<>(bindings.size());
+            List<@Nullable Term @NonNull[]> rows = new ArrayList<>(bindings.size());
             for (Map<String, Value> binding : bindings) {
                 Term[] terms = new Term[nVars];
                 for (int i = 0; i < nVars; i++)
                     terms[i] = binding.getOrDefault(vars.get(i), Value.NULL).asTerm();
-                rows.add(new SolutionRow(terms));
+                rows.add(terms);
             }
             return (T) new BatchQuerySolutions(vars, rows);
         } catch (IOException e) {
@@ -120,7 +120,8 @@ public class JSONCodec implements MediaTypeCodec  {
     private static final byte[] TERM_LANG = ",\"xml:lang\":\"".getBytes(UTF_8);
     private static final byte[] TERM_DATATYPE = ",\"datatype\":\"".getBytes(UTF_8);
 
-    public static void writeRowToBytes(@NonNull List<@NonNull String> vars, @NonNull Term[] terms,
+    public static void writeRowToBytes(@NonNull List<@NonNull String> vars,
+                                       @Nullable Term @NonNull[] terms,
                                        @NonNull ByteArrayWriter writer) {
         boolean first = true;
         writer.append('{');
@@ -157,7 +158,8 @@ public class JSONCodec implements MediaTypeCodec  {
         writer.append('}');
     }
 
-    public static void writeRow(@NonNull List<@NonNull String> vars, @NonNull Term[] terms,
+    public static void writeRow(@NonNull List<@NonNull String> vars,
+                                @Nullable Term @NonNull[] terms,
                                 @NonNull Writer writer)
             throws IOException {
         boolean first = true;
@@ -205,8 +207,8 @@ public class JSONCodec implements MediaTypeCodec  {
                     (count++ == 0 ? w : w.append(',')).append('"').append(name).append('"');
                 w.append("]},\"results\":{\"bindings\":[");
                 count = 0;
-                for (SolutionRow row : solutions)
-                    writeRow(vars, row.terms(), count++ == 0 ? w : w.append(','));
+                for (@Nullable Term @NonNull[] row : solutions)
+                    writeRow(vars, row, count++ == 0 ? w : w.append(','));
                 w.append("]}}");
             }
         } catch (IOException e) {

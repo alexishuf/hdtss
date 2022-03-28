@@ -1,10 +1,16 @@
 package com.github.lapesd.hdtss.sparql.results.chunked;
 
 import com.github.lapesd.hdtss.TestVocab;
-import com.github.lapesd.hdtss.model.solutions.*;
+import com.github.lapesd.hdtss.model.Row;
+import com.github.lapesd.hdtss.model.Term;
+import com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions;
+import com.github.lapesd.hdtss.model.solutions.FluxQuerySolutions;
+import com.github.lapesd.hdtss.model.solutions.IteratorQuerySolutions;
+import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.google.common.base.Stopwatch;
 import lombok.SneakyThrows;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -30,21 +36,21 @@ import static reactor.core.scheduler.Schedulers.boundedElastic;
 
 class SimpleChunkedPublisherTest {
     private static final int N_THREADS = 1 + 2*Runtime.getRuntime().availableProcessors();
-    private static final List<SolutionRow> ROWS = List.of(
-            SolutionRow.of(TestVocab.Alice),
-            SolutionRow.of(TestVocab.Bob),
-            SolutionRow.of(TestVocab.Charlie),
-            SolutionRow.of(TestVocab.Dave)
+    private static final List<@Nullable Term @NonNull[]> ROWS = List.of(
+            Row.raw(TestVocab.Alice),
+            Row.raw(TestVocab.Bob),
+            Row.raw(TestVocab.Charlie),
+            Row.raw(TestVocab.Dave)
     );
 
     private static class TestPublisher extends SimpleChunkedPublisher {
         public TestPublisher(@NonNull QuerySolutions solutions) { super(solutions); }
+        @Override protected void release() { }
         @Override protected byte[] askPrologue() { return "\n".getBytes(UTF_8); }
         @Override protected byte[] askBodyAndPrologue(boolean result) { return (result ? "\n" : "").getBytes(UTF_8); }
         @Override protected byte[] rowsPrologue() { return "?x\n".getBytes(UTF_8); }
-        @Override protected byte[] rowBytes(@NonNull SolutionRow r) { return r.toString().getBytes(UTF_8); }
         @Override protected byte[] rowsEpilogue() { return "EPILOGUE\n".getBytes(UTF_8); }
-        @Override protected void release() { }
+        @Override protected byte[] rowBytes(@Nullable Term @NonNull[] r) { return Arrays.toString(r).getBytes(UTF_8); }
     }
 
     private record Termination(Throwable error, boolean cancel, long rows, long items, long nanos) {}
@@ -132,7 +138,7 @@ class SimpleChunkedPublisherTest {
             return this == ASK_SCHED_FLUX || this == SCHED_FLUX;
         }
 
-        public QuerySolutions create(@NonNull List<@NonNull SolutionRow> l) {
+        public QuerySolutions create(@NonNull List<@Nullable Term @NonNull[]> l) {
             List<@NonNull String> vars = isAsk() ? List.of() : List.of("x");
             return switch (this) {
                 case IT, ASK_IT -> new IteratorQuerySolutions(vars, l.iterator());
@@ -146,15 +152,17 @@ class SimpleChunkedPublisherTest {
             List<@NonNull String> vars = isAsk() ? List.of() : List.of("x");
             return switch (this) {
                 case IT, ASK_IT -> {
-                    Iterator<SolutionRow> it = new Iterator<>() {
+                    Iterator<@Nullable Term @NonNull[]> it = new Iterator<>() {
                         @Override public boolean  hasNext() { throw exception; }
-                        @Override public SolutionRow next() { throw new NoSuchElementException(); }
+                        @Override public @Nullable Term @NonNull[] next() {
+                            throw new NoSuchElementException();
+                        }
                     };
                     yield new IteratorQuerySolutions(vars, it);
                 }
                 case FLUX, ASK_FLUX -> new FluxQuerySolutions(vars, Flux.error(exception));
                 case SCHED_FLUX, ASK_SCHED_FLUX -> {
-                    Flux<SolutionRow> errorFlux = Flux.error(exception);
+                    Flux<@Nullable Term @NonNull[]> errorFlux = Flux.error(exception);
                     yield new FluxQuerySolutions(vars, errorFlux.publishOn(boundedElastic()));
                 }
             };
@@ -163,7 +171,7 @@ class SimpleChunkedPublisherTest {
     }
 
     @SneakyThrows private static @NonNull String
-    expected(@NonNull Type type, @NonNull List<@NonNull SolutionRow> rows) {
+    expected(@NonNull Type type, @NonNull List<@Nullable Term @NonNull[]> rows) {
         var p = new TestPublisher(new BatchQuerySolutions(List.of(), List.of()));
         ByteArrayOutputStream bOS = new ByteArrayOutputStream();
         if (type.isAsk()) {
@@ -171,7 +179,7 @@ class SimpleChunkedPublisherTest {
             bOS.write(p.askBodyAndPrologue(!rows.isEmpty()));
         } else {
             bOS.write(p.rowsPrologue());
-            for (SolutionRow row : rows)
+            for (@Nullable Term @NonNull[] row : rows)
                 bOS.write(p.rowBytes(row));
             bOS.write(p.rowsEpilogue());
         }
@@ -179,14 +187,14 @@ class SimpleChunkedPublisherTest {
     }
 
     static Stream<Arguments> testHappyPath() {
-        List<List<SolutionRow>> lists =
+        List<List<@Nullable Term @NonNull[]>> lists =
                 IntStream.range(0, ROWS.size()).mapToObj(i -> ROWS.subList(0, i)).toList();
         return Arrays.stream(Type.values()).flatMap(t -> lists.stream()
                 .map(rows -> arguments(t, rows, expected(t, rows))));
     }
 
     @ParameterizedTest @MethodSource
-    void testHappyPath(Type type, List<SolutionRow> rows, String expected) throws ExecutionException {
+    void testHappyPath(Type type, List<@Nullable Term @NonNull[]> rows, String expected) throws ExecutionException {
         List<Future<?>> futures = new ArrayList<>();
         try {
             for (int i = 0; i < N_THREADS; i++)
@@ -196,7 +204,7 @@ class SimpleChunkedPublisherTest {
         }
     }
 
-    private Object doTestHappyPath(Type type, List<SolutionRow> rows,
+    private Object doTestHappyPath(Type type, List<@Nullable Term @NonNull[]> rows,
                                    String expected) {
         TestPublisher p = new TestPublisher(type.create(rows));
         List<Termination> terminations = collectTermination(p);
@@ -210,7 +218,7 @@ class SimpleChunkedPublisherTest {
     }
 
     @ParameterizedTest @MethodSource("testHappyPath")
-    void testHappyPathUnitRequests(Type type, List<SolutionRow> rows,
+    void testHappyPathUnitRequests(Type type, List<@Nullable Term @NonNull[]> rows,
                                    String expected) throws Exception {
         List<Future<?>> futures = new ArrayList<>();
         try {
@@ -223,7 +231,7 @@ class SimpleChunkedPublisherTest {
         }
     }
 
-    private Object doTestHappyPathUnitRequests(Type type, List<SolutionRow> rows,
+    private Object doTestHappyPathUnitRequests(Type type, List<@Nullable Term @NonNull[]> rows,
                                                String expected) throws Exception {
         TestPublisher p = new TestPublisher(type.create(rows));
         List<Termination> terminations = collectTermination(p);

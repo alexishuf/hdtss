@@ -1,5 +1,6 @@
 package com.github.lapesd.hdtss.model.solutions;
 
+import com.github.lapesd.hdtss.model.Term;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -17,24 +18,24 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor @EqualsAndHashCode @ToString @Accessors(fluent = true)
 public class FluxQuerySolutions implements QuerySolutions {
     @Getter private final @NonNull List<@NonNull String> varNames;
-    private final @NonNull Flux<@NonNull SolutionRow> flux;
+    private final @NonNull Flux<@Nullable Term@NonNull []> flux;
 
     private @ToString.Exclude @EqualsAndHashCode.Exclude @Nullable Boolean askResult;
-    private @ToString.Exclude @EqualsAndHashCode.Exclude @Nullable List<@NonNull SolutionRow> list;
+    private @ToString.Exclude @EqualsAndHashCode.Exclude @Nullable List<@Nullable Term @NonNull[]> list;
 
-    public @NonNull Flux<SolutionRow> flux() {
+    public @NonNull Flux<@Nullable Term @NonNull[]> flux() {
         return list != null ? Flux.fromIterable(list) : flux;
     }
 
-    @Override public @NonNull Iterator<@NonNull SolutionRow> iterator() {
+    @Override public @NonNull Iterator<@Nullable Term @NonNull[]> iterator() {
         return list != null ? list.iterator() : flux.toIterable().iterator();
     }
 
-    @Override public @NonNull Stream<@NonNull SolutionRow> stream() {
+    @Override public @NonNull Stream<@Nullable Term @NonNull[]> stream() {
         return list != null ? list.stream() : flux.toStream();
     }
 
-    @Override public @NonNull List<@NonNull SolutionRow> list() {
+    @Override public @NonNull List<@Nullable Term @NonNull[]> list() {
         return list != null ? list : (list = Objects.requireNonNull(flux.collectList().block()));
     }
 

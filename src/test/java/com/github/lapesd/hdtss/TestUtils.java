@@ -1,14 +1,15 @@
 package com.github.lapesd.hdtss;
 
 import com.github.lapesd.hdtss.data.query.impl.HDTUtils;
+import com.github.lapesd.hdtss.model.Row;
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.TriplePattern;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.google.common.collect.Lists;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.rdfhdt.hdt.hdt.HDT;
 import org.rdfhdt.hdt.hdt.HDTManager;
 import org.rdfhdt.hdt.triples.TripleID;
@@ -41,18 +42,24 @@ public class TestUtils {
         return HDTManager.loadIndexedHDT(openResource(cls, path), (l, m) -> {});
     }
 
-    public static @NonNull Term fixEquals(@NonNull Term term) {
+    public static @Nullable Term fixEquals(@Nullable Term term) {
+        if (term == null)
+            return null;
         //hdt-java's DelayedString.equals is done by reference. This is a bug already fixed.
         //See https://github.com/rdfhdt/hdt-java/pull/117
         return term.sparql() instanceof DelayedString ? new Term(term.sparql().toString()) : term;
     }
 
-    public static @NonNull Object fixEquals(@NonNull Object o) {
+    public static @Nullable Object fixEquals(@Nullable Object o) {
+        if (o == null)
+            return null;
         if (o instanceof List list)
             return fixEquals(list);
         if (o instanceof Set set)
             return fixEquals(set);
-        if (o instanceof SolutionRow row)
+        if (o instanceof Row row)
+            return fixEquals(row);
+        if (o instanceof Term[] row)
             return fixEquals(row);
         if (o instanceof Term term)
             return fixEquals(term);
@@ -61,10 +68,13 @@ public class TestUtils {
         return o;
     }
 
-    public static @NonNull SolutionRow fixEquals(@NonNull SolutionRow row) {
-        var terms = row.terms();
-        if (stream(terms).map(Term::sparql).anyMatch(DelayedString.class::isInstance))
-            return new SolutionRow(stream(terms).map(TestUtils::fixEquals).toArray(Term[]::new));
+    public static @NonNull Row fixEquals(@NonNull Row row) {
+        return new Row(fixEquals(row.terms()));
+    }
+
+    public static @Nullable Term @NonNull[] fixEquals(@Nullable Term @NonNull[] row) {
+        if (stream(row).filter(Objects::nonNull).map(Term::sparql).anyMatch(DelayedString.class::isInstance))
+            return stream(row).map(TestUtils::fixEquals).toArray(Term[]::new);
         return row;
     }
 

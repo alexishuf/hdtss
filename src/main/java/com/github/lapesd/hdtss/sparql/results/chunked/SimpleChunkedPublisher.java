@@ -1,8 +1,8 @@
 package com.github.lapesd.hdtss.sparql.results.chunked;
 
+import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.solutions.FluxQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -67,12 +67,13 @@ public abstract class SimpleChunkedPublisher implements ChunkedPublisher {
     protected abstract byte[] askPrologue();
     protected abstract byte[] askBodyAndPrologue(boolean result);
     protected abstract byte[] rowsPrologue();
-    protected abstract byte[] rowBytes(@NonNull SolutionRow row);
+    protected abstract byte[] rowBytes(@Nullable Term @NonNull[] row);
     protected abstract byte[] rowsEpilogue();
     protected abstract void   release();
 
     @RequiredArgsConstructor
-    private abstract class AbstractSubscription implements Subscription, Subscriber<SolutionRow> {
+    private abstract class AbstractSubscription implements Subscription,
+            Subscriber<@Nullable Term @NonNull []> {
         protected enum State {
             UNINITIALIZED,
             INITIALIZED,
@@ -91,7 +92,7 @@ public abstract class SimpleChunkedPublisher implements ChunkedPublisher {
         @Override public void onSubscribe(Subscription s) {
             (upstream = s).request(requested);
         }
-        @Override public void onNext(SolutionRow row) {
+        @Override public void onNext(@Nullable Term @NonNull[] row) {
             ++rows;
             if (state != State.TERMINATED) feed(rowBytes(row));
         }
@@ -211,14 +212,14 @@ public abstract class SimpleChunkedPublisher implements ChunkedPublisher {
         }
     }
 
-    private class AskFlux extends AbstractSubscription implements Subscriber<SolutionRow> {
+    private class AskFlux extends AbstractSubscription implements Subscriber<@Nullable Term @NonNull[]> {
         private @Nullable Boolean askResult;
 
         public AskFlux(@NonNull Subscriber<? super byte[]> downstream) { super(downstream); }
 
         @Override public void onSubscribe(Subscription s)     { (upstream = s).request(1); }
         @Override public void onComplete()                    {         offerResult(false); }
-        @Override public void onNext(SolutionRow solutionRow) { ++rows; offerResult(true); }
+        @Override public void onNext(@Nullable Term @NonNull[] row) { ++rows; offerResult(true); }
 
         @Override protected void init(long n) {
             state = State.PROLOGUE_SENT;
@@ -241,7 +242,7 @@ public abstract class SimpleChunkedPublisher implements ChunkedPublisher {
 
 
     private class AskIt extends AbstractSubscription {
-        private final @NonNull Iterator<SolutionRow> it = solutions.iterator();
+        private final @NonNull Iterator<@Nullable Term @NonNull[]> it = solutions.iterator();
 
         public AskIt(@NonNull Subscriber<? super byte[]> downstream) { super(downstream); }
 
@@ -267,7 +268,7 @@ public abstract class SimpleChunkedPublisher implements ChunkedPublisher {
         }
     }
 
-    private class RowsFlux extends AbstractSubscription implements Subscriber<SolutionRow> {
+    private class RowsFlux extends AbstractSubscription implements Subscriber<@Nullable Term @NonNull[]> {
         public RowsFlux(@NonNull Subscriber<? super byte[]> downstream) { super(downstream); }
 
         @Override protected void init(long n) {
@@ -283,7 +284,7 @@ public abstract class SimpleChunkedPublisher implements ChunkedPublisher {
     }
 
     private class RowsIt extends AbstractSubscription {
-        private final @NonNull Iterator<SolutionRow> it = solutions.iterator();
+        private final @NonNull Iterator<@Nullable Term @NonNull[]> it = solutions.iterator();
 
         public RowsIt(@NonNull Subscriber<? super byte[]> downstream) { super(downstream); }
 

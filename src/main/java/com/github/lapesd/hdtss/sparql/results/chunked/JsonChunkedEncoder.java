@@ -1,7 +1,7 @@
 package com.github.lapesd.hdtss.sparql.results.chunked;
 
+import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.sparql.results.codecs.JSONCodec;
 import com.github.lapesd.hdtss.utils.ByteArrayWriter;
 import io.micronaut.http.MediaType;
@@ -79,13 +79,13 @@ public class JsonChunkedEncoder implements ChunkedEncoder {
             return writer.toByteArray();
         }
 
-        @Override protected byte[] rowBytes(@NonNull SolutionRow row) {
+        @Override protected byte[] rowBytes(@Nullable Term @NonNull[] row) {
             writer.reset();
             if (firstBinding)
                 firstBinding = false;
             else
                 writer.append(',');
-            JSONCodec.writeRowToBytes(varNames, row.terms(), writer);
+            JSONCodec.writeRowToBytes(varNames, row, writer);
             return writer.toByteArray();
         }
     }

@@ -1,10 +1,10 @@
 package com.github.lapesd.hdtss.sparql.impl.minus;
 
+import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.Minus;
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.model.solutions.IteratorQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.impl.conditional.RequiresOperatorFlow;
 import jakarta.inject.Inject;
@@ -29,26 +29,26 @@ public class MinusItExecutor extends MinusExecutor {
     }
 
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
-        Predicate<SolutionRow> filter = strategy.createFilter((Minus) node);
+        Predicate<@Nullable Term @NonNull[]> filter = strategy.createFilter((Minus) node);
         var it = dispatcher.execute(node.children().get(0)).iterator();
         return new IteratorQuerySolutions(node.varNames(), new Iterator<>() {
-            private @Nullable SolutionRow next = null;
+            private @Nullable Term @Nullable[] next = null;
 
             @Override public boolean hasNext() {
                 while (next == null && it.hasNext()) {
-                    SolutionRow candidate = it.next();
+                    var candidate = it.next();
                     if (filter.test(candidate))
                         next = candidate;
                 }
                 return next != null;
             }
 
-            @Override public @NonNull SolutionRow next() {
+            @Override public @Nullable Term @NonNull[] next() {
                 if (!hasNext())
                     throw new NoSuchElementException();
-                assert this.next != null;
-                SolutionRow next = this.next;
+                var next = this.next;
                 this.next = null;
+                assert next != null;
                 return next;
             }
         });

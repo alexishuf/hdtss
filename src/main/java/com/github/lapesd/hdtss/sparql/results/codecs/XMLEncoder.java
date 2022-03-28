@@ -2,9 +2,7 @@ package com.github.lapesd.hdtss.sparql.results.codecs;
 
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.io.buffer.ByteBufferFactory;
 import io.micronaut.core.type.Argument;
@@ -16,6 +14,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -28,7 +27,8 @@ public class XMLEncoder implements MediaTypeCodec {
     private final @NonNull List<@NonNull MediaType> typeList;
 
     @Inject
-    public XMLEncoder(@Named("sparqlXML") @Nullable CodecConfiguration configuration) {
+    public XMLEncoder(@Named("sparqlXML") @io.micronaut.core.annotation.Nullable
+                                  CodecConfiguration configuration) {
         typeList = new ArrayList<>(1);
         typeList.add(SparqlMediaTypes.RESULTS_XML_TYPE);
         if (configuration != null)
@@ -122,8 +122,8 @@ public class XMLEncoder implements MediaTypeCodec {
                                      .append("</boolean>");
             } else {
                 w.append("<results>");
-                for (SolutionRow row : solutions)
-                    writeRow(vars, row.terms(), w);
+                for (@Nullable Term @NonNull[] row : solutions)
+                    writeRow(vars, row, w);
                 w.append("</results>");
             }
             w.append("</sparql>");

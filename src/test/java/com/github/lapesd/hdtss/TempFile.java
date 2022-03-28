@@ -1,5 +1,6 @@
 package com.github.lapesd.hdtss;
 
+import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -11,6 +12,7 @@ import java.nio.file.Files;
 import static com.github.lapesd.hdtss.TestUtils.openResource;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
+@Slf4j
 public class TempFile extends File implements Closeable {
     public static @NonNull File create(@Nullable File dir, @Nullable String prefix,
                                         @Nullable String suffix) throws IOException {

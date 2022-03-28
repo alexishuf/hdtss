@@ -3,11 +3,11 @@ package com.github.lapesd.hdtss.sparql;
 import com.github.lapesd.hdtss.TempFile;
 import com.github.lapesd.hdtss.TestUtils;
 import com.github.lapesd.hdtss.data.query.HdtQueryService;
+import com.github.lapesd.hdtss.model.Row;
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.Project;
 import com.github.lapesd.hdtss.model.nodes.*;
 import com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.sparql.impl.IdentityExecutor;
 import com.github.lapesd.hdtss.sparql.impl.ask.AskFluxExecutor;
 import com.github.lapesd.hdtss.sparql.impl.ask.AskItExecutor;
@@ -51,10 +51,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static com.github.lapesd.hdtss.TestUtils.fixEquals;
@@ -116,8 +113,8 @@ class OpExecutorTest {
         String opConfigName = opConfigName(op);
         for (ApplicationContext ctx : applicationContexts(opConfigName, propertyChoices)) {
             try (ctx) {
-                var actual = ctx.createBean(OpExecutorDispatcher.class).execute(op)
-                                .stream().map(r -> asList(r.terms())).collect(toList());
+                var actual = ctx.getBean(OpExecutorDispatcher.class).execute(op)
+                                .stream().map(Arrays::asList).collect(toList());
                 assertEquals(new HashSet<>(expected), new HashSet<>(fixEquals(actual)));
                 assertEquals(expected.size(), actual.size());
             }
@@ -189,7 +186,7 @@ class OpExecutorTest {
         });
     }
 
-    static @NonNull Stream<Arguments> testProjection() {
+    @SuppressWarnings("unused") static @NonNull Stream<Arguments> testProjection() {
         return Stream.of(
                 arguments(new Project(List.of("x"), new TriplePattern(Alice, knowsTerm, x)),
                           List.of(List.of(Bob))),
@@ -214,7 +211,7 @@ class OpExecutorTest {
         testInContexts(IdentityNode.INSTANCE, List.of(List.of()));
     }
 
-    static @NonNull Stream<@NonNull Arguments> testDistinct() {
+    @SuppressWarnings("unused") static @NonNull Stream<@NonNull Arguments> testDistinct() {
         return Stream.of(
                 arguments(new TriplePattern(Alice, nameTerm, x),
                           List.of(List.of(AliceEN), List.of(Alicia))),
@@ -235,7 +232,7 @@ class OpExecutorTest {
                        Map.of("sparql.distinct.strategy", List.of("HASH", "WINDOW")));
     }
 
-    static @NonNull Stream<@NonNull Arguments> testTriplePattern() {
+    @SuppressWarnings("unused") static @NonNull Stream<@NonNull Arguments> testTriplePattern() {
         return Stream.of(
                 arguments(new TriplePattern(x, ageTerm, i23), List.of(List.of(Alice))),
                 arguments(new TriplePattern(x, knowsTerm, Alice),
@@ -253,7 +250,7 @@ class OpExecutorTest {
         testInContexts(in, expected);
     }
 
-    static @NonNull Stream<@NonNull Arguments> testUnion() {
+    @SuppressWarnings("unused") static @NonNull Stream<@NonNull Arguments> testUnion() {
         return Stream.of(
                 arguments(new Union(new TriplePattern(Alice, ageTerm, x),
                                     new TriplePattern(Bob, ageTerm, x)),
@@ -287,7 +284,7 @@ class OpExecutorTest {
         testInContexts(in, expected);
     }
 
-    static @NonNull Stream<@NonNull Arguments> testFilter() {
+    @SuppressWarnings("unused") static @NonNull Stream<@NonNull Arguments> testFilter() {
         return Stream.of(
                 arguments(new Filter(new TriplePattern(x, ageTerm, y), List.of("?y > 23")),
                           List.of(asList(Bob, i25))),
@@ -308,7 +305,7 @@ class OpExecutorTest {
         testInContexts(in, expected);
     }
 
-    static @NonNull Stream<@NonNull Arguments> testJoin() {
+    @SuppressWarnings("unused") static @NonNull Stream<@NonNull Arguments> testJoin() {
         return Stream.of(
     /* 1  */    arguments(new Join(new TriplePattern(x, knowsTerm, y),
                                    new TriplePattern(y, knowsTerm, Alice)),
@@ -395,7 +392,7 @@ class OpExecutorTest {
                 "sparql.join.strategy", List.of("BIND")));
     }
 
-    static @NonNull Stream<@NonNull Arguments> testLeftJoin() {
+    @SuppressWarnings("unused") static @NonNull Stream<@NonNull Arguments> testLeftJoin() {
         return Stream.of(
                 // optional always present
     /* 1 */     arguments(new LeftJoin(new TriplePattern(x, knowsTerm, Alice),
@@ -440,7 +437,7 @@ class OpExecutorTest {
         testInContexts(in, expected);
     }
 
-    static Stream<Arguments> testLimit() {
+    @SuppressWarnings("unused") static Stream<Arguments> testLimit() {
         return Stream.of(
                 arguments(new Limit(23, new TriplePattern(x, ageTerm, y)),
                           asList(asList(Alice, i23), asList(Bob, i25))),
@@ -457,7 +454,7 @@ class OpExecutorTest {
         testInContexts(in, expected);
     }
 
-    static Stream<Arguments> testOffset() {
+    @SuppressWarnings("unused") static Stream<Arguments> testOffset() {
         return Stream.of(
                 arguments(new Offset(0, new TriplePattern(Alice, ageTerm, x)),
                           List.of(List.of(i23))),
@@ -471,19 +468,18 @@ class OpExecutorTest {
         testInContexts(in, expected);
     }
 
-    static Stream<Arguments> testValues() {
+    @SuppressWarnings("unused") static Stream<Arguments> testValues() {
         return Stream.of(
                 arguments(new Values(
                                 new BatchQuerySolutions(
                                         List.of("x"),
-                                        List.of(SolutionRow.of(Alice))),
+                                        List.of(new Term[][]{{Alice}})),
                                 new TriplePattern(x, ageTerm, y)),
                           List.of(List.of(i23))),
                 arguments(new Values(
                                 new BatchQuerySolutions(
                                         List.of("x", "z"),
-                                        List.of(SolutionRow.of(Alice, i23),
-                                                SolutionRow.of(Bob, i23))),
+                                        List.of(new Term[][]{{Alice, i23}, {Bob, i23}})),
                                 new Join(
                                         new TriplePattern(x, knowsTerm, y),
                                         new TriplePattern(y, ageTerm, z),
@@ -494,8 +490,7 @@ class OpExecutorTest {
                 arguments(new Values(
                                 new BatchQuerySolutions(
                                         List.of("x", "z"),
-                                        List.of(SolutionRow.of(Alice, i25),
-                                                SolutionRow.of(Bob, i23))),
+                                        List.of(new Term[][]{{Alice, i25}, {Bob, i23}})),
                                 new Join(
                                         new TriplePattern(x, knowsTerm, y),
                                         new TriplePattern(y, ageTerm, z),
@@ -513,7 +508,7 @@ class OpExecutorTest {
         testInContexts(in, expected);
     }
 
-    static Stream<Arguments> testAssign() {
+    @SuppressWarnings("unused") static Stream<Arguments> testAssign() {
         return Stream.of(
                 arguments(new Assign(new TriplePattern(x, ageTerm, y), "z", "?y * 2"),
                           asList(asList(Alice, i23, i46), asList(Bob, i25, i50))),
@@ -530,8 +525,8 @@ class OpExecutorTest {
         testInContexts(in, expected);
     }
 
-    static Stream<Arguments> testExists() {
-        List<SolutionRow> has = List.of(SolutionRow.EMPTY), hasNot = List.of();
+    @SuppressWarnings("unused") static Stream<Arguments> testExists() {
+        List<Term @NonNull[]> has = Row.SINGLE_EMPTY, hasNot = List.of();
         return Stream.of(
         /* 1 */ arguments(new Exists(new TriplePattern(Alice, knowsTerm, x),
                                      new TriplePattern(x, ageTerm, y)),
@@ -557,8 +552,8 @@ class OpExecutorTest {
         testInContexts(in, expected);
     }
 
-    static Stream<Arguments> testNotExists() {
-        List<SolutionRow> yes = List.of(SolutionRow.EMPTY), no = List.of();
+    @SuppressWarnings("unused") static Stream<Arguments> testNotExists() {
+        List<Term @NonNull[]> yes = Row.SINGLE_EMPTY, no = List.of();
         return Stream.of(
                 arguments(new NotExists(new TriplePattern(Alice, knowsTerm, y),
                                         new TriplePattern(y, typeTerm, PropertyTerm)),
@@ -586,7 +581,7 @@ class OpExecutorTest {
         testInContexts(in, expected);
     }
 
-    static Stream<Arguments> testMinus() {
+    @SuppressWarnings("unused") static Stream<Arguments> testMinus() {
         return Stream.of(
         /* 1 */ arguments(new Minus(new TriplePattern(x, knowsTerm, y),
                                     new TriplePattern(x, ageTerm, z)),
@@ -599,8 +594,7 @@ class OpExecutorTest {
                           List.of(asList(Charlie, Alice))),
         /* 4 */ arguments(new Minus(new TriplePattern(x, knowsTerm, y),
                                     new Filter(new TriplePattern(y, knowsTerm, z), "?z = ?y")),
-                          asList(asList(Alice, Bob), asList(Bob, Alice), asList(Bob, Bob),
-                                 asList(Charlie, Alice)))
+                          asList(asList(Bob, Alice), asList(Charlie, Alice)))
         );
     }
 
@@ -609,9 +603,9 @@ class OpExecutorTest {
         testInContexts(in, expected);
     }
 
-    static Stream<Arguments> testAsk() {
-        List<List<SolutionRow>> positive = List.of(List.of());
-        List<List<SolutionRow>> negative = List.of();
+    @SuppressWarnings("unused") static Stream<Arguments> testAsk() {
+        List<List<Term>> positive = List.of(List.of());
+        List<List<Term>> negative = List.of();
         return Stream.of(
                 arguments(new Ask(new TriplePattern(x, knowsTerm, y)), positive),
                 arguments(new Ask(new TriplePattern(x, mboxTerm, y)), negative),

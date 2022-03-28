@@ -1,9 +1,9 @@
 package com.github.lapesd.hdtss.sparql.results;
 
+import com.github.lapesd.hdtss.model.Row;
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.vocab.XSD;
 import io.micronaut.buffer.netty.NettyByteBufferFactory;
 import io.micronaut.context.ApplicationContext;
@@ -18,25 +18,24 @@ import java.util.List;
 
 import static com.github.lapesd.hdtss.TestVocab.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CodecTestBase {
     public static QuerySolutions ASK_FALSE = new BatchQuerySolutions(List.of(), List.of());
-    public static QuerySolutions ASK_TRUE = new BatchQuerySolutions(List.of(), List.of(SolutionRow.EMPTY));
+    public static QuerySolutions ASK_TRUE = new BatchQuerySolutions(List.of(), Row.SINGLE_EMPTY);
     public static QuerySolutions ONE_ONE = new BatchQuerySolutions(List.of("x"),
-            List.of(SolutionRow.of(Alice)));
-    public static  QuerySolutions ONE_ROW = new BatchQuerySolutions(asList("x", "y", "z", "w"),
-            List.of(SolutionRow.of(AliceEN, bob, i23, blank1)));
+            List.of(new Term[][]{{Alice}}));
+    public static  QuerySolutions ONE_ROW = new BatchQuerySolutions(List.of("x", "y", "z", "w"),
+            List.of(new Term[][]{{AliceEN, bob, i23, blank1}}));
     public static QuerySolutions TWO_ROWS = new BatchQuerySolutions(List.of("x"),
-            asList(new SolutionRow(new Term[]{null}), SolutionRow.of(Charlie)));
-    public static QuerySolutions XML_PROBLEMATIC = new BatchQuerySolutions(asList("x", "y"),
-            asList(SolutionRow.of(new Term("\"&\""), new Term("\"<&>\"")),
-                   SolutionRow.of(new Term("<http://example.org/search?q=1&o=2>"),
-                                  new Term("\"x > 2\\n&& y < 3\"^^<"+ XSD.string+">"))));
-    public static QuerySolutions CSV_PROBLEMATIC = new BatchQuerySolutions(asList("x", "y"),
-            List.of(SolutionRow.of(new Term("\"\\\"1\\n2\\\"\""),
-                                   new Term("\"a,b\"@en"))));
+            List.of(new Term[][]{{null}, {Charlie}}));
+    public static QuerySolutions XML_PROBLEMATIC = new BatchQuerySolutions(List.of("x", "y"),
+            List.of(new Term[][]{{new Term("\"&\""), new Term("\"<&>\"")},
+                                 {new Term("<http://example.org/search?q=1&o=2>"),
+                                  new Term("\"x > 2\\n&& y < 3\"^^<"+ XSD.string+">")}}));
+    public static QuerySolutions CSV_PROBLEMATIC = new BatchQuerySolutions(List.of("x", "y"),
+            List.of(new Term[][]{{new Term("\"\\\"1\\n2\\\"\""),
+                                  new Term("\"a,b\"@en")}}));
     ApplicationContext applicationContext;
     MediaTypeCodec codec;
     final Class<? extends MediaTypeCodec> encoderClass;
@@ -77,6 +76,6 @@ public class CodecTestBase {
     protected void doTestDecode(@NonNull QuerySolutions expected, @NonNull String encoded) {
         QuerySolutions actual = codec.decode(QuerySolutions.class, encoded);
         assertEquals(expected.varNames(), actual.varNames());
-        assertEquals(expected.list(), actual.list());
+        assertEquals(expected.wrappedList(), actual.wrappedList());
     }
 }

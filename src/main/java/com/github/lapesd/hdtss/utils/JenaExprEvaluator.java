@@ -1,7 +1,6 @@
 package com.github.lapesd.hdtss.utils;
 
 import com.github.lapesd.hdtss.model.Term;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
@@ -9,6 +8,7 @@ import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.function.FunctionEnvBase;
 import org.apache.jena.sparql.util.Context;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.List;
 import java.util.function.Function;
@@ -26,16 +26,16 @@ public class JenaExprEvaluator implements
         this.tmpBinding = new RowJenaBinding(inputVars);
     }
 
-    public @NonNull JenaExprEvaluator setInput(@NonNull SolutionRow row) {
+    public @NonNull JenaExprEvaluator setInput(@Nullable Term @NonNull[] row) {
         tmpBinding.setRow(row);
         return this;
     }
 
-    public @NonNull Term apply(@NonNull Expr expr, @NonNull SolutionRow row) {
+    public @NonNull Term apply(@NonNull Expr expr, @Nullable Term @NonNull[] row) {
         return setInput(row).apply(expr);
     }
 
-    public boolean test(@NonNull Expr expr, @NonNull SolutionRow row) {
+    public boolean test(@NonNull Expr expr, @Nullable Term @NonNull[] row) {
         return setInput(row).test(expr);
     }
 

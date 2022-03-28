@@ -3,9 +3,7 @@ package com.github.lapesd.hdtss.sparql.results.codecs;
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.io.buffer.ByteBuffer;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.codec.CodecConfiguration;
@@ -14,6 +12,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -27,7 +26,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @Singleton
 public class TSVCodec extends AbstractSVEncoder {
     @Inject
-    public TSVCodec(@Named("sparqlTSV") @Nullable CodecConfiguration configuration) {
+    public TSVCodec(@Named("sparqlTSV") @io.micronaut.core.annotation.Nullable
+                                CodecConfiguration configuration) {
         super('\t', "?", "\n", SparqlMediaTypes.RESULTS_TSV_TYPE, configuration);
     }
 
@@ -61,13 +61,13 @@ public class TSVCodec extends AbstractSVEncoder {
             for (Matcher m = VAR_RX.matcher(hLine); m.find(); )
                 vars.add(m.group(1));
             int nVars = vars.size();
-            List<SolutionRow> rows = new ArrayList<>();
+            List<@Nullable Term @NonNull[]> rows = new ArrayList<>();
             for (String ln = reader.readLine(); ln != null; ln = reader.readLine()) {
                 Term[] terms = new Term[nVars];
                 Matcher m = TERM_RX.matcher(ln);
                 for (int i = 0; m.find() && i < nVars; ++i)
                     terms[i] = toTerm(m.group(1));
-                rows.add(new SolutionRow(terms));
+                rows.add(terms);
             }
             return (T) new BatchQuerySolutions(vars, rows);
         } catch (IOException e) {

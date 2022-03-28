@@ -3,13 +3,13 @@ package com.github.lapesd.hdtss.sparql.impl.assign;
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.Assign;
 import com.github.lapesd.hdtss.model.nodes.Op;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.sparql.OpExecutor;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.utils.JenaExprEvaluator;
 import com.github.lapesd.hdtss.utils.JenaUtils;
 import org.apache.jena.sparql.expr.Expr;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +31,7 @@ abstract class JenaAssignExecutor implements OpExecutor {
     }
 
     protected static class Evaluator
-            implements Function<@NonNull SolutionRow, @NonNull SolutionRow> {
+            implements Function<@Nullable Term @NonNull[], @Nullable Term @NonNull[]> {
         private final @NonNull JenaExprEvaluator evaluator;
         private final @NonNull Map<String, Expr> var2expr;
         private final @NonNull List<String> outVars;
@@ -47,14 +47,14 @@ abstract class JenaAssignExecutor implements OpExecutor {
                     : "Assign is rearranging variables from its input Op";
         }
 
-        @Override public @NonNull SolutionRow apply(@NonNull SolutionRow inputRow) {
-            evaluator.setInput(inputRow);
-            Term[] outputs = new Term[outVars.size()], inputs = inputRow.terms();
+        @Override public @Nullable Term @NonNull[] apply(@Nullable Term @NonNull[] inputs) {
+            evaluator.setInput(inputs);
+            Term[] outputs = new Term[outVars.size()];
             for (int i = 0; i < outputs.length; i++) {
                 var expr = var2expr.getOrDefault(outVars.get(i), null);
                 outputs[i] = expr == null ? inputs[i] : evaluator.apply(expr);
             }
-            return new SolutionRow(outputs);
+            return outputs;
         }
     }
 

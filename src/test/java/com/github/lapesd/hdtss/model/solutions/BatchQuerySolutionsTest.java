@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -18,8 +17,7 @@ class BatchQuerySolutionsTest extends BaseQuerySolutionsTest {
     @Override
     protected @NonNull QuerySolutions createFor(@NonNull List<@NonNull String> names,
                                                 @NonNull List<Term[]> rows) {
-        var wrapped = rows.stream().map(SolutionRow::new).collect(Collectors.toList());
-        return new BatchQuerySolutions(names, wrapped);
+        return new BatchQuerySolutions(names, rows);
     }
 
     @Test

@@ -25,7 +25,7 @@ public class ValuesFluxExecutor extends ValuesExecutor {
         Op inner = node.children().get(0);
         BatchQuerySolutions values = ((Values) node).values();
         return new FluxQuerySolutions(node.varNames(), values.flux().flatMap(r ->
-                dispatcher.execute(inner.bind(values.varNames(), r.terms())).flux()
+                dispatcher.execute(inner.bind(values.varNames(), r)).flux()
         ));
     }
 }

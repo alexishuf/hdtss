@@ -1,14 +1,15 @@
 package com.github.lapesd.hdtss.sparql.impl.filter;
 
+import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.Filter;
 import com.github.lapesd.hdtss.model.nodes.Op.Type;
-import com.github.lapesd.hdtss.model.solutions.SolutionRow;
 import com.github.lapesd.hdtss.sparql.OpExecutor;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.utils.JenaExprEvaluator;
 import com.github.lapesd.hdtss.utils.JenaUtils;
 import org.apache.jena.sparql.expr.Expr;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -27,7 +28,7 @@ abstract class JenaFilterExecutor implements OpExecutor {
         return SUPPORTED_TYPES;
     }
 
-    protected static class Evaluator implements Predicate<@NonNull SolutionRow> {
+    protected static class Evaluator implements Predicate<@Nullable Term @NonNull[]> {
         private final @NonNull JenaExprEvaluator evaluator;
         private final @NonNull List<Expr> parsedFilters;
 
@@ -36,7 +37,7 @@ abstract class JenaFilterExecutor implements OpExecutor {
             this.parsedFilters = JenaUtils.parseFilters(filter.filters());
         }
 
-        @Override public boolean test(@NonNull SolutionRow row) {
+        @Override public boolean test(@Nullable Term @NonNull[] row) {
             evaluator.setInput(row);
             for (Expr filter : parsedFilters) {
                 if (!evaluator.test(filter))
