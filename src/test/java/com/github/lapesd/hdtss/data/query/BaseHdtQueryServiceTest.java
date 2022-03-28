@@ -32,7 +32,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 public abstract class BaseHdtQueryServiceTest {
-    public static record Implementation(@NonNull String name, @NonNull HdtQueryService service) {}
+    public record Implementation(@NonNull String name,
+                                 @NonNull HdtQueryService service,
+                                 @NonNull ApplicationContext appCtx) implements  AutoCloseable {
+        @Override public void close() { appCtx.close(); }
+    }
 
     protected abstract @NonNull List<Implementation> createImplementations();
 
@@ -76,13 +80,15 @@ public abstract class BaseHdtQueryServiceTest {
     void testIterateQuery(@NonNull String queryString, @NonNull Set<SolutionRow> expected) {
         TriplePattern query = TestUtils.parseTriplePattern(queryString);
         for (Implementation impl : createImplementations()) {
-            for (FlowType flowType : FlowType.values()) {
-                QuerySolutions sols = impl.service.query(query, flowType);
-                for (int i = 0, rounds = sols.isHot() ? 1 : 2; i < rounds; i++) {
-                    var msg = format("flowType=%s, round=%d, impl=%s", flowType, i, impl.name);
-                    Set<SolutionRow> actual = new HashSet<>();
-                    sols.forEach(actual::add);
-                    assertEquals(expected, fixEquals(actual), msg);
+            try (impl) {
+                for (FlowType flowType : FlowType.values()) {
+                    QuerySolutions sols = impl.service.query(query, flowType);
+                    for (int i = 0, rounds = sols.isHot() ? 1 : 2; i < rounds; i++) {
+                        var msg = format("flowType=%s, round=%d, impl=%s", flowType, i, impl.name);
+                        Set<SolutionRow> actual = new HashSet<>();
+                        sols.forEach(actual::add);
+                        assertEquals(expected, fixEquals(actual), msg);
+                    }
                 }
             }
         }
@@ -93,11 +99,13 @@ public abstract class BaseHdtQueryServiceTest {
     void testListQuery(@NonNull String queryString, @NonNull Set<SolutionRow> expected) {
         TriplePattern query = TestUtils.parseTriplePattern(queryString);
         for (Implementation impl : createImplementations()) {
-            for (FlowType flowType : FlowType.values()) {
-                QuerySolutions sols = impl.service.query(query, flowType);
-                for (int i = 0, rounds = sols.isHot() ? 1 : 2; i < rounds; i++) {
-                    var msg = format("flowType=%s, round=%d, impl=%s", flowType, i, impl.name);
-                    assertEquals(expected, new HashSet<>(fixEquals(sols.list())), msg);
+            try (impl) {
+                for (FlowType flowType : FlowType.values()) {
+                    QuerySolutions sols = impl.service.query(query, flowType);
+                    for (int i = 0, rounds = sols.isHot() ? 1 : 2; i < rounds; i++) {
+                        var msg = format("flowType=%s, round=%d, impl=%s", flowType, i, impl.name);
+                        assertEquals(expected, new HashSet<>(fixEquals(sols.list())), msg);
+                    }
                 }
             }
         }
@@ -108,12 +116,14 @@ public abstract class BaseHdtQueryServiceTest {
     void testStreamQuery(@NonNull String queryString, @NonNull Set<SolutionRow> expected) {
         TriplePattern query = TestUtils.parseTriplePattern(queryString);
         for (Implementation impl : createImplementations()) {
-            for (FlowType flowType : FlowType.values()) {
-                QuerySolutions sols = impl.service.query(query, flowType);
-                for (int i = 0, rounds = sols.isHot() ? 1 : 2; i < rounds; i++) {
-                    var msg = format("flowType=%s, round=%d, impl=%s", flowType, i, impl.name);
-                    var ac = sols.stream().map(TestUtils::fixEquals).collect(Collectors.toSet());
-                    assertEquals(expected, ac, msg);
+            try (impl) {
+                for (FlowType flowType : FlowType.values()) {
+                    QuerySolutions sols = impl.service.query(query, flowType);
+                    for (int i = 0, rounds = sols.isHot() ? 1 : 2; i < rounds; i++) {
+                        var msg = format("flowType=%s, round=%d, impl=%s", flowType, i, impl.name);
+                        var ac = sols.stream().map(TestUtils::fixEquals).collect(Collectors.toSet());
+                        assertEquals(expected, ac, msg);
+                    }
                 }
             }
         }
@@ -124,15 +134,17 @@ public abstract class BaseHdtQueryServiceTest {
     void testSubscribeQuery(@NonNull String queryString, @NonNull Set<SolutionRow> expected){
         TriplePattern query = TestUtils.parseTriplePattern(queryString);
         for (Implementation impl : createImplementations()) {
-            for (FlowType flowType : FlowType.values()) {
-                QuerySolutions solutions = impl.service.query(query, flowType);
-                for (int i = 0, rounds = solutions.isHot() ? 1 : 2; i < rounds; i++) {
-                    var msg = format("flowType=%s, round=%d, impl=%s", flowType, i, impl.name);
-                    var actual = solutions.flux()
-                            .subscribeOn(Schedulers.single())
-                            .collect(toSet()).block();
-                    assertNotNull(actual);
-                    assertEquals(expected, fixEquals(actual), msg);
+            try (impl) {
+                for (FlowType flowType : FlowType.values()) {
+                    QuerySolutions solutions = impl.service.query(query, flowType);
+                    for (int i = 0, rounds = solutions.isHot() ? 1 : 2; i < rounds; i++) {
+                        var msg = format("flowType=%s, round=%d, impl=%s", flowType, i, impl.name);
+                        var actual = solutions.flux()
+                                .subscribeOn(Schedulers.single())
+                                .collect(toSet()).block();
+                        assertNotNull(actual);
+                        assertEquals(expected, fixEquals(actual), msg);
+                    }
                 }
             }
         }

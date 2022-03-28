@@ -59,7 +59,7 @@ class HdtQueryServiceImplTest extends BaseHdtQueryServiceTest {
                     .map(kv -> kv.getKey() + "=" + kv.getValue()).collect(Collectors.joining("\n"));
             var ctx = ApplicationContext.builder().properties(props).start();
             var svc = ctx.createBean(HdtQueryServiceImpl.class);
-            return new BaseHdtQueryServiceTest.Implementation(name, svc);
+            return new BaseHdtQueryServiceTest.Implementation(name, svc, ctx);
         }).collect(Collectors.toList());
     }
 }
