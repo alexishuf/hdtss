@@ -1,0 +1,3 @@
+[submodule "hdt-java"]
+	path = hdt-java
+	url = https://github.com/rdfhdt/hdt-java.git

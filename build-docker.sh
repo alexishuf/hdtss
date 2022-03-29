@@ -53,14 +53,20 @@ if [ -z "$VERSION" ]; then
   fi
 fi
 
+# pull hdt-java if not already done by the user
+if [ ! -d hdt-java -o "$(ls hdt-java | wc -l)" == 0 ]; then
+  echo "Pulling hdt-java submodule"
+  (set -x; git submodule update --init --recursive)
+fi
+
 # Build JDK variant
 if [ "$DO_JDK" == "y" ]; then
-  docker build -f jdk.Dockerfile -t $IMG:$VERSION-jdk -t $IMG:jdk -t $IMG .
+  (set -x; docker build -f jdk.Dockerfile -t $IMG:$VERSION-jdk -t $IMG:jdk -t $IMG -t $VERSION .)
 fi
 
 # Build native image
 test "$DO_NATIVE" == "y" && \
-  docker build -f native.Dockerfile -t $IMG:$VERSION-native -t $IMG:native .
+  (set -x; docker build -f native.Dockerfile -t $IMG:$VERSION-native -t $IMG:native .)
 
 # Push images
 if [ "$PUSH" == "y" ]; then

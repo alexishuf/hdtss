@@ -4,10 +4,12 @@
 FROM findepi/graalvm:java17-native AS build
 WORKDIR /var/build
 ADD src src
+ADD hdt-java hdt-java
 ADD .mvn .mvn
 ADD pom.xml mvnw ./
-RUN ./mvnw verify && \
-    ./mvnw package -Dpackaging=native-image
+RUN (cd hdt-java && ../mvnw install) &&\
+    ./mvnw verify && \
+    ./mvnw package -Pfaster -Dpackaging=native-image
 
 FROM debian:stable-slim
 COPY --from=build /var/build/target/hdtss /usr/bin/

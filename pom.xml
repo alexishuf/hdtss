@@ -100,12 +100,23 @@
     <dependency>
       <groupId>org.apache.jena</groupId>
       <artifactId>apache-jena-libs</artifactId>
+      <!--suppress MavenPackageUpdate -->
       <version>3.13.1</version> <!-- same version has org.rdfhdt -->
       <type>pom</type>
     </dependency>
     <dependency>
       <groupId>org.rdfhdt</groupId>
       <artifactId>hdt-java-core</artifactId>
+      <!-- Versions >= 2.2 are slower, thus the use of 2.1.2 -->
+      <!-- Enable the "faster" profile with -Pfaster to use 2.1.2-FASTER, which is
+           8.2% faster and reduces total allocation (not peak memory usage) in stress testing
+           by almost half since it avoids the following three allocations per call of extract()
+           methods of HDT dictionaries:
+           - one CompactString and associated byte[]
+           - one DelayedString wrapping the CompactString
+           - one ReplazableString (a ThreadLocal holds a reusable instance)
+      -->
+      <!--suppress MavenPackageUpdate -->
       <version>2.1.2</version>
     </dependency>
 
@@ -193,6 +204,17 @@
   </build>
 
   <profiles>
+    <profile>
+      <id>faster</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.rdfhdt</groupId>
+          <artifactId>hdt-java-core</artifactId>
+          <!--suppress MavenPackageUpdate -->
+          <version>2.1.2-FASTER</version>
+        </dependency>
+      </dependencies>
+    </profile>
     <profile>
       <activation>
         <property>

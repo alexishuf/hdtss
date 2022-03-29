@@ -4,9 +4,10 @@
 FROM openjdk:17-bullseye AS build
 WORKDIR /var/build
 ADD src src
+ADD hdt-java hdt-java
 ADD .mvn .mvn
 ADD pom.xml mvnw ./
-RUN ./mvnw package
+RUN (cd hdt-java && ../mvnw install) && ./mvnw package -Pfaster
 
 FROM openjdk:17-bullseye
 COPY --from=build /var/build/target/hdtss /usr/bin/
