@@ -1,72 +1,18 @@
 package com.github.lapesd.hdtss.model.nodes;
 
 import com.github.lapesd.hdtss.model.Term;
-import com.github.lapesd.hdtss.utils.TokenPatterns;
+import com.github.lapesd.hdtss.utils.BindUtils;
+import com.github.lapesd.hdtss.utils.ExprUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.util.regex.Pattern.compile;
 
 public final class Filter extends AbstractOp {
     /* --- --- --- constants --- --- --- */
-
-
-    private static final @NonNull Pattern S_RX = compile("(\"(\"\")?|'('')?|<[= ?$]?|\\?|\\$)");
-    private static final @NonNull Pattern CL_SHORT_SINGLE_RX = compile("[^\\\\]'");
-    private static final @NonNull Pattern CL_SHORT_DOUBLE_RX = compile("[^\\\\]\"");
-    private static final @NonNull Pattern CL_LONG_SINGLE_RX = compile("'*'''");
-    private static final @NonNull Pattern CL_LONG_DOUBLE_RX = compile("\"*\"\"\"");
-    private static final @NonNull Pattern CL_IRI_RX = compile(">");
-    private static final @NonNull Term S0 = new Term("$0");
-
-    private enum State {
-        S {
-            @Override public @NonNull Pattern pattern() {return S_RX;}
-            @Override public @NonNull State next(@NonNull Matcher matchedMatcher) {
-                return switch (matchedMatcher.group()) {
-                    case "?", "$", "<?", "<$" -> VAR_NAME;
-                    case "\"" -> CL_SHORT_DOUBLE;
-                    case "\"\"\"" -> CL_LONG_DOUBLE;
-                    case "'" -> CL_SHORT_SINGLE;
-                    case "'''" -> CL_LONG_SINGLE;
-                    case "<" -> CL_IRI;
-                    case "< ", "<=" -> S;
-                    default -> throw new IllegalStateException();
-                };
-            }
-        },
-        VAR_NAME {
-            @Override public @NonNull Pattern pattern() {return TokenPatterns.VAR_NAME_RX;}
-            @Override public @NonNull State next(@NonNull Matcher matchedMatcher) {return S;}
-        },
-        CL_SHORT_SINGLE {
-            @Override public @NonNull Pattern pattern() {return CL_SHORT_SINGLE_RX;}
-            @Override public @NonNull State next(@NonNull Matcher matchedMatcher) {return S;}
-        },
-        CL_SHORT_DOUBLE {
-            @Override public @NonNull Pattern pattern() {return CL_SHORT_DOUBLE_RX;}
-            @Override public @NonNull State next(@NonNull Matcher matchedMatcher) {return S;}
-        },
-        CL_LONG_SINGLE {
-            @Override public @NonNull Pattern pattern() {return CL_LONG_SINGLE_RX;}
-            @Override public @NonNull State next(@NonNull Matcher matchedMatcher) {return S;}
-        },
-        CL_LONG_DOUBLE {
-            @Override public @NonNull Pattern pattern() {return CL_LONG_DOUBLE_RX;}
-            @Override public @NonNull State next(@NonNull Matcher matchedMatcher) {return S;}
-        },
-        CL_IRI {
-            @Override public @NonNull Pattern pattern() {return CL_IRI_RX;}
-            @Override public @NonNull State next(@NonNull Matcher matchedMatcher) {return S; }
-        };
-
-        public abstract @NonNull Pattern pattern();
-        public abstract @NonNull State next(@NonNull Matcher matchedMatcher);
-    }
     private static final Pattern WRAPPER_RX = compile("(?i)^\\s*FILTER\\((.*)\\)\\s*$");
 
     /* --- --- --- instance fields and constructor --- --- --- */
@@ -119,7 +65,7 @@ public final class Filter extends AbstractOp {
         if (filtersVarNames == null) {
             Set<@NonNull String> set = new HashSet<>();
             for (String filter : filters)
-                findVarNames(filter, set);
+                ExprUtils.findVarNames(filter, set);
             filtersVarNames = Collections.unmodifiableSet(set);
         }
         return filtersVarNames;
@@ -143,20 +89,14 @@ public final class Filter extends AbstractOp {
             return new Filter(inner().bind(v2t, bindType), filters);
         List<@NonNull String> boundFilters = new ArrayList<>(filters.size());
         for (String filter : filters)
-            boundFilters.add(bindFilter(filter, v2t));
+            boundFilters.add(ExprUtils.bindExpr(filter, v2t));
         return new Filter(inner().bind(v2t), boundFilters);
     }
 
     @Override
     public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row,
                             @NonNull BindType bindType) {
-        if (row.length != varNames.size())
-            throw new IllegalArgumentException("varNames.size() != row.length");
-        else if (row.length == 0)
-            return this;
-        Map<String, Term> v2t = new HashMap<>();
-        for (int i = 0; i < row.length; i++) v2t.put(varNames.get(i), row[i]);
-        return bind(v2t, bindType);
+        return BindUtils.bindWithMap(this, varNames, row, bindType);
     }
 
     @Override
@@ -181,45 +121,6 @@ public final class Filter extends AbstractOp {
         filterUnion.addAll(filters);
         filterUnion.addAll(child.filters);
         return new Filter(child.inner(), filterUnion);
-    }
-
-    /* --- --- --- private methods --- --- --- */
-
-    static @NonNull String bindFilter(@NonNull String filter, @NonNull Map<@NonNull String, Term> v2t) {
-        StringBuilder b = new StringBuilder(filter.length());
-        int consumed = 0;
-        State st = State.S;
-        var m = st.pattern().matcher(filter);
-        while (m.find()) {
-            b.append(filter, consumed, m.start());
-            State next = st.next(m);
-            switch (st) {
-                case S -> {
-                    if (next != State.VAR_NAME)
-                        b.append(filter, m.start(), m.end());
-                    else if (m.end()-m.start() > 1)
-                        b.append(filter, m.start(), m.end()-1);
-                }
-                case VAR_NAME -> {
-                    Term term = v2t.getOrDefault(m.group(), null);
-                    if (term != null) b.append(term.sparql());
-                    else              b.append(filter, m.start()-1, m.end());
-                }
-                default -> b.append(filter, m.start(), m.end());
-            }
-            m = (st = next).pattern().matcher(filter).region(consumed = m.end(), filter.length());
-        }
-        return b.append(filter, consumed, filter.length()).toString();
-    }
-
-    static void findVarNames(@NonNull String filter, @NonNull Set<@NonNull String> set) {
-        State st = State.S;
-        var m = st.pattern().matcher(filter);
-        while (m.find()) {
-            if (st == State.VAR_NAME)
-                set.add(m.group());
-            m = (st = st.next(m)).pattern().matcher(filter).region(m.end(), filter.length());
-        }
     }
 
 }
