@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.github.lapesd.hdtss.TestVocab.*;
@@ -60,5 +61,35 @@ class ExistsTest {
     @ParameterizedTest @MethodSource
     public void testVarNames(@NonNull Exists exists, @NonNull List<String> expected) {
         assertEquals(expected, exists.varNames());
+    }
+
+    static Stream<Arguments> testInputFilterVarNames() {
+        return Stream.of(
+        /*  1 */arguments(new Exists(new TriplePattern(Alice, knowsTerm, x),
+                                     new TriplePattern(x, ageTerm, y)),
+                          Set.of("y")),
+        /*  2 */arguments(new Exists(new TriplePattern(Alice, knowsTerm, x),
+                                     new Filter(new TriplePattern(x, ageTerm, y), "?y > 23")),
+                          Set.of("y")),
+        /*  3 */arguments(new Exists(new TriplePattern(Alice, knowsTerm, x),
+                                     new Filter(new TriplePattern(x, ageTerm, y), "?y > ?x")),
+                          Set.of("y")),
+        /*  4 */arguments(new Exists(new Filter(new TriplePattern(x, ageTerm, y), "?y > ?x"),
+                                     new TriplePattern(Alice, knowsTerm, x)),
+                          Set.of()),
+        /*  5 */arguments(new Exists(new TriplePattern(Alice, knowsTerm, x),
+                                     new Filter(new TriplePattern(x, ageTerm, y), "?y > ?z")),
+                          Set.of("y", "z")),
+                // bind is directional
+        /*  6 */arguments(new Exists(new Filter(new TriplePattern(Alice, ageTerm, x), "?x > ?y"),
+                                     new TriplePattern(Bob, ageTerm, y)),
+                          Set.of("y"))
+        );
+    }
+
+    @ParameterizedTest @MethodSource
+    public void testInputFilterVarNames(@NonNull Exists op,
+                                        @NonNull Set<@NonNull String> expected) {
+        assertEquals(expected, op.inputVars());
     }
 }

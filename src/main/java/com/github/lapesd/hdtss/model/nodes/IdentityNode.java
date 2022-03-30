@@ -6,6 +6,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This node acts as an algebraic identity on operators.
@@ -50,17 +51,19 @@ public final class IdentityNode implements Op {
         return Collections.emptyList();
     }
 
+    @Override public @NonNull Set<@NonNull String> inputVars() {
+        return Set.of();
+    }
+
     @Override public @NonNull List<@NonNull Op> children() {
         return Collections.emptyList();
     }
 
-    @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row,
-                                      @NonNull BindType ignored) {
+    @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row) {
         return this;
     }
 
-    @Override public @NonNull Op bind(@NonNull Map<String, Term> var2term,
-                                      @NonNull BindType ignored) {
+    @Override public @NonNull Op bind(@NonNull Map<String, Term> var2term) {
         return this;
     }
 

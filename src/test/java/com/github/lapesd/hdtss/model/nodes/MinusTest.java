@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.github.lapesd.hdtss.TestVocab.*;
@@ -58,26 +59,26 @@ class MinusTest {
         return Stream.of(
         /* 1 */ arguments(new Minus(new TriplePattern(Alice, knowsTerm, x),
                                     new TriplePattern(x, ageTerm, y)),
-                          Map.of("x", Bob), Op.BindType.ALL,
+                          Map.of("x", Bob),
                           new Minus(new TriplePattern(Alice, knowsTerm, Bob),
                                     new TriplePattern(Bob, ageTerm, y))),
         /* 2 */ arguments(new Minus(new TriplePattern(Alice, knowsTerm, x),
                                     new TriplePattern(x, ageTerm, y)),
-                          Map.of("x", Bob), Op.BindType.ONLY_TRIPLES,
+                          Map.of("x", Bob),
                           new Minus(new TriplePattern(Alice, knowsTerm, Bob),
                                     new TriplePattern(Bob, ageTerm, y))),
 
         /* 3 */ arguments(new Minus(new Join(new TriplePattern(Alice, knowsTerm, x),
                                              new TriplePattern(Alice, ageTerm, y))       ,
                                     new Filter(new TriplePattern(x, ageTerm, z), "?z = ?y")),
-                          Map.of("y", i23), Op.BindType.ALL,
+                          Map.of("y", i23),
                           new Minus(new Join(new TriplePattern(Alice, knowsTerm, x),
                                              new TriplePattern(Alice, ageTerm, i23)),
                                      new Filter(new TriplePattern(x, ageTerm, z), "?z = ?y"))),
         /* 4 */ arguments(new Minus(new Join(new TriplePattern(Alice, knowsTerm, x),
                                              new TriplePattern(Alice, ageTerm, y))       ,
                                     new Filter(new TriplePattern(x, ageTerm, z), "?z = ?y")),
-                          Map.of("y", i23), Op.BindType.ONLY_TRIPLES,
+                          Map.of("y", i23),
                           new Minus(new Join(new TriplePattern(Alice, knowsTerm, x),
                                              new TriplePattern(Alice, ageTerm, i23)),
                                     new Filter(new TriplePattern(x, ageTerm, z), "?z = ?y"))),
@@ -86,7 +87,7 @@ class MinusTest {
                                     new Filter(new Join(new TriplePattern(x, knowsTerm, z),
                                                         new TriplePattern(z, ageTerm, w)),
                                                "?w > ?y")),
-                          Map.of("y", i25), Op.BindType.ALL,
+                          Map.of("y", i25),
                           new Minus(new Filter(new TriplePattern(x, ageTerm, i25),
                                                "\"25\"^^<"+XSD.integer+"> > 23"),
                                     new Filter(new Join(new TriplePattern(x, knowsTerm, z),
@@ -96,9 +97,9 @@ class MinusTest {
                                     new Filter(new Join(new TriplePattern(x, knowsTerm, z),
                                                         new TriplePattern(z, ageTerm, w)),
                                                "?w > ?y")),
-                          Map.of("y", i25), Op.BindType.ONLY_TRIPLES,
+                          Map.of("y", i25),
                           new Minus(new Filter(new TriplePattern(x, ageTerm, i25),
-                                               "?y > 23"),
+                                               i25+" > 23"),
                                     new Filter(new Join(new TriplePattern(x, knowsTerm, z),
                                                         new TriplePattern(z, ageTerm, w)),
                                                "?w > ?y")))
@@ -107,15 +108,17 @@ class MinusTest {
 
     @SuppressWarnings("UnstableApiUsage") @ParameterizedTest @MethodSource
     public void testBind(@NonNull Minus in, @NonNull Map<String, Term> v2t,
-                         Op. @NonNull BindType bindType, @NonNull Minus expected) {
-        Op bound = in.bind(v2t, bindType);
+                         @NonNull Minus expected) {
+        Op bound = in.bind(v2t);
+        assertEquals(expected.toString(), bound.toString());
         assertTrue(bound.deepEquals(expected));
         assertTrue(expected.deepEquals(bound));
 
         for (List<String> permutation : Collections2.permutations(v2t.keySet())) {
             Term[] row = new Term[permutation.size()];
             for (int i = 0; i < row.length; i++) row[i] = v2t.get(permutation.get(i));
-            Op listBound = in.bind(permutation, row, bindType);
+            Op listBound = in.bind(permutation, row);
+            assertEquals(expected.toString(), listBound.toString());
             assertTrue(listBound.deepEquals(expected));
             assertTrue(expected.deepEquals(listBound));
         }
@@ -156,5 +159,37 @@ class MinusTest {
         assertTrue(replaced.deepEquals(expected));
         assertTrue(expected.deepEquals(replaced));
         assertEquals(oldVars, op.varNames());
+    }
+
+
+    static Stream<Arguments> testInputFilterVarNames() {
+        return Stream.of(
+                arguments(new Minus(new TriplePattern(Alice, knowsTerm, x),
+                                    new TriplePattern(x, ageTerm, y)),
+                          Set.of()),
+                arguments(new Minus(new TriplePattern(Alice, knowsTerm, x),
+                                    new Filter(new TriplePattern(x, ageTerm, y), "?y > 23")),
+                          Set.of()),
+                // by MINUS semantics, z must be unbound forever, it is not an "input"
+                arguments(new Minus(new TriplePattern(Alice, knowsTerm, x),
+                                new Filter(new TriplePattern(x, ageTerm, y), "?y > ?z")),
+                          Set.of()),
+                // by MINUS semantics, y must be unbound forever, it is not an "input"
+                arguments(new Minus(new TriplePattern(x, ageTerm, y),
+                                    new Filter(new TriplePattern(Bob, ageTerm, z), "?z > ?y")),
+                          Set.of()),
+                arguments(new Minus(new Filter(new TriplePattern(Alice, ageTerm, x), "?x > ?y"),
+                                    new TriplePattern(Bob, ageTerm, x)),
+                          Set.of("y")),
+                // the bind is direction, y cannot be assigned by the right operand
+                arguments(new Minus(new Filter(new TriplePattern(Alice, ageTerm, x), "?x > ?y"),
+                                new TriplePattern(Bob, ageTerm, y)),
+                          Set.of("y"))
+        );
+    }
+
+    @ParameterizedTest @MethodSource
+    void testInputFilterVarNames(@NonNull Minus op, @NonNull Set<@NonNull String> expected) {
+        assertEquals(expected, op.inputVars());
     }
 }

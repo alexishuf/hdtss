@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 abstract class AbstractOp implements Op {
     protected final @NonNull List<@NonNull Op> children;
     protected @Nullable List<@NonNull String> varNames = null;
+    protected @Nullable Set<@NonNull String> inputVarNames = null;
 
     public AbstractOp(@NonNull List<@NonNull Op> children) {
         this.children = children;
@@ -29,6 +30,19 @@ abstract class AbstractOp implements Op {
         return varNames;
     }
 
+    @Override public @NonNull Set<@NonNull String> inputVars() {
+        if (inputVarNames == null) {
+            Set<@NonNull String> union = null;
+            for (Op child : children()) {
+                Set<@NonNull String> set = child.inputVars();
+                if (!set.isEmpty())
+                    (union == null ? union = new HashSet<>() : union).addAll(set);
+            }
+            inputVarNames = union == null ? Set.of() : union;
+        }
+        return inputVarNames;
+    }
+
     @Override public boolean deepEquals(@NonNull Op other) {
         if (!getClass().equals(other.getClass()))
             return false;
@@ -43,8 +57,7 @@ abstract class AbstractOp implements Op {
         return true;
     }
 
-    @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row,
-                                      @NonNull BindType bindType) {
+    @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row) {
         if (varNames.isEmpty())
             return this;
         List<@NonNull Op> list = new ArrayList<>(children().size());
@@ -53,8 +66,7 @@ abstract class AbstractOp implements Op {
         return withChildren(list);
     }
 
-    @Override public @NonNull Op bind(@NonNull Map<String, Term> var2term,
-                                      @NonNull BindType bindType) {
+    @Override public @NonNull Op bind(@NonNull Map<String, Term> var2term) {
         if (var2term.isEmpty())
             return this;
         List<@NonNull Op> list = new ArrayList<>(children().size());

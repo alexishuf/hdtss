@@ -40,8 +40,7 @@ public class Values extends AbstractOp {
         return varNames;
     }
 
-    @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row,
-                                      @NonNull BindType ignored) {
+    @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row) {
         var inner = children.get(0);
         var forbidden = values.varNames();
         var useful = inner.varNames();
@@ -66,8 +65,7 @@ public class Values extends AbstractOp {
         }
     }
 
-    @Override public @NonNull Op bind(@NonNull Map<String, Term> var2term,
-                                      @NonNull BindType ignored) {
+    @Override public @NonNull Op bind(@NonNull Map<String, Term> var2term) {
         Op inner = children.get(0);
         if (inner.varNames().stream().noneMatch(var2term::containsKey)) {
             return this; // no work

@@ -3,7 +3,9 @@ package com.github.lapesd.hdtss.model.nodes;
 import com.github.lapesd.hdtss.model.Term;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A node in a SPARQL algebra expression.
@@ -38,18 +40,6 @@ public interface Op {
      */
     @NonNull Type type();
 
-    enum BindType {
-        /**
-         * Only bind triple patters (recursively). Do not recurse into
-         * FILTER()s, FILTER (NOT) EXISTS, MINUS and sub-queries
-         */
-        ONLY_TRIPLES,
-        /**
-         * Recurse and bind into every node.
-         */
-        ALL
-    }
-
     /**
      * Create a new SPARQL algebra expression that replaces any variables in {@code varNames}
      * with the values in {@code row}.
@@ -60,31 +50,9 @@ public interface Op {
      * @param varNames a list of variable names not including the leading '?' or '$'.
      * @param row Term assignments for the variables in {@code varNames}. The i-th {@link Term}
      *            corresponds to the i-th variable name.
-     * @param bindType controls into which node types the bind will recurse into.
      * @return A SPARQL expression with mentioned variables replaced with the given {@link Term}s.
      */
-    default @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull[] row,
-                             @NonNull BindType bindType) {
-        if (row.length != varNames.size())
-            throw new IllegalArgumentException("varNames.size() != row.length");
-        else if (row.length == 0)
-            return this;
-        Map<String, Term> map = new HashMap<>();
-        for (int i = 0; i < row.length; i++)
-            map.put(varNames.get(i), row[i]);
-        return bind(map, bindType);
-    }
-
-    /**
-     * Calls {@link Op#bind(List, Term[], BindType)} with {@link BindType#ALL}.
-     *
-     * @param varNames forwarded to {@link Op#bind(List, Term[], BindType)}
-     * @param row forwarded to {@link Op#bind(List, Term[], BindType)}
-     * @return same as {@link Op#bind(List, Term[], BindType)}
-     */
-    default @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull[] row) {
-        return bind(varNames, row, BindType.ALL);
-    }
+    @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull[] row);
 
     /**
      * Same effect as {@link Op#bind(List, Term[])}, but variable-{@link Term} bindings are
@@ -92,36 +60,46 @@ public interface Op {
      *
      * @param var2term a map from variable names (not including leading '?' or '$') to the
      *                 {@link Term}s that shall be used instead.
-     * @param bindType controls into which node types the bind will recurse into.
      * @return a SPARQL expression with the given vars replaced with the given {@link Term}s.
      */
-    default @NonNull Op bind(@NonNull Map<String, Term> var2term, @NonNull BindType bindType) {
-        if (var2term.isEmpty())
-            return this;
-        ArrayList<String> names = new ArrayList<>(var2term.keySet());
-        Term[] terms = new Term[names.size()];
-        for (int i = 0; i < terms.length; i++)
-            terms[i] = var2term.get(names.get(i));
-        return bind(names, terms, bindType);
-    }
-
-    /**
-     * Call {@link Op#bind(Map, BindType)} with {@link BindType#ALL}.
-     *
-     * @param var2term forwarded to {@link Op#bind(Map, BindType)}.
-     * @return see {@link Op#bind(Map, BindType)}.
-     */
-    default @NonNull Op bind(@NonNull Map<String, Term> var2term) {
-        return bind(var2term, BindType.ALL);
-    }
+    @NonNull Op bind(@NonNull Map<String, Term> var2term);
 
     /**
      * A list of distinct var names exposed in solutions for this SPARQL query.
+     *
+     * <strong>This list is orderred in the same order as columns of result rows</strong>.
      *
      * @return a non-null, possibly empty list of non-null and non-empty
      * variable names (not including leading '?' nor '$').
      */
     @NonNull List<@NonNull String> varNames();
+
+    /**
+     * The variables that would never be bound if this node were the root of the SPARQL algebra.
+     *
+     * Examples:
+     * <ul>
+     *     <li>{@code [x]} in {@code ?x <p> <o> FILTER(?s = ?x)}</li>
+     *     <li>{@code []} in {@code SELECT ?x {?x <p> ?y} MINUS {<a> <b> ?z FILTER(?z > ?y)}}</li>
+     *     <li>{@code [z]} in {@code SELECT ?x {?x <p> ?y} MINUS {<a> <b> ?x FILTER(?z > ?y)}}</li>
+     * </ul>
+     *
+     * Note that:
+     * <ol>
+     *     <li>A variable in this set at a node may not be present in this set for a parent node</li>
+     *     <li>A variable being projected-out is not sufficient condition for inclusion in this
+     *         list: if the variable is assigned during evaluation of intermediate results it does
+     *         not belong here.</li>
+     * </ol>
+     *
+     *
+     * If this node is a {@link Filter}, variables of its own filter expressions may appear in
+     * this set.
+     *
+     * @return A non-null immutable set of non-null and non-empty variable names
+     *         (no leading '?' or '$').
+     */
+    @NonNull Set<@NonNull String> inputVars();
 
     /**
      * Get all <strong>direct</strong> child operands of this node.

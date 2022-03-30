@@ -2,24 +2,22 @@ package com.github.lapesd.hdtss.model.nodes;
 
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.vocab.FOAF;
-import com.github.lapesd.hdtss.vocab.XSD;
 import com.google.common.collect.Collections2;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.github.lapesd.hdtss.TestUtils.parseTriplePattern;
-import static com.github.lapesd.hdtss.TestVocab.EX;
-import static java.util.Collections.singletonList;
+import static com.github.lapesd.hdtss.TestVocab.*;
+import static com.github.lapesd.hdtss.vocab.FOAF.ageTerm;
+import static com.github.lapesd.hdtss.vocab.FOAF.knowsTerm;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -28,29 +26,30 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 class FilterTest {
     static @NonNull Stream<@NonNull Arguments> testBind() {
         TriplePattern tp = parseTriplePattern("?x <" + FOAF.knows + "> $y");
-        Term alice = new Term("<" + EX + "Alice>");
         return Stream.of(
-                arguments(new Filter(tp, singletonList("?x = ?y")),
-                          Map.of("x", alice),
-                          new Filter(parseTriplePattern("<"+EX+"Alice> <"+FOAF.knows+"> $y"),
-                                     singletonList("<"+EX+"Alice> = ?y"))),
-                arguments(new Filter(tp, singletonList("str(?x) > str($y)")),
-                          Map.of("y", alice),
-                          new Filter(parseTriplePattern("?x <"+FOAF.knows+"> <"+EX+"Alice>"),
-                                  singletonList("str(?x) > str(<"+EX+"Alice>)")))
+                arguments(new Filter(new TriplePattern(x, knowsTerm, y), "?x = ?y"),
+                          Map.of("x", Alice),
+                          new Filter(new TriplePattern(Alice, knowsTerm, y), Alice+" = ?y")),
+                arguments(new Filter(new TriplePattern(x, knowsTerm, y), "str(?x) > str($y)"),
+                          Map.of("y", Alice),
+                          new Filter(new TriplePattern(x, knowsTerm, Alice), "str(?x) > str("+Alice+")")),
+                arguments(new Filter(new TriplePattern(x, ageTerm, y), "?y > 23"),
+                          Map.of("y", i25),
+                          new Filter(new TriplePattern(x, ageTerm, i25), i25+" > 23")),
+                arguments(new Filter(new TriplePattern(x, ageTerm, y), "?y = ?z"),
+                          Map.of("y", i23),
+                          new Filter(new TriplePattern(x, ageTerm, i23), i23+" = ?z"))
         );
     }
 
     @SuppressWarnings("UnstableApiUsage")
-    @ParameterizedTest
-    @MethodSource
+    @ParameterizedTest @MethodSource
     void testBind(@NonNull Filter in, @NonNull Map<@NonNull String, Term> v2t,
                   @NonNull Filter expected) {
         Op actual = in.bind(v2t);
         String msg = "\nExpected: " + expected + "\n  Actual: " + actual;
         assertTrue(actual.deepEquals(expected), msg);
         assertTrue(expected.deepEquals(actual), msg);
-
 
         for (List<String> varNames : Collections2.permutations(v2t.keySet())) {
             Term[] terms = new Term[varNames.size()];
@@ -63,70 +62,57 @@ class FilterTest {
         }
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "?x > ?y:::x y",
-            "?x > ?y || true:::x y",
-            "?x < ?y:::x y",
-            "?x < $y:::x y",
-            "?x <?y:::x y",
-            "?x <=?y:::x y",
-            "?x < str(?y):::x y",
-            "?x123ção > ?y_09:::x123ção y_09",
-            "?x > str($y):::x y",
-            "?x > concat('$', str($y)):::x y",
-            "?x > concat('?', str($y)):::x y",
-            "?x > concat('?z', str($y)):::x y",
-            "?x > concat('$z', str($y)):::x y",
-            "?x > concat(\"$\", str($y)):::x y",
-            "?x > concat(\"?\", str($y)):::x y",
-            "?x > concat(\"?z\", str($y)):::x y",
-            "?x > concat(\"$z\", str($y)):::x y",
-            "?x > concat('''?z''', str($y)):::x y",
-            "?x > concat(\"\"\"?z\"\"\", str($y)):::x y",
-            "?x > concat(\"\"\"\"?z\"\"\"\", str($y)):::x y",
-            "?x > concat(\"\"\"'\"'?z'\"'\"\"\", str($y)):::x y",
-            "?x > concat(\"\\\"?y\", str($y)):::x y",
-            "?x > concat('\\'?y', str($y)):::x y",
-            "?x = str(<"+EX+"?get.php>) && ?y < $z:::x y z",
-    })
-    void testFindVarNames(@NonNull String data) {
-        String[] pieces = data.split(":::", 2);
-        Set<@NonNull String> expected = Set.of(pieces[1].split(" "));
-        Set<@NonNull String> set = new HashSet<>();
-        Filter.findVarNames(pieces[0], set);
-        assertEquals(expected, set);
-    }
-
-    static @NonNull Stream<Arguments> testBindFilter() {
-        Term i23 = new Term("\"23\"^^<"+XSD.integer+">");
-        Term i25 = new Term("\"25\"^^<"+XSD.integer+">");
-
+    static Stream<Arguments> testInputFilterVarNames() {
         return Stream.of(
-                arguments("?x > ?y", Map.of("y", i23), "?x > "+i23),
-                arguments("?x < ?y", Map.of("y", i23), "?x < "+i23),
-                arguments("?x <?y", Map.of("y", i23), "?x <"+i23),
-                arguments("?x < ?y", Map.of("y", i23), "?x < "+i23),
-                arguments("?x < "+i25, Map.of("x", i23), i23+" < "+i25),
-                arguments("?x <"+i25, Map.of("x", i23), i23+" <"+i25),
-                arguments("?x > ?y || false", Map.of("y", i23), "?x > "+i23+" || false"),
-                arguments("?x = $y", Map.of("x", i23, "y", i25), i23+" = "+i25),
-                arguments("str(?x) = str($y)", Map.of("x", i23, "y", i25),
-                          "str("+i23+") = str("+i25+")"),
-                arguments("str(?x) = concat('''asd?x$y'''@en, str($y))",
-                          Map.of("x", i23, "y", i25),
-                          "str("+i23+") = concat('''asd?x$y'''@en, str("+i25+"))"),
-                arguments("str(?x) = concat(<"+EX+"/get?x=$y>, str($y))",
-                        Map.of("x", i23, "y", i25),
-                        "str("+i23+") = concat(<"+EX+"/get?x=$y>, str("+i25+"))")
+                arguments(new Filter(new TriplePattern(Alice, ageTerm, x), "?x > 23"),
+                          Set.of()),
+                arguments(new Filter(new TriplePattern(Alice, ageTerm, x), "?x > ?y"),
+                          Set.of("y")),
+                arguments(new Filter(new Distinct(new TriplePattern(Alice, ageTerm, x)),
+                                     "?x > 23"),
+                          Set.of()),
+                arguments(new Filter(new Distinct(new TriplePattern(Alice, ageTerm, x)),
+                                "?x > ?y"),
+                        Set.of("y")),
+                arguments(new Filter(new Join(new TriplePattern(Alice, knowsTerm, x),
+                                              new Filter(new TriplePattern(x, ageTerm, y), "?y > ?z"),
+                                              new TriplePattern(Bob, ageTerm, z)),
+                                     "?x > ?z"),
+                          Set.of()),
+                arguments(new Filter(new Join(new TriplePattern(Alice, knowsTerm, x),
+                                              new Filter(new TriplePattern(x, ageTerm, y), "?y > ?w"),
+                                              new TriplePattern(Bob, ageTerm, z)),
+                                     "?x > ?z"),
+                          Set.of("w")),
+                arguments(new Filter(new Join(new TriplePattern(Alice, knowsTerm, x),
+                                              new Filter(new TriplePattern(x, ageTerm, y), "?y > ?w"),
+                                              new TriplePattern(Bob, ageTerm, z)),
+                                     "?x > ?t"),
+                          Set.of("w", "t"))
         );
     }
 
-    @ParameterizedTest
-    @MethodSource
-    void testBindFilter(@NonNull String filter, @NonNull Map<@NonNull String, Term> v2t,
-                        @NonNull String expected) {
-        assertEquals(expected, Filter.bindFilter(filter, v2t));
+    @ParameterizedTest @MethodSource
+    void testInputFilterVarNames(@NonNull Filter op, @NonNull Set<@NonNull String> expected) {
+        assertEquals(expected, op.inputVars());
     }
 
+    static Stream<@NonNull Arguments> testVarNames() {
+        List<Object> empty = List.of();
+        List<String> xList = List.of("x");
+        List<String> xyList = List.of("x", "y");
+        return Stream.of(
+                arguments(new Filter(new TriplePattern(Alice, ageTerm, i23), "23 > 25"), empty),
+                arguments(new Filter(new TriplePattern(Alice, ageTerm, x), "?x > 23"),   xList),
+                arguments(new Filter(new TriplePattern(x, ageTerm, y), "?y > 23"),       xyList),
+                arguments(new Filter(new TriplePattern(x, ageTerm, y), "?x > 23"),       xyList),
+                arguments(new Filter(new TriplePattern(Alice, ageTerm, x), "?x > ?y"),   xList),
+                arguments(new Filter(new TriplePattern(Alice, ageTerm, x), "?y > ?x"),   xList)
+        );
+    }
+
+    @ParameterizedTest @MethodSource
+    void testVarNames(@NonNull Filter op, @NonNull List<@NonNull String> expected) {
+        assertEquals(expected, op.varNames());
+    }
 }

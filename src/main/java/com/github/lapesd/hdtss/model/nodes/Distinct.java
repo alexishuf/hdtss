@@ -2,13 +2,12 @@ package com.github.lapesd.hdtss.model.nodes;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 
-import java.util.Collections;
 import java.util.List;
 
 public class Distinct extends AbstractOp {
 
     public Distinct(@NonNull Op inner) {
-        super(Collections.singletonList(inner));
+        super(List.of(inner));
     }
 
     @Override public @NonNull Type type() {

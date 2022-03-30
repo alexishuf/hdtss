@@ -81,22 +81,32 @@ public final class Filter extends AbstractOp {
         return children.get(0).varNames();
     }
 
-    @Override public @NonNull Op bind(@NonNull Map<String, Term> v2t,
-                                      @NonNull BindType bindType) {
+    @Override public @NonNull Set<@NonNull String> inputVars() {
+        Op child = children.get(0);
+        List<@NonNull String> childOutputs = child.varNames();
+        Set<@NonNull String> childInputs = child.inputVars();
+        Set<@NonNull String> union = null;
+        for (String var : filtersVarNames()) {
+            if (!childOutputs.contains(var))
+                (union == null ? union = new HashSet<>() : union).add(var);
+        }
+        if (union == null)
+            return childInputs;
+        union.addAll(childInputs);
+        return union;
+    }
+
+    @Override public @NonNull Op bind(@NonNull Map<String, Term> v2t) {
         if (v2t.isEmpty())
             return this;
-        if (bindType == BindType.ONLY_TRIPLES)
-            return new Filter(inner().bind(v2t, bindType), filters);
         List<@NonNull String> boundFilters = new ArrayList<>(filters.size());
         for (String filter : filters)
             boundFilters.add(ExprUtils.bindExpr(filter, v2t));
         return new Filter(inner().bind(v2t), boundFilters);
     }
 
-    @Override
-    public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row,
-                            @NonNull BindType bindType) {
-        return BindUtils.bindWithMap(this, varNames, row, bindType);
+    @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row) {
+        return BindUtils.bindWithMap(this, varNames, row);
     }
 
     @Override

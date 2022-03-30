@@ -13,7 +13,8 @@ import java.util.*;
 @Accessors(fluent = true)
 public class Assign extends AbstractOp {
     private final @Getter @NonNull Map<String, String> var2expr;
-    private @Nullable List<String> assignedVars;
+    private @Nullable List<@NonNull String> assignedVars;
+    private @Nullable Set<@NonNull String> usedVars;
 
     public Assign(@NonNull Map<String, String> var2expr, @NonNull Op child) {
         super(List.of(child));
@@ -52,10 +53,27 @@ public class Assign extends AbstractOp {
         return withAssignments(inner, map);
     }
 
+    /**
+     * The set of vars assigned by expressions. These vars are included in {@link Op#varNames()}
+     * together with {@code inner().varNames()}.
+     */
     public @NonNull List<@NonNull String> assignedVars() {
         if (assignedVars == null)
             assignedVars = new ArrayList<>(var2expr.keySet());
         return assignedVars;
+    }
+
+    /**
+     * The set of vars used by the expressions.
+     */
+    public @NonNull Set<@NonNull String> usedVars() {
+        if (usedVars == null) {
+            HashSet<String> set = new HashSet<>();
+            for (String expr : var2expr.values())
+                ExprUtils.findVarNames(expr, set);
+            usedVars = set;
+        }
+        return usedVars;
     }
 
     public @NonNull Op inner() {
@@ -84,18 +102,9 @@ public class Assign extends AbstractOp {
         return new Assign(var2expr, OpUtils.single(replacements));
     }
 
-    @Override
-    public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row,
-                            @NonNull BindType bindType) {
-        return BindUtils.bindWithMap(this, varNames, row, bindType);
-    }
-
-    @Override
-    public @NonNull Op bind(@NonNull Map<String, Term> var2term, @NonNull BindType bindType) {
+    public @NonNull Op bind(@NonNull Map<String, Term> var2term) {
         if (var2term.isEmpty()) return this;
-        Op boundInner = inner().bind(var2term, bindType);
-        if (bindType == BindType.ONLY_TRIPLES)
-            return new Assign(var2expr, boundInner);
+        Op boundInner = inner().bind(var2term);
         HashMap<String, String> boundExprs = new HashMap<>();
         for (Map.Entry<String, String> e : var2expr.entrySet()) {
             String var = e.getKey();
@@ -104,6 +113,10 @@ public class Assign extends AbstractOp {
             boundExprs.put(var, ExprUtils.bindExpr(e.getValue(), var2term));
         }
         return new Assign(boundExprs, boundInner);
+    }
+
+    @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row) {
+        return BindUtils.bindWithMap(this, varNames, row);
     }
 
     @Override public boolean deepEquals(@NonNull Op other) {

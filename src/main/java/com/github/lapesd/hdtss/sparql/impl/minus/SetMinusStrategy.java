@@ -5,8 +5,8 @@ import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.Minus;
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
-import com.github.lapesd.hdtss.sparql.impl.Binder;
 import com.github.lapesd.hdtss.sparql.impl.ExecutorUtils;
+import com.github.lapesd.hdtss.sparql.impl.MinusBinder;
 import com.github.lapesd.hdtss.utils.QueryExecutionScheduler;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
@@ -18,7 +18,6 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.scheduler.Scheduler;
 
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -43,11 +42,10 @@ public class SetMinusStrategy implements MinusStrategy {
 
     @Override
     public @NonNull Predicate<@Nullable Term @NonNull[]> createFilter(@NonNull Minus minus) {
-        Op inner = minus.inner();
-        List<@NonNull String> innerVars = inner.varNames();
-        var binder = new Binder(inner, minus.outer().varNames(), innerVars);
+        Op inner = minus.filter();
+        var binder = new MinusBinder(minus);
         int[] outerIndices = binder.leftIndices();
-        int[] innerIndices = ExecutorUtils.findIndices(binder.sharedVars(), innerVars);
+        int[] innerIndices = ExecutorUtils.findIndices(binder.sharedVars(), inner.varNames());
         CompletableFuture<Set<Row>> future = new CompletableFuture<>();
         Set<Row> set = setSupplier.get();
         dispatcher.execute(inner).flux()

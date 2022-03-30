@@ -594,13 +594,22 @@ class OpExecutorTest {
                           List.of(asList(Charlie, Alice))),
         /* 4 */ arguments(new Minus(new TriplePattern(x, knowsTerm, y),
                                     new Filter(new TriplePattern(y, knowsTerm, z), "?z = ?y")),
-                          asList(asList(Bob, Alice), asList(Charlie, Alice)))
+                          asList(asList(Bob, Alice), asList(Charlie, Alice))),
+                // per § 8.3.3 of http://www.w3.org/TR/sparql11-query/, y is unbound
+                // during execution of the MINUS right operand, making the filter vacuously true
+        /* 5 */ arguments(new Minus(new TriplePattern(x, knowsTerm, y),
+                        new Filter(new TriplePattern(y, knowsTerm, z), "?z = ?x")),
+                asList(asList(Alice, Bob),
+                       asList(Bob, Alice),
+                       asList(Bob, Bob),
+                       asList(Charlie, Alice)))
         );
     }
 
     @ParameterizedTest @MethodSource
     void testMinus(@NonNull Minus in, @NonNull Collection<List<Term>> expected) {
-        testInContexts(in, expected);
+        testInContexts(in, expected,
+                       Map.of("sparql.minus.strategy", List.of("BIND", "SET")));
     }
 
     @SuppressWarnings("unused") static Stream<Arguments> testAsk() {

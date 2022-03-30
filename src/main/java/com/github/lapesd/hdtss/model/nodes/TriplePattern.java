@@ -38,6 +38,10 @@ public final class TriplePattern implements Op {
         return varNames;
     }
 
+    @Override public @NonNull Set<@NonNull String> inputVars() {
+        return Set.of();
+    }
+
     @Override public @NonNull Type type() {
         return Type.TRIPLE;
     }
@@ -46,8 +50,7 @@ public final class TriplePattern implements Op {
         return Collections.emptyList();
     }
 
-    @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row,
-                                      @NonNull BindType ignored) {
+    @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row) {
         Term[] terms = null;
         VarsInfo info = collectVarsInfo();
         TermPosition f = info.sharedVars.first();
@@ -70,8 +73,7 @@ public final class TriplePattern implements Op {
         return this;
     }
 
-    @Override public @NonNull Op bind(@NonNull Map<@NonNull String, Term> var2term,
-                                      @NonNull BindType ignored) {
+    @Override public @NonNull Op bind(@NonNull Map<@NonNull String, Term> var2term) {
         VarsInfo info = collectVarsInfo();
         TermPosition f = info.sharedVars.first();
         Term[] bound = null;
@@ -166,9 +168,9 @@ public final class TriplePattern implements Op {
      * {@link VarsInfo#positions()} array share the same order: subject, predicate
      * and object (terms which are not variables are not included).
      */
-    public static record VarsInfo(@NonNull String @NonNull [] names,
-                                  @NonNull TermPosition @NonNull [] positions,
-                                  @NonNull SharedVars sharedVars) {
+    public record VarsInfo(@NonNull String @NonNull [] names,
+                           @NonNull TermPosition @NonNull [] positions,
+                           @NonNull SharedVars sharedVars) {
         public static final TriplePattern.@NonNull VarsInfo EMPTY =
                 new VarsInfo(new String[0], new TermPosition[0], SharedVars.NONE);
 

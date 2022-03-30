@@ -3,7 +3,9 @@ package com.github.lapesd.hdtss.model.nodes;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class Join extends AbstractOp {
     public Join(@NonNull List<@NonNull Op> operands) {
@@ -25,6 +27,21 @@ public class Join extends AbstractOp {
 
     @Override public @NonNull Type type() {
         return Type.JOIN;
+    }
+
+    @Override public @NonNull Set<@NonNull String> inputVars() {
+        Set<@NonNull String> result = null;
+        outer:
+        for (int i = 0, size = children.size(); i < size; i++) {
+            for (String candidate : children.get(i).inputVars()) {
+                for (int j = 0; j < size; j++) {
+                    if (j != i && children.get(j).varNames().contains(candidate))
+                        continue outer;
+                }
+                (result == null ? result = new HashSet<>() : result).add(candidate);
+            }
+        }
+        return result == null ? Set.of() : result;
     }
 
     @Override
