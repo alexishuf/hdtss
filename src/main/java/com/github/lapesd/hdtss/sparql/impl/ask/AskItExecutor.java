@@ -26,7 +26,7 @@ public class AskItExecutor extends AskExecutor {
 
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
         var it = dispatcher.execute(node.children().get(0)).iterator();
-        return new IteratorQuerySolutions(node.varNames(), new Iterator<>() {
+        return new IteratorQuerySolutions(node.outputVars(), new Iterator<>() {
             private boolean exhausted = false;
             @Override public boolean hasNext() {
                 return !exhausted && it.hasNext();

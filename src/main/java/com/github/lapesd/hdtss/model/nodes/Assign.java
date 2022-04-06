@@ -54,7 +54,7 @@ public class Assign extends AbstractOp {
     }
 
     /**
-     * The set of vars assigned by expressions. These vars are included in {@link Op#varNames()}
+     * The set of vars assigned by expressions. These vars are included in {@link Op#outputVars()}
      * together with {@code inner().varNames()}.
      */
     public @NonNull List<@NonNull String> assignedVars() {
@@ -80,9 +80,9 @@ public class Assign extends AbstractOp {
         return children.get(0);
     }
 
-    @Override public @NonNull List<@NonNull String> varNames() {
+    @Override public @NonNull List<@NonNull String> outputVars() {
         if (varNames == null) {
-            var childVars = children.get(0).varNames();
+            var childVars = children.get(0).outputVars();
             ArrayList<@NonNull String> list = new ArrayList<>(childVars.size() + var2expr.size());
             list.addAll(childVars);
             for (String name : var2expr.keySet()) {

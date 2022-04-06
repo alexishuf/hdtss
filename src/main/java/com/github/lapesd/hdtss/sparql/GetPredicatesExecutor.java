@@ -36,7 +36,7 @@ public class GetPredicatesExecutor {
         if (query.type() != Op.Type.DISTINCT)
             return null;
         Op project = query.children().get(0);
-        if (project.type() != Op.Type.PROJECT || project.varNames().size() != 1)
+        if (project.type() != Op.Type.PROJECT || project.outputVars().size() != 1)
             return null;
         List<@NonNull Op> children = project.children();
         if (children.size() != 1 || children.get(0).type() != Op.Type.TRIPLE)
@@ -44,11 +44,11 @@ public class GetPredicatesExecutor {
         TriplePattern tp = (TriplePattern) children.get(0);
         if (tp.collectVarsInfo().positions().length != 3)
             return null;
-        if (!project.varNames().get(0).contentEquals(tp.predicate().content()))
+        if (!project.outputVars().get(0).contentEquals(tp.predicate().content()))
             return null;
 
         Dictionary dict = hdtQueryService.hdt().getDictionary();
-        return new IteratorQuerySolutions(project.varNames(), new Iterator<>() {
+        return new IteratorQuerySolutions(project.outputVars(), new Iterator<>() {
             long next = 1;
             final long last = dict.getNpredicates();
             @Override public boolean hasNext() { return next <= last; }

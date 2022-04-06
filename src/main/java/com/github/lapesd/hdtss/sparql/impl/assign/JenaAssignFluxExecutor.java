@@ -22,7 +22,7 @@ public class JenaAssignFluxExecutor extends JenaAssignExecutor {
 
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
         Evaluator evaluator = new Evaluator((Assign) node);
-        return new FluxQuerySolutions(node.varNames(),
+        return new FluxQuerySolutions(node.outputVars(),
                 dispatcher.execute(node.children().get(0)).flux().map(evaluator));
     }
 }

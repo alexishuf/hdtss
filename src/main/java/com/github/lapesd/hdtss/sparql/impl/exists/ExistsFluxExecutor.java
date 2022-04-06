@@ -27,8 +27,8 @@ public class ExistsFluxExecutor extends ExistsExecutor {
         if (IdentityNode.is(filter))
             return dispatcher.execute(main);
         boolean negate = exists.negate();
-        var outerVars = main.varNames();
-        return new FluxQuerySolutions(node.varNames(), dispatcher.execute(main).flux()
+        var outerVars = main.outputVars();
+        return new FluxQuerySolutions(node.outputVars(), dispatcher.execute(main).flux()
                 .filter(r -> negate ^ dispatcher.execute(filter.bind(outerVars, r)).askResult()));
     }
 }

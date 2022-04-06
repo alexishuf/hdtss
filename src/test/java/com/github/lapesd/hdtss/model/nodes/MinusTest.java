@@ -137,7 +137,7 @@ class MinusTest {
 
     @ParameterizedTest @MethodSource
     public void testVarNames(@NonNull Minus op, @NonNull List<String> expected) {
-        assertEquals(expected, op.varNames());
+        assertEquals(expected, op.outputVars());
     }
 
     static  Stream<Arguments> testWithChildren() {
@@ -154,11 +154,11 @@ class MinusTest {
     @ParameterizedTest @MethodSource
     public void testWithChildren(@NonNull Minus op, @NonNull List<Op> replacements,
                                  @NonNull Minus expected) {
-        List<@NonNull String> oldVars = new ArrayList<>(op.varNames());
+        List<@NonNull String> oldVars = new ArrayList<>(op.outputVars());
         Op replaced = op.withChildren(replacements);
         assertTrue(replaced.deepEquals(expected));
         assertTrue(expected.deepEquals(replaced));
-        assertEquals(oldVars, op.varNames());
+        assertEquals(oldVars, op.outputVars());
     }
 
 

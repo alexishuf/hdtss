@@ -91,7 +91,7 @@ class ExistsTest {
 
     @ParameterizedTest @MethodSource
     public void testVarNames(@NonNull Exists exists, @NonNull List<String> expected) {
-        assertEquals(expected, exists.varNames());
+        assertEquals(expected, exists.outputVars());
     }
 
     static Stream<Arguments> testInputFilterVarNames() {

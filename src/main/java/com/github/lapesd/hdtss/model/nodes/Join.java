@@ -35,7 +35,7 @@ public class Join extends AbstractOp {
         for (int i = 0, size = children.size(); i < size; i++) {
             for (String candidate : children.get(i).inputVars()) {
                 for (int j = 0; j < size; j++) {
-                    if (j != i && children.get(j).varNames().contains(candidate))
+                    if (j != i && children.get(j).outputVars().contains(candidate))
                         continue outer;
                 }
                 (result == null ? result = new HashSet<>() : result).add(candidate);

@@ -24,7 +24,7 @@ public class DistinctFluxExecutor extends DistinctExecutor {
 
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
         var set = distinctStrategy.createSet();
-        return new FluxQuerySolutions(node.varNames(),
+        return new FluxQuerySolutions(node.outputVars(),
                 dispatcher.execute(node.children().get(0)).flux().filter(r -> set.add(new Row(r))));
     }
 }

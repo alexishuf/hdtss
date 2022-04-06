@@ -33,7 +33,7 @@ abstract class JenaFilterExecutor implements OpExecutor {
         private final @NonNull List<Expr> parsedFilters;
 
         public Evaluator(@NonNull Filter filter) {
-            this.evaluator = new JenaExprEvaluator(filter.inner().varNames());
+            this.evaluator = new JenaExprEvaluator(filter.inner().outputVars());
             this.parsedFilters = JenaUtils.parseFilters(filter.filters());
         }
 

@@ -33,7 +33,7 @@ public class ExistsItExecutor extends ExistsExecutor {
         if (IdentityNode.is(filter))
             return dispatcher.execute(main);
         boolean negate = exists.negate();
-        var vars = main.varNames();
+        var vars = main.outputVars();
         var it = dispatcher.execute(main).iterator();
         return new IteratorQuerySolutions(vars, new Iterator<>() {
             private @Nullable Term @Nullable[] next;

@@ -20,11 +20,11 @@ abstract class AbstractOp implements Op {
         return children;
     }
 
-    @Override public @NonNull List<@NonNull String> varNames() {
+    @Override public @NonNull List<@NonNull String> outputVars() {
         if (varNames == null) {
             Set<String> set = new LinkedHashSet<>();
             for (Op child : children)
-                set.addAll(child.varNames());
+                set.addAll(child.outputVars());
             varNames = new ArrayList<>(set);
         }
         return varNames;

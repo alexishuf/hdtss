@@ -24,7 +24,7 @@ public abstract class WeighedJoinReorderStrategy implements JoinReorderStrategy 
         ArrayList<@NonNull Op> reordered = new ArrayList<>(size);
         for (long weight : weights)
             reordered.add(ops.get((int)weight));
-        return new JoinReorder(reordered, getProjection(join.varNames(), reordered));
+        return new JoinReorder(reordered, getProjection(join.outputVars(), reordered));
     }
 
     static boolean isNoOp(long[] weights) {
@@ -35,8 +35,8 @@ public abstract class WeighedJoinReorderStrategy implements JoinReorderStrategy 
     }
 
     private static void avoidProducts(@NonNull Join join, List<@NonNull Op> ops, long[] weights) {
-        Set<String> vars = new HashSet<>(join.varNames().size()*2);
-        vars.addAll(ops.get((int) weights[0]).varNames());
+        Set<String> vars = new HashSet<>(join.outputVars().size()*2);
+        vars.addAll(ops.get((int) weights[0]).outputVars());
         for (int i = 1; i < weights.length; i++) {
             int idx = firstIntersecting(vars, ops, weights, i);
             if (idx > i) {
@@ -44,14 +44,14 @@ public abstract class WeighedJoinReorderStrategy implements JoinReorderStrategy 
                 System.arraycopy(weights, i, weights, i+1, idx-i);
                 weights[i] = tmp;
             }
-            vars.addAll(ops.get((int) weights[i]).varNames());
+            vars.addAll(ops.get((int) weights[i]).outputVars());
         }
     }
 
     private static int firstIntersecting(@NonNull Set<String> vars, @NonNull List<@NonNull Op> ops,
                                  long[] weights, int startIdx) {
         for (int i = startIdx; i < weights.length; i++) {
-            for (String var : ops.get((int) weights[i]).varNames()) {
+            for (String var : ops.get((int) weights[i]).outputVars()) {
                 if (vars.contains(var))
                     return i;
             }
@@ -63,7 +63,7 @@ public abstract class WeighedJoinReorderStrategy implements JoinReorderStrategy 
                                           @NonNull List<@NonNull Op> reordered) {
         List<String> effVars = new ArrayList<>(exposedVars.size());
         for (Op op : reordered) {
-            for (String var : op.varNames()) {
+            for (String var : op.outputVars()) {
                 if (!effVars.contains(var))
                     effVars.add(var);
             }

@@ -71,7 +71,7 @@ public interface Op {
      * @return a non-null, possibly empty list of non-null and non-empty
      * variable names (not including leading '?' nor '$').
      */
-    @NonNull List<@NonNull String> varNames();
+    @NonNull List<@NonNull String> outputVars();
 
     /**
      * The variables that would never be bound if this node were the root of the SPARQL algebra.

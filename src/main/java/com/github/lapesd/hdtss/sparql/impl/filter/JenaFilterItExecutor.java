@@ -30,7 +30,7 @@ public class JenaFilterItExecutor extends JenaFilterExecutor {
         Filter filter = (Filter) node;
         Evaluator evaluator = new Evaluator(filter);
         var inner = dispatcher.execute(filter.inner()).iterator();
-        return new IteratorQuerySolutions(node.varNames(), new Iterator<>() {
+        return new IteratorQuerySolutions(node.outputVars(), new Iterator<>() {
             private @Nullable Term @Nullable[] next = null;
 
             @EnsuresNonNullIf(expression = "this.next", result = true)

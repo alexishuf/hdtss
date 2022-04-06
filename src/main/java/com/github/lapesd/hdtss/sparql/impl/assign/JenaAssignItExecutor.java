@@ -28,7 +28,7 @@ public class JenaAssignItExecutor extends JenaAssignExecutor {
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
         var it = dispatcher.execute(node.children().get(0)).iterator();
         Evaluator evaluator = new Evaluator((Assign) node);
-        return new IteratorQuerySolutions(node.varNames(), new Iterator<>() {
+        return new IteratorQuerySolutions(node.outputVars(), new Iterator<>() {
             @Override public boolean hasNext() { return it.hasNext(); }
             @Override public @Nullable Term @NonNull[] next() { return evaluator.apply(it.next()); }
         });

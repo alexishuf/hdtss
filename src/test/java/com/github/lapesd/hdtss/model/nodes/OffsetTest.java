@@ -62,14 +62,14 @@ class OffsetTest {
     @ParameterizedTest @MethodSource
     public void testWithChildren(@NonNull Offset a, @NonNull List<Op> replacements,
                                  @NonNull Offset expected) {
-        var oldVars = new ArrayList<>(a.varNames());
+        var oldVars = new ArrayList<>(a.outputVars());
         Op oldInner = a.children().get(0);
         Op withChildren = a.withChildren(replacements);
 
         assertTrue(withChildren.deepEquals(expected));
         assertTrue(expected.deepEquals(withChildren));
 
-        assertEquals(oldVars, a.varNames());
+        assertEquals(oldVars, a.outputVars());
         assertSame(oldInner, a.children().get(0));
     }
 

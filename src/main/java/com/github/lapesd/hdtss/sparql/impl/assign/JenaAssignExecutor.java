@@ -37,13 +37,13 @@ abstract class JenaAssignExecutor implements OpExecutor {
         private final @NonNull List<String> outVars;
 
         public Evaluator(@NonNull Assign assign) {
-            this.evaluator = new JenaExprEvaluator(assign.inner().varNames());
+            this.evaluator = new JenaExprEvaluator(assign.inner().outputVars());
             this.var2expr = new HashMap<>();
             for (Map.Entry<String, String> e : assign.var2expr().entrySet())
                 this.var2expr.put(e.getKey(), JenaUtils.parseFilter(e.getValue()));
-            this.outVars = assign.varNames();
-            assert assign.varNames().stream().filter(v -> !var2expr.containsKey(v))
-                    .allMatch(v -> outVars.indexOf(v) == assign.inner().varNames().indexOf(v))
+            this.outVars = assign.outputVars();
+            assert assign.outputVars().stream().filter(v -> !var2expr.containsKey(v))
+                    .allMatch(v -> outVars.indexOf(v) == assign.inner().outputVars().indexOf(v))
                     : "Assign is rearranging variables from its input Op";
         }
 

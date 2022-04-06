@@ -32,7 +32,7 @@ public class DistinctItExecutor extends DistinctExecutor {
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
         var inner = dispatcher.execute(node.children().get(0)).iterator();
         var set = distinctStrategy.createSet();
-        return new IteratorQuerySolutions(node.varNames(), new Iterator<>() {
+        return new IteratorQuerySolutions(node.outputVars(), new Iterator<>() {
             private @Nullable Term @Nullable[] next;
 
             @EnsuresNonNullIf(expression = "this.next", result = true)

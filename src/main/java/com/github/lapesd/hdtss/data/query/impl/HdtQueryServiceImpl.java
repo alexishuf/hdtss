@@ -103,7 +103,7 @@ public class HdtQueryServiceImpl implements HdtQueryService, Closeable {
         var vi = query.collectVarsInfo();
         var it = new SolutionIterator(hdt.getDictionary(), hdtIt, vi.positions(),
                                     HDTUtils.sharedVarIDFilter(vi.sharedVars()));
-        return new NamesAndIt(query.varNames(), it);
+        return new NamesAndIt(query.outputVars(), it);
     }
 
     @Override public @NonNull HDT hdt() {

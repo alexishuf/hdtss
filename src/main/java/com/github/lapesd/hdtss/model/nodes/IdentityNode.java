@@ -47,7 +47,7 @@ public final class IdentityNode implements Op {
         return Type.IDENTITY;
     }
 
-    @Override public @NonNull List<@NonNull String> varNames() {
+    @Override public @NonNull List<@NonNull String> outputVars() {
         return Collections.emptyList();
     }
 

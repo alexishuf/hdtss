@@ -34,16 +34,16 @@ public class Values extends AbstractOp {
         return new Values(values, OpUtils.single(replacements));
     }
 
-    @Override public @NonNull List<@NonNull String> varNames() {
+    @Override public @NonNull List<@NonNull String> outputVars() {
         if (varNames == null)
-            super.varNames().removeIf(values.varNames()::contains);
+            super.outputVars().removeIf(values.varNames()::contains);
         return varNames;
     }
 
     @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row) {
         var inner = children.get(0);
         var forbidden = values.varNames();
-        var useful = inner.varNames();
+        var useful = inner.outputVars();
         int varNamesSize = varNames.size();
         int[] indices = new int[varNamesSize];
         int newLen = 0;
@@ -67,7 +67,7 @@ public class Values extends AbstractOp {
 
     @Override public @NonNull Op bind(@NonNull Map<String, Term> var2term) {
         Op inner = children.get(0);
-        if (inner.varNames().stream().noneMatch(var2term::containsKey)) {
+        if (inner.outputVars().stream().noneMatch(var2term::containsKey)) {
             return this; // no work
         } else if (values.varNames().stream().anyMatch(var2term::containsKey)) {
             var filtered = new HashMap<>(var2term);

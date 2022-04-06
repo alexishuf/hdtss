@@ -21,12 +21,12 @@ public class Project extends AbstractOp {
 
     @Override
     public @NonNull Op withChildren(@NonNull List<@NonNull Op> replacements) {
-        return new Project(varNames(), OpUtils.single(replacements));
+        return new Project(outputVars(), OpUtils.single(replacements));
     }
 
     @Override public boolean deepEquals(@NonNull Op other) {
         if (!(other instanceof Project project)) return false;
-        return project.varNames().equals(varNames()) && inner().deepEquals(project.inner());
+        return project.outputVars().equals(outputVars()) && inner().deepEquals(project.inner());
     }
 
     @Override public @NonNull String toString() {

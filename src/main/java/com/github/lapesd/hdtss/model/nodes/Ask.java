@@ -17,7 +17,7 @@ public class Ask extends AbstractOp {
         return Type.ASK;
     }
 
-    @Override public @NonNull List<@NonNull String> varNames() {
+    @Override public @NonNull List<@NonNull String> outputVars() {
         return List.of();
     }
 

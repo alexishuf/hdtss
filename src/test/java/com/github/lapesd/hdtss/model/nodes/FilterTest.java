@@ -113,6 +113,6 @@ class FilterTest {
 
     @ParameterizedTest @MethodSource
     void testVarNames(@NonNull Filter op, @NonNull List<@NonNull String> expected) {
-        assertEquals(expected, op.varNames());
+        assertEquals(expected, op.outputVars());
     }
 }

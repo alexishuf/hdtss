@@ -195,7 +195,7 @@ class ValuesTest {
 
     @ParameterizedTest @MethodSource
     void testVarNames(@NonNull Values in, @NonNull List<String> expected) {
-        assertEquals(expected, in.varNames());
+        assertEquals(expected, in.outputVars());
     }
 
 }

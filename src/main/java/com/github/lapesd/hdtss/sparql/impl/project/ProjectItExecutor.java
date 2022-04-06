@@ -29,8 +29,8 @@ public class ProjectItExecutor extends ProjectExecutor {
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
         Op child = node.children().get(0);
         var inner = dispatcher.execute(child).iterator();
-        int[] indices = ExecutorUtils.findIndices(node.varNames(), child.varNames());
-        return new IteratorQuerySolutions(node.varNames(), new Iterator<>() {
+        int[] indices = ExecutorUtils.findIndices(node.outputVars(), child.outputVars());
+        return new IteratorQuerySolutions(node.outputVars(), new Iterator<>() {
             @Override public boolean hasNext() {return inner.hasNext();}
             @Override public @Nullable Term @NonNull[] next() {
                 if (!inner.hasNext())

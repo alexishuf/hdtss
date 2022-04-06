@@ -32,7 +32,7 @@ public final class TriplePattern implements Op {
         this(new Term(subject), new Term(predicate), new Term(object));
     }
 
-    @Override public @NonNull List<@NonNull String> varNames() {
+    @Override public @NonNull List<@NonNull String> outputVars() {
         if (varNames == null)
             varNames = Arrays.asList(collectVarsInfo().names);
         return varNames;

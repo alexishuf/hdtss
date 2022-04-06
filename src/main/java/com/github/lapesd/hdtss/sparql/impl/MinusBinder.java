@@ -21,11 +21,11 @@ public final class MinusBinder {
 
     public MinusBinder(@NonNull Minus minus) {
         this.right = minus.children().get(1);
-        List<@NonNull String> leftVars = minus.main().varNames();
+        List<@NonNull String> leftVars = minus.main().outputVars();
         this.sharedVars = new ArrayList<>(leftVars.size());
         int[] indices = new int[leftVars.size()];
         int n = 0;
-        for (String name : right.varNames()) {
+        for (String name : right.outputVars()) {
             int i = leftVars.indexOf(name);
             if (i >= 0) {
                 indices[n++] = i;

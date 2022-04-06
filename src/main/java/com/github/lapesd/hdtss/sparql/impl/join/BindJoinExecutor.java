@@ -40,7 +40,7 @@ abstract class BindJoinExecutor implements OpExecutor {
                 projection = reorder.projection();
             }
         }
-        return execute(type == Type.LEFT_JOIN, operands, node.varNames(), projection);
+        return execute(type == Type.LEFT_JOIN, operands, node.outputVars(), projection);
     }
 
     protected abstract @NonNull QuerySolutions

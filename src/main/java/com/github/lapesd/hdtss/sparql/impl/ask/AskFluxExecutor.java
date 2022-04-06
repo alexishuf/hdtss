@@ -22,7 +22,7 @@ public class AskFluxExecutor extends AskExecutor {
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
         var flux = dispatcher.execute(node.children().get(0)).flux()
                              .take(1).map(r -> Row.EMPTY);
-        return new FluxQuerySolutions(node.varNames(), flux);
+        return new FluxQuerySolutions(node.outputVars(), flux);
     }
 
 }

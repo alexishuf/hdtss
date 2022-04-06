@@ -20,8 +20,8 @@ public class ProjectFluxExecutor extends ProjectExecutor {
 
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
         Op inner = node.children().get(0);
-        int[] indices = ExecutorUtils.findIndices(node.varNames(), inner.varNames());
-        return new FluxQuerySolutions(node.varNames(),
+        int[] indices = ExecutorUtils.findIndices(node.outputVars(), inner.outputVars());
+        return new FluxQuerySolutions(node.outputVars(),
                 dispatcher.execute(inner).flux().map(r -> ExecutorUtils.project(indices, r)));
     }
 }

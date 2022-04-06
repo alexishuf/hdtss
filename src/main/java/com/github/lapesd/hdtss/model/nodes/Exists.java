@@ -39,16 +39,16 @@ public class Exists extends AbstractOp {
         return Type.EXISTS;
     }
 
-    @Override public @NonNull List<@NonNull String> varNames() {
-        return main().varNames();
+    @Override public @NonNull List<@NonNull String> outputVars() {
+        return main().outputVars();
     }
 
     @Override public @NonNull Set<@NonNull String> inputVars() {
         if (inputVarNames == null) {
             Op filter = children.get(1);
-            Set<String> inputs = new HashSet<>(filter.varNames());
+            Set<String> inputs = new HashSet<>(filter.outputVars());
             inputs.addAll(filter.inputVars());
-            for (String offer : children.get(0).varNames()) inputs.remove(offer);
+            for (String offer : children.get(0).outputVars()) inputs.remove(offer);
             inputVarNames = inputs;
         }
         return inputVarNames;

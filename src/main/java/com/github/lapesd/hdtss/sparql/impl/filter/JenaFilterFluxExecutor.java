@@ -23,7 +23,7 @@ public class JenaFilterFluxExecutor extends JenaFilterExecutor {
 
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
         Filter filter = (Filter) node;
-        return new FluxQuerySolutions(node.varNames(),
+        return new FluxQuerySolutions(node.outputVars(),
                 dispatcher.execute(filter.inner()).flux().filter(new Evaluator(filter)));
     }
 }

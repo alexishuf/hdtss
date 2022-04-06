@@ -45,7 +45,7 @@ public class SetMinusStrategy implements MinusStrategy {
         Op inner = minus.filter();
         var binder = new MinusBinder(minus);
         int[] outerIndices = binder.leftIndices();
-        int[] innerIndices = ExecutorUtils.findIndices(binder.sharedVars(), inner.varNames());
+        int[] innerIndices = ExecutorUtils.findIndices(binder.sharedVars(), inner.outputVars());
         CompletableFuture<Set<Row>> future = new CompletableFuture<>();
         Set<Row> set = setSupplier.get();
         dispatcher.execute(inner).flux()

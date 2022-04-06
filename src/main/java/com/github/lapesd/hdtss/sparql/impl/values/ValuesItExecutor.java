@@ -30,7 +30,7 @@ public class ValuesItExecutor extends ValuesExecutor {
         Values valuesNode = (Values) node;
         var values = valuesNode.values();
         var inner = valuesNode.inner();
-        return new IteratorQuerySolutions(node.varNames(), new Iterator<>() {
+        return new IteratorQuerySolutions(node.outputVars(), new Iterator<>() {
             private final @NonNull Iterator<@Nullable Term @NonNull[]> valuesIt = values.iterator();
             private @NonNull Iterator<@Nullable Term @NonNull[]> it = Collections.emptyIterator();
 

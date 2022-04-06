@@ -26,7 +26,7 @@ public class MinusFluxExecutor extends MinusExecutor {
 
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
         Predicate<@Nullable Term @NonNull[]> filter = strategy.createFilter((Minus) node);
-        return new FluxQuerySolutions(node.varNames(),
+        return new FluxQuerySolutions(node.outputVars(),
                 dispatcher.execute(node.children().get(0)).flux().filter(filter));
     }
 }

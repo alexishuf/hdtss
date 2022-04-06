@@ -22,7 +22,7 @@ public class UnionFluxExecutor extends UnionExecutor {
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
         if (node.type() != Type.UNION)
             throw new IllegalArgumentException("node is not Union");
-        var exposedVars = node.varNames();
+        var exposedVars = node.outputVars();
         var merge = Flux.merge(Flux.fromIterable(node.children())
                 .map(n -> {
                     var sols = dispatcher.execute(n);

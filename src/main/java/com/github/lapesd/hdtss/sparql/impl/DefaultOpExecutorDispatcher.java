@@ -97,7 +97,7 @@ public class DefaultOpExecutorDispatcher implements OpExecutorDispatcher {
             init();
         QuerySolutions solutions = executorMap.get(node.type()).execute(node);
         // multiple OpExecutor implementations rely on this:
-        assert solutions.varNames().equals(node.varNames());
+        assert solutions.varNames().equals(node.outputVars());
         return solutions;
     }
 }

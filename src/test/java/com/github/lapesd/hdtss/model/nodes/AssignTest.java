@@ -61,11 +61,11 @@ class AssignTest {
 
     @ParameterizedTest @MethodSource
     void testVarNames(@NonNull Assign a, @NonNull List<String> expected) {
-        assertEquals(expected, a.varNames());
+        assertEquals(expected, a.outputVars());
         assertEquals(a.var2expr().keySet(), new HashSet<>(a.assignedVars()));
-        for (String innerVar : a.inner().varNames()) {
-            assertEquals(a.inner().varNames().indexOf(innerVar),
-                         a.varNames().indexOf(innerVar));
+        for (String innerVar : a.inner().outputVars()) {
+            assertEquals(a.inner().outputVars().indexOf(innerVar),
+                         a.outputVars().indexOf(innerVar));
         }
     }
 }

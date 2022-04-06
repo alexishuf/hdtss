@@ -24,7 +24,7 @@ public class ValuesFluxExecutor extends ValuesExecutor {
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
         Op inner = node.children().get(0);
         BatchQuerySolutions values = ((Values) node).values();
-        return new FluxQuerySolutions(node.varNames(), values.flux().flatMap(r ->
+        return new FluxQuerySolutions(node.outputVars(), values.flux().flatMap(r ->
                 dispatcher.execute(inner.bind(values.varNames(), r)).flux()
         ));
     }

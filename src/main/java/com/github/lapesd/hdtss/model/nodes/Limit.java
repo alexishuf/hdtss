@@ -26,8 +26,8 @@ public class Limit extends AbstractOp {
         return Type.LIMIT;
     }
 
-    @Override public @NonNull List<@NonNull String> varNames() {
-        return children.get(0).varNames();
+    @Override public @NonNull List<@NonNull String> outputVars() {
+        return children.get(0).outputVars();
     }
 
     @Override public @NonNull Op withChildren(@NonNull List<@NonNull Op> replacements) {

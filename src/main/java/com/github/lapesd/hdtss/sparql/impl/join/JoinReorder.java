@@ -11,7 +11,7 @@ import java.util.List;
  * A join reorder consists of:
  * <ul>
  *     <li>{@link JoinReorder#operands()}: a reorder of the original {@link Join#children()} </li>
- *     <li>{@link JoinReorder#projection}: Let {@code exVars} be the {@link Join#varNames()} of
+ *     <li>{@link JoinReorder#projection}: Let {@code exVars} be the {@link Join#outputVars()} of
  *         the original {@link Join} operation and let
  *         {@code effVars = Join.of(operands()).varNames()}, then
  *         {@code exVars.get(i).equals(effVars.get(projection[i]))}.

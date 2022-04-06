@@ -23,6 +23,6 @@ public class OffsetFluxExecutor extends OffsetExecutor {
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
         Op inner = node.children().get(0);
         long n = ((Offset) node).offset();
-        return new FluxQuerySolutions(node.varNames(), dispatcher.execute(inner).flux().skip(n));
+        return new FluxQuerySolutions(node.outputVars(), dispatcher.execute(inner).flux().skip(n));
     }
 }

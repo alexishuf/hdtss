@@ -77,13 +77,13 @@ public final class Filter extends AbstractOp {
         return Type.FILTER;
     }
 
-    @Override public @NonNull List<@NonNull String> varNames() {
-        return children.get(0).varNames();
+    @Override public @NonNull List<@NonNull String> outputVars() {
+        return children.get(0).outputVars();
     }
 
     @Override public @NonNull Set<@NonNull String> inputVars() {
         Op child = children.get(0);
-        List<@NonNull String> childOutputs = child.varNames();
+        List<@NonNull String> childOutputs = child.outputVars();
         Set<@NonNull String> childInputs = child.inputVars();
         Set<@NonNull String> union = null;
         for (String var : filtersVarNames()) {

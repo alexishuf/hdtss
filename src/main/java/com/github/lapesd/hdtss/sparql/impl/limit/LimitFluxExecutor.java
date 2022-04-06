@@ -24,6 +24,6 @@ public class LimitFluxExecutor extends LimitExecutor {
     @Override public @NonNull QuerySolutions execute(@NonNull Op op) {
         Op inner = op.children().get(0);
         long limit = ((Limit) op).limit();
-        return new FluxQuerySolutions(op.varNames(), dispatcher.execute(inner).flux().take(limit));
+        return new FluxQuerySolutions(op.outputVars(), dispatcher.execute(inner).flux().take(limit));
     }
 }

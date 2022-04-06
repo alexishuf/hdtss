@@ -26,8 +26,8 @@ public class Minus extends AbstractOp {
         return Type.MINUS;
     }
 
-    @Override public @NonNull List<@NonNull String> varNames() {
-        return main().varNames();
+    @Override public @NonNull List<@NonNull String> outputVars() {
+        return main().outputVars();
     }
 
     @Override public @NonNull Set<@NonNull String> inputVars() {

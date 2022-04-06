@@ -47,7 +47,7 @@ public class BindJoinItExecutor extends BindJoinExecutor {
             if (prev != null && prev.isOptional)
                 throw new IllegalArgumentException("optional left operand not supported");
             this.prev = prev;
-            var myVars = op.varNames();
+            var myVars = op.outputVars();
             if (prev == null) {
                 accVars = myVars;
                 indices = new int[myVars.size()];

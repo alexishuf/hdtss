@@ -18,7 +18,7 @@ public final class LeftJoin extends Join {
         if (inputVarNames == null) {
             @NonNull Op left = children.get(0);
             Set<@NonNull String> inputs = null, leftInputs = left.inputVars();
-            List<@NonNull String> leftOutputs = left.varNames();
+            List<@NonNull String> leftOutputs = left.outputVars();
             for (String candidate : children.get(1).inputVars()) {
                 if (!leftOutputs.contains(candidate))
                     (inputs == null ? inputs = new HashSet<>() : inputs).add(candidate);

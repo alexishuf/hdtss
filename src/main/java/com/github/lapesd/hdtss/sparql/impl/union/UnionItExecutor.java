@@ -27,8 +27,8 @@ public class UnionItExecutor extends UnionExecutor {
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
         if (node.type() != Op.Type.UNION)
             throw new IllegalArgumentException("node is not a Union");
-        List<@NonNull String> exposedVars = node.varNames();
-        return new IteratorQuerySolutions(node.varNames(), new Iterator<>() {
+        List<@NonNull String> exposedVars = node.outputVars();
+        return new IteratorQuerySolutions(node.outputVars(), new Iterator<>() {
             private final Iterator<@NonNull Op> nodeIt = node.children().iterator();
             private final TermsOrder order = new TermsOrder(exposedVars);
             private Iterator<@Nullable Term @NonNull[]> solutionIt;

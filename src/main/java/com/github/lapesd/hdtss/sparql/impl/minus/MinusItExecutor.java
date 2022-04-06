@@ -31,7 +31,7 @@ public class MinusItExecutor extends MinusExecutor {
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
         Predicate<@Nullable Term @NonNull[]> filter = strategy.createFilter((Minus) node);
         var it = dispatcher.execute(node.children().get(0)).iterator();
-        return new IteratorQuerySolutions(node.varNames(), new Iterator<>() {
+        return new IteratorQuerySolutions(node.outputVars(), new Iterator<>() {
             private @Nullable Term @Nullable[] next = null;
 
             @Override public boolean hasNext() {

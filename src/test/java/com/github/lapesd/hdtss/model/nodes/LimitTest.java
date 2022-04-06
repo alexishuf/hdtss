@@ -65,8 +65,8 @@ class LimitTest {
 
         Op withChildren = op.withChildren(children);
         assertSame(oldInner, op.children.get(0));
-        assertEquals(op.varNames(), oldInner.varNames());
-        assertSame(op.varNames(), oldInner.varNames());
+        assertEquals(op.outputVars(), oldInner.outputVars());
+        assertSame(op.outputVars(), oldInner.outputVars());
 
         assertTrue(withChildren.deepEquals(expected));
         assertTrue(expected.deepEquals(withChildren));

@@ -71,11 +71,11 @@ class ProjectTest {
     void testWithChildren(@NonNull Project op, @NonNull List<Op> children,
                           @NonNull Project expected) {
         Op oldInner = op.inner();
-        List<@NonNull String> oldVars = new ArrayList<>(op.varNames());
+        List<@NonNull String> oldVars = new ArrayList<>(op.outputVars());
 
         Op withChildren = op.withChildren(children);
         assertSame(op.inner(), oldInner);
-        assertEquals(op.varNames(), oldVars);
+        assertEquals(op.outputVars(), oldVars);
 
         assertTrue(withChildren.deepEquals(expected));
         assertTrue(expected.deepEquals(withChildren));

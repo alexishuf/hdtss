@@ -29,7 +29,7 @@ public class OffsetItExecutor extends OffsetExecutor {
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
         long offset = ((Offset) node).offset();
         var it = dispatcher.execute(node.children().get(0)).iterator();
-        return new IteratorQuerySolutions(node.varNames(), new Iterator<>() {
+        return new IteratorQuerySolutions(node.outputVars(), new Iterator<>() {
             private int count = 0;
 
             @Override public boolean hasNext() {

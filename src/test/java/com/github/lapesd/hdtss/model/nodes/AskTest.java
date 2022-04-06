@@ -58,11 +58,11 @@ class AskTest {
 
     @ParameterizedTest @MethodSource
     void testWithChildren(@NonNull Ask ask, @NonNull List<Op> children, @NonNull Ask expected) {
-        assertEquals(ask.varNames(), List.of());
+        assertEquals(ask.outputVars(), List.of());
         Op withChildren = ask.withChildren(children);
         assertTrue(withChildren.deepEquals(expected));
         assertTrue(expected.deepEquals(withChildren));
-        assertEquals(ask.varNames(), List.of());
+        assertEquals(ask.outputVars(), List.of());
     }
 
 }
