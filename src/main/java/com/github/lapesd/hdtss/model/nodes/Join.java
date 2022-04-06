@@ -46,7 +46,7 @@ public class Join extends AbstractOp {
 
     @Override
     public @NonNull Op withChildren(@NonNull List<@NonNull Op> replacements) {
-        replacements = OpUtils.flattenOrCopy(Join.class, replacements);
+        replacements = OpUtils.flatten(Join.class, replacements);
         return switch (replacements.size()) {
             case 0 -> IdentityNode.INSTANCE;
             case 1 -> replacements.get(0);
