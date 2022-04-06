@@ -15,7 +15,6 @@ import static com.github.lapesd.hdtss.TestUtils.parseTriplePattern;
 import static com.github.lapesd.hdtss.TestVocab.*;
 import static com.github.lapesd.hdtss.vocab.FOAF.knowsTerm;
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
@@ -44,14 +43,14 @@ class OpUtilsTest {
                 arguments(true,  new Union(new Join(tp3, tp4), tp5), new Union(new Join(tp3_, tp4), tp5)),
                 arguments(true,  new Union(new Join(tp3, tp4), tp5), new Union(new Join(tp3_, tp4), tp5_)),
                 arguments(false, new Union(new Join(tp3, tp4), tp5), new Union(new Join(tp3_, tp5), tp4)),
-                arguments(true,  new Filter(new Union(new Join(tp3, tp4), tp5 ), singletonList("?x = ?y")),
-                                 new Filter(new Union(new Join(tp3, tp4), tp5 ), singletonList("?x = ?y"))),
-                arguments(true,  new Filter(new Union(new Join(tp3, tp4), tp5_), singletonList("?x = ?y")),
-                                 new Filter(new Union(new Join(tp3, tp4), tp5 ), singletonList("?x = ?y"))),
-                arguments(false, new Filter(new Union(new Join(tp3, tp4), tp5 ), singletonList("?x = ?y")),
-                                 new Filter(new Union(new Join(tp3, tp4), tp5 ), singletonList("?y = ?x"))),
-                arguments(false, new Filter(new Union(new Join(tp3, tp4), tp5 ), singletonList("?x = ?y")),
-                                 new Filter(new Union(new Join(tp3, tp5), tp4 ), singletonList("?x = ?y")))
+                arguments(true,  new Filter(new Union(new Join(tp3, tp4), tp5 ), List.of("?x = ?y")),
+                                 new Filter(new Union(new Join(tp3, tp4), tp5 ), List.of("?x = ?y"))),
+                arguments(true,  new Filter(new Union(new Join(tp3, tp4), tp5_), List.of("?x = ?y")),
+                                 new Filter(new Union(new Join(tp3, tp4), tp5 ), List.of("?x = ?y"))),
+                arguments(false, new Filter(new Union(new Join(tp3, tp4), tp5 ), List.of("?x = ?y")),
+                                 new Filter(new Union(new Join(tp3, tp4), tp5 ), List.of("?y = ?x"))),
+                arguments(false, new Filter(new Union(new Join(tp3, tp4), tp5 ), List.of("?x = ?y")),
+                                 new Filter(new Union(new Join(tp3, tp5), tp4 ), List.of("?x = ?y")))
         );
     }
 
@@ -76,10 +75,10 @@ class OpUtilsTest {
                 arguments(new Union(new Join(tp2, tp3), tp4), new Union(new Join(tp2, tp3), tp4)),
                 arguments(new Union(tp2, tp4, IdentityNode.get()), new Union(tp2, tp4)),
                 arguments(new Union(tp2, new Union(tp4, tp3)), new Union(tp2, tp4, tp3)),
-                arguments(new Filter(tp2, singletonList("?x = ?y")),
-                          new Filter(tp2, singletonList("?x = ?y"))),
-                arguments(new Filter(new Filter(tp2, singletonList("str(?x) > str(?y)")),
-                                     singletonList("?x = ?y")),
+                arguments(new Filter(tp2, List.of("?x = ?y")),
+                          new Filter(tp2, List.of("?x = ?y"))),
+                arguments(new Filter(new Filter(tp2, List.of("str(?x) > str(?y)")),
+                                     List.of("?x = ?y")),
                           new Filter(tp2, asList("?x = ?y", "str(?x) > str(?y)")))
         );
     }

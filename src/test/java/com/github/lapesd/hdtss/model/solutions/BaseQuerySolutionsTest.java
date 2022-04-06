@@ -13,13 +13,11 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static com.github.lapesd.hdtss.TestVocab.EX;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;
@@ -36,21 +34,21 @@ abstract class BaseQuerySolutionsTest {
     void testVarNames(String testData) {
         List<String> list = Arrays.stream(testData.split(" "))
                                    .filter(not(String::isEmpty)).collect(toList());
-        QuerySolutions solutions = createFor(list, emptyList());
+        QuerySolutions solutions = createFor(list, List.of());
         assertEquals(list, solutions.varNames());
     }
 
     @Test
     void testIsAsk() {
-        assertTrue(createFor(emptyList(), emptyList()).isAsk());
-        assertFalse(createFor(Collections.singletonList("x"), emptyList()).isAsk());
-        assertFalse(createFor(asList("x", "y"), emptyList()).isAsk());
+        assertTrue(createFor(List.of(), List.of()).isAsk());
+        assertFalse(createFor(List.of("x"), List.of()).isAsk());
+        assertFalse(createFor(asList("x", "y"), List.of()).isAsk());
     }
 
     @Test
     void testAskResult() {
-        var negative = createFor(emptyList(), emptyList());
-        var positive = createFor(emptyList(), singletonList(new Term[]{XSD.xtrue}));
+        var negative = createFor(List.of(), List.of());
+        var positive = createFor(List.of(), singletonList(new Term[]{XSD.xtrue}));
         assertTrue(negative.isAsk());
         assertTrue(positive.isAsk());
 
@@ -67,11 +65,11 @@ abstract class BaseQuerySolutionsTest {
 
     static Stream<Arguments> solutionData() {
         return Stream.of(
-                arguments(emptyList(), emptyList()),
-                arguments(emptyList(), singletonList(new Term[]{XSD.xtrue})),
-                arguments(singletonList("x"), emptyList()),
-                arguments(singletonList("x"), singletonList(new Term[]{XSD.xtrue})),
-                arguments(singletonList("x"), asList(
+                arguments(List.of(), List.of()),
+                arguments(List.of(), singletonList(new Term[]{XSD.xtrue})),
+                arguments(List.of("x"), List.of()),
+                arguments(List.of("x"), singletonList(new Term[]{XSD.xtrue})),
+                arguments(List.of("x"), asList(
                         new Term[]{XSD.xtrue},
                         new Term[]{XSD.xfalse}
                 )),

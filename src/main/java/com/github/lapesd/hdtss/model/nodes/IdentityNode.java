@@ -3,7 +3,6 @@ package com.github.lapesd.hdtss.model.nodes;
 import com.github.lapesd.hdtss.model.Term;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,7 +47,7 @@ public final class IdentityNode implements Op {
     }
 
     @Override public @NonNull List<@NonNull String> outputVars() {
-        return Collections.emptyList();
+        return List.of();
     }
 
     @Override public @NonNull Set<@NonNull String> inputVars() {
@@ -56,7 +55,7 @@ public final class IdentityNode implements Op {
     }
 
     @Override public @NonNull List<@NonNull Op> children() {
-        return Collections.emptyList();
+        return List.of();
     }
 
     @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row) {

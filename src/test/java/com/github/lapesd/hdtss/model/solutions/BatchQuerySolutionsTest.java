@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -22,8 +21,8 @@ class BatchQuerySolutionsTest extends BaseQuerySolutionsTest {
 
     @Test
     void testIsCold() {
-        assertFalse(createFor(emptyList(), emptyList()).isHot());
-        assertFalse(createFor(emptyList(), singletonList(new Term[]{XSD.xtrue})).isHot());
-        assertFalse(createFor(singletonList("x"), singletonList(new Term[]{XSD.xtrue})).isHot());
+        assertFalse(createFor(List.of(), List.of()).isHot());
+        assertFalse(createFor(List.of(), singletonList(new Term[]{XSD.xtrue})).isHot());
+        assertFalse(createFor(List.of("x"), singletonList(new Term[]{XSD.xtrue})).isHot());
     }
 }

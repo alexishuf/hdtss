@@ -6,11 +6,16 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-import static java.util.Collections.singletonList;
 
 public record Row(Term @NonNull[] terms) {
     public static final @NonNull Term @NonNull [] EMPTY = new Term[0];
-    public static final List<@NonNull Term @NonNull[]> SINGLE_EMPTY = singletonList(EMPTY);
+    public static final List<@NonNull Term @NonNull[]> SINGLE_EMPTY;
+
+    static {
+        List<?> l = List.of((Object) EMPTY);
+        //noinspection unchecked
+        SINGLE_EMPTY = (List<Term[]>) l;
+    }
 
     public static @Nullable Term @NonNull[] raw(@Nullable Term... terms) {
         return terms == null ? EMPTY : terms;

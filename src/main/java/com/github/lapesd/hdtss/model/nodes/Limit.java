@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
-import java.util.Collections;
 import java.util.List;
 
 @Accessors(fluent = true)
@@ -12,7 +11,7 @@ public class Limit extends AbstractOp {
     @Getter long limit;
 
     public Limit(long limit, @NonNull Op child) {
-        super(Collections.singletonList(child));
+        super(List.of(child));
         if (limit < 0)
             throw new IllegalArgumentException("limit must be >= 0");
         this.limit = limit;

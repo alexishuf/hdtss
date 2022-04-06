@@ -58,7 +58,6 @@ import static com.github.lapesd.hdtss.vocab.FOAF.*;
 import static com.github.lapesd.hdtss.vocab.RDF.PropertyTerm;
 import static com.github.lapesd.hdtss.vocab.RDF.typeTerm;
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -75,7 +74,7 @@ class OpExecutorTest {
         hdtFile = new TempFile(".hdt").initFromResource(TempFile.class, path);
         sharedPropertyChoices = Map.of(
                 "sparql.hdt.flow", asList("REACTIVE", "ITERATOR"),
-                "hdt.location", singletonList(hdtFile.getAbsolutePath()),
+                "hdt.location", List.of(hdtFile.getAbsolutePath()),
                 "hdt.estimator", asList("PATTERN", "PEEK")
         );
     }

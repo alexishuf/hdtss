@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
-import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.junit.jupiter.api.Assertions.*;
@@ -114,7 +113,7 @@ public class TestUtils {
 
     public static @NonNull List<Map<String, Object>>
     configPermutations(@NonNull Map<String, List<Object>> choicesMap) {
-        return configPermutations(singletonList(choicesMap));
+        return configPermutations(List.of(choicesMap));
     }
 
     public static @NonNull List<Map<String, Object>>
@@ -140,7 +139,7 @@ public class TestUtils {
 
     public static @NonNull Iterable<ApplicationContextBuilder>
     listApplicationContextBuilders(@NonNull Map<String, List<Object>> configChoicesMap) {
-        return listApplicationContextBuilders(singletonList(configChoicesMap));
+        return listApplicationContextBuilders(List.of(configChoicesMap));
     }
 
     public static @NonNull Iterable<ApplicationContextBuilder>
@@ -158,7 +157,7 @@ public class TestUtils {
 
     public static @NonNull Iterable<ApplicationContext>
     listApplicationContext(@NonNull Map<String, List<Object>> configChoicesMap) {
-        return listApplicationContext(singletonList(configChoicesMap));
+        return listApplicationContext(List.of(configChoicesMap));
 
     }
     public static @NonNull Iterable<ApplicationContext>

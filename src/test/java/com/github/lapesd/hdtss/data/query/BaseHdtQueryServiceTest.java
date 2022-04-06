@@ -24,8 +24,6 @@ import static com.github.lapesd.hdtss.TestUtils.fixEquals;
 import static com.github.lapesd.hdtss.TestVocab.EX;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -43,16 +41,16 @@ public abstract class BaseHdtQueryServiceTest {
     @SuppressWarnings("unchecked") static @NonNull Stream<Arguments> testQuery() {
         return Stream.of(
                 // no results
-                arguments("<"+EX+"Charlie> <"+FOAF.age+"> ?x", emptyList()),
+                arguments("<"+EX+"Charlie> <"+FOAF.age+"> ?x", List.of()),
                 // negative ask query
-                arguments("<"+EX+"Charlie> <"+FOAF.age+"> \"charlie\"", emptyList()),
+                arguments("<"+EX+"Charlie> <"+FOAF.age+"> \"charlie\"", List.of()),
                 // positive ask query
                 arguments("<"+EX+"Alice> <"+FOAF.name+"> \"Alice\"@en",
-                          singletonList(emptyList())),
+                          List.of(List.of())),
                 // query two objects
                 arguments("<"+EX+"Alice> <"+FOAF.name +"> ?x", asList(
-                        singletonList("\"Alice\"@en"),
-                        singletonList("\"Alícia\"@pt-BR")
+                        List.of("\"Alice\"@en"),
+                        List.of("\"Alícia\"@pt-BR")
                 )),
                 // query with two variables
                 arguments("?x <"+FOAF.age+"> ?age", asList(
@@ -61,10 +59,10 @@ public abstract class BaseHdtQueryServiceTest {
                 )),
                 // query reflexive triple
                 arguments("?x <"+FOAF.knows+"> ?x",
-                        singletonList(singletonList("<"+EX+"Bob>"))),
+                        List.of(List.of("<"+EX+"Bob>"))),
                 // all vars to query reflexive triple
                 arguments("?x ?pred ?x",
-                        singletonList(asList("<"+EX+"Bob>", "<"+FOAF.knows+">")))
+                        List.of(asList("<"+EX+"Bob>", "<"+FOAF.knows+">")))
         ).map(a -> {
             Object queryString = a.get()[0];
             var results = (List<List<String>>)a.get()[1];

@@ -47,7 +47,7 @@ public final class TriplePattern implements Op {
     }
 
     @Override public @NonNull List<@NonNull Op> children() {
-        return Collections.emptyList();
+        return List.of();
     }
 
     @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row) {

@@ -21,7 +21,7 @@ public final class Filter extends AbstractOp {
 
     public Filter(@NonNull Op inner,
                   @NonNull List<@NonNull String> filters) {
-        super(Collections.singletonList(inner));
+        super(List.of(inner));
         this.filters = filters;
         assert filters.stream().noneMatch(WRAPPER_RX.asPredicate())
                 : "Filter expressions must not be wrapped with FILTER()";

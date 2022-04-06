@@ -14,20 +14,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-
 @Tag("fast")
 class HdtQueryServiceImplTest extends BaseHdtQueryServiceTest {
 
     private static TempFile hdtFile;
     private static final @NonNull Map<String, List<String>> propertyValues = Map.of(
-            "hdt.load.indexed", asList("true", "false"),
-            "hdt.load.native", asList("true", "false"),
-            "hdt.load.mmap", asList("true", "false"),
-            "hdt.load.can-create-index", asList("true", "false"),
-            "hdt.load.progress.impl", asList("log", "none"),
-            "hdt.load.progress.log.level", singletonList("DEBUG")
+            "hdt.load.indexed", List.of("true", "false"),
+            "hdt.load.native", List.of("true", "false"),
+            "hdt.load.mmap", List.of("true", "false"),
+            "hdt.load.can-create-index", List.of("true", "false"),
+            "hdt.load.progress.impl", List.of("log", "none"),
+            "hdt.load.progress.log.level", List.of("DEBUG")
     );
     private static List<Map<String, Object>> configurations;
 

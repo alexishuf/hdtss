@@ -9,7 +9,6 @@ import reactor.core.publisher.Flux;
 
 import java.util.List;
 
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -23,9 +22,9 @@ class FluxQuerySolutionsTest extends BaseQuerySolutionsTest {
 
     @Test
     void testIsHot() {
-        assertTrue(createFor(emptyList(), emptyList()).isHot());
-        assertTrue(createFor(emptyList(), singletonList(new Term[]{XSD.xtrue})).isHot());
-        assertTrue(createFor(emptyList(), singletonList(new Term[]{XSD.xfalse})).isHot());
-        assertTrue(createFor(singletonList("x"), singletonList(new Term[]{XSD.xtrue})).isHot());
+        assertTrue(createFor(List.of(), List.of()).isHot());
+        assertTrue(createFor(List.of(), singletonList(new Term[]{XSD.xtrue})).isHot());
+        assertTrue(createFor(List.of(), singletonList(new Term[]{XSD.xfalse})).isHot());
+        assertTrue(createFor(List.of("x"), singletonList(new Term[]{XSD.xtrue})).isHot());
     }
 }
