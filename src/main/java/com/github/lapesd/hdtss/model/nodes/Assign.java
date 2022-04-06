@@ -11,7 +11,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.util.*;
 
 @Accessors(fluent = true)
-public class Assign extends AbstractOp {
+public final class Assign extends AbstractOp {
     private final @Getter @NonNull Map<String, String> var2expr;
     private @Nullable List<@NonNull String> assignedVars;
     private @Nullable Set<@NonNull String> usedVars;

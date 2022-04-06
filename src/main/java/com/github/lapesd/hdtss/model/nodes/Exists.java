@@ -6,10 +6,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class Exists extends AbstractOp {
+public final class Exists extends AbstractOp {
     private final boolean negate;
 
-    protected Exists(@NonNull Op outer, @NonNull Op inner, boolean negate) {
+    private Exists(@NonNull Op outer, @NonNull Op inner, boolean negate) {
         super(List.of(outer, inner));
         this.negate = negate;
     }

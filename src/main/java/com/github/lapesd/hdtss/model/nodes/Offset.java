@@ -7,7 +7,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import java.util.List;
 
 @Accessors(fluent = true)
-public class Offset extends AbstractOp {
+public final class Offset extends AbstractOp {
     private final @Getter long offset;
 
     public Offset(long offset, @NonNull Op inner) {

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @Accessors(fluent = true)
-public class Values extends AbstractOp {
+public final class Values extends AbstractOp {
     private final @Getter @NonNull BatchQuerySolutions values;
 
     public Values(@NonNull QuerySolutions values, @NonNull Op child) {

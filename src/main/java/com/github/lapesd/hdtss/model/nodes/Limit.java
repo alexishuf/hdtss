@@ -7,7 +7,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import java.util.List;
 
 @Accessors(fluent = true)
-public class Limit extends AbstractOp {
+public final class Limit extends AbstractOp {
     @Getter long limit;
 
     public Limit(long limit, @NonNull Op child) {

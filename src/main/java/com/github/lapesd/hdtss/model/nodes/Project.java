@@ -4,7 +4,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.List;
 
-public class Project extends AbstractOp {
+public final class Project extends AbstractOp {
     public Project(@NonNull List<String> varNames, @NonNull Op inner) {
         super(List.of(inner));
         this.varNames = varNames;

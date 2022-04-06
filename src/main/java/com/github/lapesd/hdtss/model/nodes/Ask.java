@@ -4,7 +4,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.List;
 
-public class Ask extends AbstractOp {
+public final class Ask extends AbstractOp {
     public Ask(@NonNull Op child) {
         super(List.of(child));
     }

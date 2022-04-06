@@ -9,7 +9,7 @@ import java.util.*;
 import static com.github.lapesd.hdtss.utils.BitsetOps.nextSet;
 import static java.util.Arrays.asList;
 
-public class Minus extends AbstractOp {
+public final class Minus extends AbstractOp {
     public Minus(@NonNull Op main, @NonNull Op filter) {
         super(asList(main, filter));
     }
