@@ -17,8 +17,6 @@ import com.github.lapesd.hdtss.sparql.impl.distinct.DistinctFluxExecutor;
 import com.github.lapesd.hdtss.sparql.impl.distinct.DistinctItExecutor;
 import com.github.lapesd.hdtss.sparql.impl.exists.ExistsFluxExecutor;
 import com.github.lapesd.hdtss.sparql.impl.exists.ExistsItExecutor;
-import com.github.lapesd.hdtss.sparql.impl.exists.NotExistsFluxExecutor;
-import com.github.lapesd.hdtss.sparql.impl.exists.NotExistsItExecutor;
 import com.github.lapesd.hdtss.sparql.impl.filter.JenaFilterFluxExecutor;
 import com.github.lapesd.hdtss.sparql.impl.filter.JenaFilterItExecutor;
 import com.github.lapesd.hdtss.sparql.impl.join.BindJoinFluxExecutor;
@@ -166,7 +164,6 @@ class OpExecutorTest {
                 new Params(Op.Type.LEFT_JOIN,  BindLeftJoinItExecutor.class,  BindLeftJoinFluxExecutor.class),
                 new Params(Op.Type.LIMIT,      LimitItExecutor.class,         LimitFluxExecutor.class),
                 new Params(Op.Type.MINUS,      MinusItExecutor.class,         MinusFluxExecutor.class),
-                new Params(Op.Type.NOT_EXISTS, NotExistsItExecutor.class,     NotExistsFluxExecutor.class),
                 new Params(Op.Type.OFFSET,     OffsetItExecutor.class,        OffsetFluxExecutor.class),
                 new Params(Op.Type.PROJECT,    ProjectItExecutor.class,       ProjectFluxExecutor.class),
                 new Params(Op.Type.UNION,      UnionItExecutor.class,         UnionFluxExecutor.class),
@@ -528,21 +525,21 @@ class OpExecutorTest {
     @SuppressWarnings("unused") static Stream<Arguments> testExists() {
         List<Term @NonNull[]> has = Row.SINGLE_EMPTY, hasNot = List.of();
         return Stream.of(
-        /* 1 */ arguments(new Exists(new TriplePattern(Alice, knowsTerm, x),
-                                     new TriplePattern(x, ageTerm, y)),
+        /* 1 */ arguments(Exists.create(new TriplePattern(Alice, knowsTerm, x),
+                                        new TriplePattern(x, ageTerm, y)),
                           List.of(List.of(Bob))),
-        /* 2 */ arguments(new Exists(new TriplePattern(Alice, knowsTerm, x),
-                                     IdentityNode.INSTANCE),
+        /* 2 */ arguments(Exists.create(new TriplePattern(Alice, knowsTerm, x),
+                                        IdentityNode.INSTANCE),
                           List.of(List.of(Bob))),
-        /* 3 */ arguments(new Exists(new TriplePattern(Alice, knowsTerm, Bob),
-                                     IdentityNode.INSTANCE),
+        /* 3 */ arguments(Exists.create(new TriplePattern(Alice, knowsTerm, Bob),
+                                        IdentityNode.INSTANCE),
                           List.of(List.of())),
-        /* 4 */ arguments(new Exists(new TriplePattern(x, knowsTerm, y),
-                                     new TriplePattern(y, ageTerm, z)),
+        /* 4 */ arguments(Exists.create(new TriplePattern(x, knowsTerm, y),
+                                        new TriplePattern(y, ageTerm, z)),
                           asList(asList(Alice, Bob), asList(Bob, Alice), asList(Bob, Bob),
                                  asList(Charlie, Alice))),
-        /* 5 */ arguments(new Exists(new TriplePattern(x, knowsTerm, y),
-                                     new TriplePattern(x, ageTerm, z)),
+        /* 5 */ arguments(Exists.create(new TriplePattern(x, knowsTerm, y),
+                                        new TriplePattern(x, ageTerm, z)),
                           asList(asList(Alice, Bob), asList(Bob, Alice), asList(Bob, Bob)))
         );
     }
@@ -555,29 +552,29 @@ class OpExecutorTest {
     @SuppressWarnings("unused") static Stream<Arguments> testNotExists() {
         List<Term @NonNull[]> yes = Row.SINGLE_EMPTY, no = List.of();
         return Stream.of(
-                arguments(new NotExists(new TriplePattern(Alice, knowsTerm, y),
+                arguments(Exists.not(new TriplePattern(Alice, knowsTerm, y),
                                         new TriplePattern(y, typeTerm, PropertyTerm)),
                           List.of(List.of(Bob))),
-                arguments(new NotExists(new TriplePattern(Alice, knowsTerm, Bob),
+                arguments(Exists.not(new TriplePattern(Alice, knowsTerm, Bob),
                                         new TriplePattern(Bob, typeTerm, PropertyTerm)),
                           List.of(List.of())),
-                arguments(new NotExists(new TriplePattern(Alice, knowsTerm, Bob),
+                arguments(Exists.not(new TriplePattern(Alice, knowsTerm, Bob),
                                         new TriplePattern(Bob, ageTerm, z)),
                           List.of()),
-                arguments(new NotExists(new TriplePattern(x, knowsTerm, y),
+                arguments(Exists.not(new TriplePattern(x, knowsTerm, y),
                                         new TriplePattern(y, ageTerm, z)),
                           List.of()),
-                arguments(new NotExists(new TriplePattern(x, knowsTerm, y),
+                arguments(Exists.not(new TriplePattern(x, knowsTerm, y),
                                         new TriplePattern(x, ageTerm, z)),
                           List.of(asList(Charlie, Alice))),
-                arguments(new NotExists(new TriplePattern(Alice, knowsTerm, x),
+                arguments(Exists.not(new TriplePattern(Alice, knowsTerm, x),
                                         IdentityNode.INSTANCE),
                           List.of(List.of(Bob)))
         );
     }
 
     @ParameterizedTest @MethodSource
-    void testNotExists(@NonNull NotExists in, @NonNull Collection<List<Term>> expected) {
+    void testNotExists(@NonNull Exists in, @NonNull Collection<List<Term>> expected) {
         testInContexts(in, expected);
     }
 

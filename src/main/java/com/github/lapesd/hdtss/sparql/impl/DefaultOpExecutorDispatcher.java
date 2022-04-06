@@ -31,7 +31,6 @@ public class DefaultOpExecutorDispatcher implements OpExecutorDispatcher {
     private final @NonNull Provider<OpExecutor> valuesExecutor;
     private final @NonNull Provider<OpExecutor> assignExecutor;
     private final @NonNull Provider<OpExecutor> existsExecutor;
-    private final @NonNull Provider<OpExecutor> notExistsExecutor;
     private final @NonNull Provider<OpExecutor> minusExecutor;
     private final @NonNull Provider<OpExecutor> askExecutor;
     private @Nullable Map<Op.@NonNull Type, @NonNull OpExecutor> executorMap;
@@ -50,7 +49,6 @@ public class DefaultOpExecutorDispatcher implements OpExecutorDispatcher {
                                        @Named("values")    @NonNull Provider<OpExecutor> valuesExecutor,
                                        @Named("assign")    @NonNull Provider<OpExecutor> assignExecutor,
                                        @Named("exists")    @NonNull Provider<OpExecutor> existsExecutor,
-                                       @Named("notExists") @NonNull Provider<OpExecutor> notExistsExecutor,
                                        @Named("minus")     @NonNull Provider<OpExecutor> minusExecutor,
                                        @Named("ask")       @NonNull Provider<OpExecutor> askExecutor) {
         this.tripleExecutor = tripleExecutor;
@@ -66,7 +64,6 @@ public class DefaultOpExecutorDispatcher implements OpExecutorDispatcher {
         this.valuesExecutor = valuesExecutor;
         this.assignExecutor = assignExecutor;
         this.existsExecutor = existsExecutor;
-        this.notExistsExecutor = notExistsExecutor;
         this.minusExecutor = minusExecutor;
         this.askExecutor = askExecutor;
     }
@@ -87,7 +84,6 @@ public class DefaultOpExecutorDispatcher implements OpExecutorDispatcher {
         map.put(Op.Type.VALUES,     this.valuesExecutor.get());
         map.put(Op.Type.ASSIGN,     this.assignExecutor.get());
         map.put(Op.Type.EXISTS,     this.existsExecutor.get());
-        map.put(Op.Type.NOT_EXISTS, this.notExistsExecutor.get());
         map.put(Op.Type.MINUS,      this.minusExecutor.get());
         map.put(Op.Type.ASK,        this.askExecutor.get());
         assert Arrays.stream(Op.Type.values()).allMatch(map::containsKey);

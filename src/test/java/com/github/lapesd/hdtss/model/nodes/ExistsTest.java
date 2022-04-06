@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import static com.github.lapesd.hdtss.TestVocab.*;
 import static com.github.lapesd.hdtss.vocab.FOAF.ageTerm;
 import static com.github.lapesd.hdtss.vocab.FOAF.knowsTerm;
+import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
@@ -20,41 +21,71 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 class ExistsTest {
     static Stream<Arguments> testEquals() {
         return Stream.of(
-                arguments(new Exists(new TriplePattern(Alice, knowsTerm, x),
-                                     new TriplePattern(x, knowsTerm, Alice)),
-                          new Exists(new TriplePattern(Alice, knowsTerm, x),
-                                     new TriplePattern(x, knowsTerm, Alice)),
+                arguments(Exists.create(new TriplePattern(Alice, knowsTerm, x),
+                                        new TriplePattern(x, knowsTerm, Alice)),
+                          Exists.create(new TriplePattern(Alice, knowsTerm, x),
+                                        new TriplePattern(x, knowsTerm, Alice)),
                           true),
-                arguments(new Exists(new TriplePattern(Alice, knowsTerm, x),
-                                     new TriplePattern(x, knowsTerm, Alice)),
-                          new Exists(new TriplePattern(x, knowsTerm, Alice),
-                                     new TriplePattern(Alice, knowsTerm, x)),
+                arguments(Exists.create(new TriplePattern(Alice, knowsTerm, x),
+                                        new TriplePattern(x, knowsTerm, Alice)),
+                          Exists.create(new TriplePattern(x, knowsTerm, Alice),
+                                        new TriplePattern(Alice, knowsTerm, x)),
                           false),
-                arguments(new Exists(new TriplePattern(Alice, knowsTerm, x),
-                                     new TriplePattern(x, knowsTerm, Alice)),
-                          new Exists(new TriplePattern(Alice, knowsTerm, x),
-                                     new TriplePattern(x, ageTerm, Alice)),
-                         false)
+                arguments(Exists.create(new TriplePattern(Alice, knowsTerm, x),
+                                        new TriplePattern(x, knowsTerm, Alice)),
+                          Exists.create(new TriplePattern(Alice, knowsTerm, x),
+                                        new TriplePattern(x, ageTerm, Alice)),
+                         false),
+
+                arguments(Exists.not(new TriplePattern(Alice, knowsTerm, x),
+                                     new TriplePattern(x, ageTerm, y)),
+                        Exists.not(new TriplePattern(Alice, knowsTerm, x),
+                                     new TriplePattern(x, ageTerm, y)),
+                        true),
+                arguments(Exists.not(new TriplePattern(Alice, knowsTerm, x),
+                                     new TriplePattern(x, ageTerm, y)),
+                        Exists.not(new TriplePattern(Bob, knowsTerm, x),
+                                     new TriplePattern(x, ageTerm, y)),
+                        false),
+                arguments(Exists.not(new TriplePattern(Alice, knowsTerm, x),
+                                     new TriplePattern(x, ageTerm, y)),
+                        Exists.not(new TriplePattern(Alice, knowsTerm, x),
+                                     new TriplePattern(y, ageTerm, x)),
+                        false),
+                arguments(Exists.not(new TriplePattern(Alice, knowsTerm, x),
+                                     new TriplePattern(x, ageTerm, y)),
+                        new TriplePattern(Alice, knowsTerm, x),
+                        false)
         );
     }
 
     @ParameterizedTest @MethodSource
     public void testEquals(@NonNull Op a, @NonNull Op b, boolean expected) {
+        assertEquals(expected, a.toString().equals(b.toString()));
         assertEquals(expected, a.deepEquals(b));
         assertEquals(expected, b.deepEquals(a));
     }
 
     static Stream<Arguments> testVarNames() {
         return Stream.of(
-                arguments(new Exists(new TriplePattern(Alice, knowsTerm, x),
-                                     new TriplePattern(x, knowsTerm, Bob)),
+                arguments(Exists.create(new TriplePattern(Alice, knowsTerm, x),
+                                        new TriplePattern(x, knowsTerm, Bob)),
                           List.of("x")),
-                arguments(new Exists(new TriplePattern(Alice, knowsTerm, x),
-                                new TriplePattern(x, knowsTerm, y)),
+                arguments(Exists.create(new TriplePattern(Alice, knowsTerm, x),
+                                        new TriplePattern(x, knowsTerm, y)),
                           List.of("x")),
-                arguments(new Exists(new TriplePattern(Alice, knowsTerm, Bob),
-                                new TriplePattern(Bob, ageTerm, y)),
-                          List.of())
+                arguments(Exists.create(new TriplePattern(Alice, knowsTerm, Bob),
+                                        new TriplePattern(Bob, ageTerm, y)),
+                          List.of()),
+                arguments(Exists.not(new TriplePattern(Alice, knowsTerm, x),
+                                     new TriplePattern(x, ageTerm, y)),
+                          List.of("x")),
+                arguments(Exists.not(new TriplePattern(Alice, knowsTerm, Bob),
+                                     new TriplePattern(Bob, ageTerm, y)),
+                          List.of()),
+                arguments(Exists.not(new TriplePattern(x, knowsTerm, y),
+                                     new TriplePattern(y, knowsTerm, z)),
+                          asList("x", "y"))
         );
     }
 
@@ -65,24 +96,24 @@ class ExistsTest {
 
     static Stream<Arguments> testInputFilterVarNames() {
         return Stream.of(
-        /*  1 */arguments(new Exists(new TriplePattern(Alice, knowsTerm, x),
-                                     new TriplePattern(x, ageTerm, y)),
+        /*  1 */arguments(Exists.create(new TriplePattern(Alice, knowsTerm, x),
+                                        new TriplePattern(x, ageTerm, y)),
                           Set.of("y")),
-        /*  2 */arguments(new Exists(new TriplePattern(Alice, knowsTerm, x),
-                                     new Filter(new TriplePattern(x, ageTerm, y), "?y > 23")),
+        /*  2 */arguments(Exists.create(new TriplePattern(Alice, knowsTerm, x),
+                                        new Filter(new TriplePattern(x, ageTerm, y), "?y > 23")),
                           Set.of("y")),
-        /*  3 */arguments(new Exists(new TriplePattern(Alice, knowsTerm, x),
-                                     new Filter(new TriplePattern(x, ageTerm, y), "?y > ?x")),
+        /*  3 */arguments(Exists.create(new TriplePattern(Alice, knowsTerm, x),
+                                        new Filter(new TriplePattern(x, ageTerm, y), "?y > ?x")),
                           Set.of("y")),
-        /*  4 */arguments(new Exists(new Filter(new TriplePattern(x, ageTerm, y), "?y > ?x"),
-                                     new TriplePattern(Alice, knowsTerm, x)),
+        /*  4 */arguments(Exists.create(new Filter(new TriplePattern(x, ageTerm, y), "?y > ?x"),
+                                        new TriplePattern(Alice, knowsTerm, x)),
                           Set.of()),
-        /*  5 */arguments(new Exists(new TriplePattern(Alice, knowsTerm, x),
-                                     new Filter(new TriplePattern(x, ageTerm, y), "?y > ?z")),
+        /*  5 */arguments(Exists.create(new TriplePattern(Alice, knowsTerm, x),
+                                        new Filter(new TriplePattern(x, ageTerm, y), "?y > ?z")),
                           Set.of("y", "z")),
                 // bind is directional
-        /*  6 */arguments(new Exists(new Filter(new TriplePattern(Alice, ageTerm, x), "?x > ?y"),
-                                     new TriplePattern(Bob, ageTerm, y)),
+        /*  6 */arguments(Exists.create(new Filter(new TriplePattern(Alice, ageTerm, x), "?x > ?y"),
+                                        new TriplePattern(Bob, ageTerm, y)),
                           Set.of("y"))
         );
     }

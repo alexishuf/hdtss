@@ -7,9 +7,25 @@ import java.util.List;
 import java.util.Set;
 
 public class Exists extends AbstractOp {
-    public Exists(@NonNull Op outer, @NonNull Op inner) {
+    private final boolean negate;
+
+    protected Exists(@NonNull Op outer, @NonNull Op inner, boolean negate) {
         super(List.of(outer, inner));
+        this.negate = negate;
     }
+
+    /** Create a {@code main FILTER EXISTS filter} expression */
+    public static @NonNull Exists create(@NonNull Op main, @NonNull Op filter) {
+        return new Exists(main, filter, false);
+    }
+
+    /** Create a {@code main FILTER NOT EXISTS filter} expression */
+    public static @NonNull Exists not(@NonNull Op main, @NonNull Op filter) {
+        return new Exists(main, filter, true);
+    }
+
+    /** Whether this is a {@code NOT EXISTS} instead of {@code EXISTS} */
+    public boolean negate() { return negate; }
 
     public @NonNull Op main() {
         return children.get(0);
@@ -42,12 +58,12 @@ public class Exists extends AbstractOp {
         int size = replacements.size();
         if (size != 2)
             throw new IllegalArgumentException("FILTER EXISTS requires exactly two child nodes");
-        return new Exists(replacements.get(0), replacements.get(1));
+        return new Exists(replacements.get(0), replacements.get(1), negate);
     }
 
     @Override public boolean deepEquals(@NonNull Op other) {
         if (!(other instanceof Exists e)) return false;
-        return e.main().deepEquals(main()) && e.filter().deepEquals(filter());
+        return negate == e.negate && e.main().deepEquals(main()) && e.filter().deepEquals(filter());
     }
 
     @Override public @NonNull String toString() {

@@ -169,13 +169,13 @@ public class JenaSparqlParser implements SparqlParser {
             @Override public void visit(ElementExists el) {
                 Op outer = op[0];
                 el.getElement().visit(this);
-                op[0] = new Exists(outer, op[0]);
+                op[0] = Exists.create(outer, op[0]);
             }
 
             @Override public void visit(ElementNotExists el) {
                 Op outer = op[0];
                 el.getElement().visit(this);
-                op[0] = new NotExists(outer, op[0]);
+                op[0] = Exists.not(outer, op[0]);
             }
 
             @Override public void visit(ElementMinus el) {

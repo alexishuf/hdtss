@@ -54,7 +54,7 @@ public abstract class SparqlParserTestBase {
                           "  ?x foaf:age ?y FILTER(?y > 23).\n" +
                           "  ?x foaf:knows ?z FILTER NOT EXISTS { ?z foaf:age ?w }\n" +
                           "}",
-                          new NotExists(new Filter(new Join(new TriplePattern(x, ageTerm, y),
+                          Exists.not(new Filter(new Join(new TriplePattern(x, ageTerm, y),
                                                             new TriplePattern(x, knowsTerm, z)),
                                                    "?y > 23"),
                                         new TriplePattern(z, ageTerm, w))),

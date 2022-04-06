@@ -1,5 +1,7 @@
 package com.github.lapesd.hdtss.sparql.impl.exists;
 
+import com.github.lapesd.hdtss.model.nodes.Exists;
+import com.github.lapesd.hdtss.model.nodes.IdentityNode;
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.model.solutions.FluxQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
@@ -20,9 +22,13 @@ public class ExistsFluxExecutor extends ExistsExecutor {
     }
 
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
-        Op outer = node.children().get(0), inner = node.children().get(1);
-        var outerVars = outer.varNames();
-        return new FluxQuerySolutions(node.varNames(), dispatcher.execute(outer).flux()
-                .filter(r -> dispatcher.execute(inner.bind(outerVars, r)).askResult()));
+        Exists exists = (Exists) node;
+        Op main = exists.main(), filter = exists.filter();
+        if (IdentityNode.is(filter))
+            return dispatcher.execute(main);
+        boolean negate = exists.negate();
+        var outerVars = main.varNames();
+        return new FluxQuerySolutions(node.varNames(), dispatcher.execute(main).flux()
+                .filter(r -> negate ^ dispatcher.execute(filter.bind(outerVars, r)).askResult()));
     }
 }

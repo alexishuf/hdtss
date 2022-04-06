@@ -1,6 +1,8 @@
 package com.github.lapesd.hdtss.sparql.impl.exists;
 
 import com.github.lapesd.hdtss.model.Term;
+import com.github.lapesd.hdtss.model.nodes.Exists;
+import com.github.lapesd.hdtss.model.nodes.IdentityNode;
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.model.solutions.IteratorQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
@@ -26,17 +28,21 @@ public class ExistsItExecutor extends ExistsExecutor {
     }
 
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
-        Op outer = node.children().get(0), inner = node.children().get(1);
-        var outerVars = outer.varNames();
-        var it = dispatcher.execute(outer).iterator();
-        return new IteratorQuerySolutions(node.varNames(), new Iterator<>() {
+        Exists exists = (Exists) node;
+        Op main = exists.main(), filter = exists.filter();
+        if (IdentityNode.is(filter))
+            return dispatcher.execute(main);
+        boolean negate = exists.negate();
+        var vars = main.varNames();
+        var it = dispatcher.execute(main).iterator();
+        return new IteratorQuerySolutions(vars, new Iterator<>() {
             private @Nullable Term @Nullable[] next;
 
             @EnsuresNonNullIf(expression = "this.next", result = true)
             @Override public boolean hasNext() {
                 while (next == null && it.hasNext()) {
                     var outerRow = it.next();
-                    if (dispatcher.execute(inner.bind(outerVars, outerRow)).askResult())
+                    if (negate ^ dispatcher.execute(filter.bind(vars, outerRow)).askResult())
                         this.next = outerRow;
                 }
                 return next != null;

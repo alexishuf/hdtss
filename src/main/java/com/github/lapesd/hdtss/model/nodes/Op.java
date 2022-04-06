@@ -22,7 +22,6 @@ public interface Op {
         LEFT_JOIN,
         LIMIT,
         MINUS,
-        NOT_EXISTS,
         OFFSET,
         PROJECT,
         TRIPLE,
