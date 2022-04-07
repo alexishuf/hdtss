@@ -329,9 +329,7 @@ properties is null, delegating control to `sparql.flow`:
 > 
 > `sparql.values.flow=REACTIVE|ITERATOR`
 > 
-> `sparql.limit.flow=REACTIVE|ITERATOR`
-> 
-> `sparql.offset.flow=REACTIVE|ITERATOR`
+> `sparql.slice.flow=REACTIVE|ITERATOR`
 > 
 > `sparql.assign.flow=REACTIVE|ITERATOR`
 > 

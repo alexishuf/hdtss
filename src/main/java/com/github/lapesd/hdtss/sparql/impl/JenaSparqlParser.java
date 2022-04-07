@@ -61,10 +61,10 @@ public class JenaSparqlParser implements SparqlParser {
             root = new Project(vars, root);
         if (query.isDistinct())
             root = new Distinct(root);
-        if (query.hasLimit())
-            root = new Limit(query.getLimit(), root);
-        if (query.hasOffset())
-            root = new Offset(query.getOffset(), root);
+        if (query.hasLimit() || query.hasOffset()) {
+            long limit = query.hasLimit() ? query.getLimit() : Long.MAX_VALUE;
+            root = new Slice(root, limit, Math.max(0, query.getOffset()));
+        }
         if (query.isAskType())
             root = new Ask(root);
         return root;

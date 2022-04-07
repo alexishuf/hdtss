@@ -1,7 +1,7 @@
-package com.github.lapesd.hdtss.sparql.impl.offset;
+package com.github.lapesd.hdtss.sparql.impl.slice;
 
-import com.github.lapesd.hdtss.model.nodes.Offset;
 import com.github.lapesd.hdtss.model.nodes.Op;
+import com.github.lapesd.hdtss.model.nodes.Slice;
 import com.github.lapesd.hdtss.model.solutions.FluxQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
@@ -12,17 +12,17 @@ import jakarta.inject.Singleton;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 @Singleton
-@Named("offset")
-@RequiresOperatorFlow(values = {"REACTIVE"})
-public class OffsetFluxExecutor extends OffsetExecutor {
-    @Inject
-    public OffsetFluxExecutor(@NonNull OpExecutorDispatcher dispatcher) {
+@Named("slice")
+@RequiresOperatorFlow(values = "REACTIVE")
+public class SliceFluxExecutor extends SliceExecutor{
+    @Inject public SliceFluxExecutor(@NonNull OpExecutorDispatcher dispatcher) {
         super(dispatcher);
     }
 
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
-        Op inner = node.children().get(0);
-        long n = ((Offset) node).offset();
-        return new FluxQuerySolutions(node.outputVars(), dispatcher.execute(inner).flux().skip(n));
+        Slice slice = (Slice) node;
+        var flux = dispatcher.execute(slice.inner()).flux();
+        return new FluxQuerySolutions(slice.outputVars(),
+                                      flux.skip(slice.offset()).take(slice.limit()));
     }
 }

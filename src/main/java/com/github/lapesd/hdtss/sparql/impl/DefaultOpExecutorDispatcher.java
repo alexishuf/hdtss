@@ -26,8 +26,7 @@ public class DefaultOpExecutorDispatcher implements OpExecutorDispatcher {
     private final @NonNull Provider<OpExecutor> joinExecutor;
     private final @NonNull Provider<OpExecutor> leftJoinExecutor;
     private final @NonNull Provider<OpExecutor> identityExecutor;
-    private final @NonNull Provider<OpExecutor> limitExecutor;
-    private final @NonNull Provider<OpExecutor> offsetExecutor;
+    private final @NonNull Provider<OpExecutor> sliceExecutor;
     private final @NonNull Provider<OpExecutor> valuesExecutor;
     private final @NonNull Provider<OpExecutor> assignExecutor;
     private final @NonNull Provider<OpExecutor> existsExecutor;
@@ -44,8 +43,7 @@ public class DefaultOpExecutorDispatcher implements OpExecutorDispatcher {
                                        @Named("join")      @NonNull Provider<OpExecutor> joinExecutor,
                                        @Named("leftJoin")  @NonNull Provider<OpExecutor> leftJoinExecutor,
                                        @Named("identity")  @NonNull Provider<OpExecutor> identityExecutor,
-                                       @Named("limit")     @NonNull Provider<OpExecutor> limitExecutor,
-                                       @Named("offset")    @NonNull Provider<OpExecutor> offsetExecutor,
+                                       @Named("slice")    @NonNull Provider<OpExecutor> sliceExecutor,
                                        @Named("values")    @NonNull Provider<OpExecutor> valuesExecutor,
                                        @Named("assign")    @NonNull Provider<OpExecutor> assignExecutor,
                                        @Named("exists")    @NonNull Provider<OpExecutor> existsExecutor,
@@ -59,8 +57,7 @@ public class DefaultOpExecutorDispatcher implements OpExecutorDispatcher {
         this.joinExecutor = joinExecutor;
         this.leftJoinExecutor = leftJoinExecutor;
         this.identityExecutor = identityExecutor;
-        this.limitExecutor = limitExecutor;
-        this.offsetExecutor = offsetExecutor;
+        this.sliceExecutor = sliceExecutor;
         this.valuesExecutor = valuesExecutor;
         this.assignExecutor = assignExecutor;
         this.existsExecutor = existsExecutor;
@@ -79,8 +76,7 @@ public class DefaultOpExecutorDispatcher implements OpExecutorDispatcher {
         map.put(Op.Type.JOIN,       this.joinExecutor.get());
         map.put(Op.Type.LEFT_JOIN,  this.leftJoinExecutor.get());
         map.put(Op.Type.IDENTITY,   this.identityExecutor.get());
-        map.put(Op.Type.LIMIT,      this.limitExecutor.get());
-        map.put(Op.Type.OFFSET,     this.offsetExecutor.get());
+        map.put(Op.Type.SLICE,      this.sliceExecutor.get());
         map.put(Op.Type.VALUES,     this.valuesExecutor.get());
         map.put(Op.Type.ASSIGN,     this.assignExecutor.get());
         map.put(Op.Type.EXISTS,     this.existsExecutor.get());

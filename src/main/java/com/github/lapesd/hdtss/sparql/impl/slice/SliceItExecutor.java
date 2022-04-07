@@ -1,8 +1,8 @@
-package com.github.lapesd.hdtss.sparql.impl.offset;
+package com.github.lapesd.hdtss.sparql.impl.slice;
 
 import com.github.lapesd.hdtss.model.Term;
-import com.github.lapesd.hdtss.model.nodes.Offset;
 import com.github.lapesd.hdtss.model.nodes.Op;
+import com.github.lapesd.hdtss.model.nodes.Slice;
 import com.github.lapesd.hdtss.model.solutions.IteratorQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
@@ -17,32 +17,33 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 @Singleton
-@Named("offset")
+@Named("slice")
 @RequiresOperatorFlow(values = {"ITERATOR", "HEAVY_REACTIVE", "HDT_REACTIVE"})
-public class OffsetItExecutor extends OffsetExecutor {
+public class SliceItExecutor extends SliceExecutor {
 
     @Inject
-    public OffsetItExecutor(@NonNull OpExecutorDispatcher dispatcher) {
+    public SliceItExecutor(@NonNull OpExecutorDispatcher dispatcher) {
         super(dispatcher);
     }
 
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
-        long offset = ((Offset) node).offset();
-        var it = dispatcher.execute(node.children().get(0)).iterator();
-        return new IteratorQuerySolutions(node.outputVars(), new Iterator<>() {
-            private int count = 0;
+        Slice slice = (Slice) node;
+        long offset = slice.offset(), end = offset + slice.limit();
+        var it = dispatcher.execute(slice.inner()).iterator();
+        return new IteratorQuerySolutions(slice.outputVars(), new Iterator<>() {
+            private long cursor = 0;
 
             @Override public boolean hasNext() {
-                while (count < offset && it.hasNext()) {
+                while (cursor < offset && it.hasNext()) {
                     it.next();
-                    ++count;
+                    ++cursor;
                 }
-                return it.hasNext();
+                return cursor != end && it.hasNext();
             }
 
             @Override public @Nullable Term @NonNull[] next() {
-                if (!hasNext())
-                    throw new NoSuchElementException();
+                if (!hasNext()) throw new NoSuchElementException();
+                ++cursor;
                 return it.next();
             }
         });

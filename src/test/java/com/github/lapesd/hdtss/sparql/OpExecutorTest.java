@@ -23,14 +23,12 @@ import com.github.lapesd.hdtss.sparql.impl.join.BindJoinFluxExecutor;
 import com.github.lapesd.hdtss.sparql.impl.join.BindJoinItExecutor;
 import com.github.lapesd.hdtss.sparql.impl.join.BindLeftJoinFluxExecutor;
 import com.github.lapesd.hdtss.sparql.impl.join.BindLeftJoinItExecutor;
-import com.github.lapesd.hdtss.sparql.impl.limit.LimitFluxExecutor;
-import com.github.lapesd.hdtss.sparql.impl.limit.LimitItExecutor;
 import com.github.lapesd.hdtss.sparql.impl.minus.MinusFluxExecutor;
 import com.github.lapesd.hdtss.sparql.impl.minus.MinusItExecutor;
-import com.github.lapesd.hdtss.sparql.impl.offset.OffsetFluxExecutor;
-import com.github.lapesd.hdtss.sparql.impl.offset.OffsetItExecutor;
 import com.github.lapesd.hdtss.sparql.impl.project.ProjectFluxExecutor;
 import com.github.lapesd.hdtss.sparql.impl.project.ProjectItExecutor;
+import com.github.lapesd.hdtss.sparql.impl.slice.SliceFluxExecutor;
+import com.github.lapesd.hdtss.sparql.impl.slice.SliceItExecutor;
 import com.github.lapesd.hdtss.sparql.impl.union.UnionFluxExecutor;
 import com.github.lapesd.hdtss.sparql.impl.union.UnionItExecutor;
 import com.github.lapesd.hdtss.sparql.impl.values.ValuesFluxExecutor;
@@ -161,9 +159,8 @@ class OpExecutorTest {
                 new Params(Op.Type.IDENTITY,   IdentityExecutor.class,        IdentityExecutor.class),
                 new Params(Op.Type.JOIN,       BindJoinItExecutor.class,      BindJoinFluxExecutor.class),
                 new Params(Op.Type.LEFT_JOIN,  BindLeftJoinItExecutor.class,  BindLeftJoinFluxExecutor.class),
-                new Params(Op.Type.LIMIT,      LimitItExecutor.class,         LimitFluxExecutor.class),
+                new Params(Op.Type.SLICE,      SliceItExecutor.class,         SliceFluxExecutor.class),
                 new Params(Op.Type.MINUS,      MinusItExecutor.class,         MinusFluxExecutor.class),
-                new Params(Op.Type.OFFSET,     OffsetItExecutor.class,        OffsetFluxExecutor.class),
                 new Params(Op.Type.PROJECT,    ProjectItExecutor.class,       ProjectFluxExecutor.class),
                 new Params(Op.Type.UNION,      UnionItExecutor.class,         UnionFluxExecutor.class),
                 new Params(Op.Type.VALUES,     ValuesItExecutor.class,        ValuesFluxExecutor.class)
@@ -435,32 +432,30 @@ class OpExecutorTest {
 
     @SuppressWarnings("unused") static Stream<Arguments> testLimit() {
         return Stream.of(
-                arguments(new Limit(23, new TriplePattern(x, ageTerm, y)),
+                arguments(new Slice(new TriplePattern(x, ageTerm, y), 23, 0),
                           asList(asList(Alice, i23), asList(Bob, i25))),
-                arguments(new Limit(2,
-                                new Project(List.of("x"), new TriplePattern(x, ageTerm, y))),
-                          asList(List.of(Alice), List.of(Bob))),
-                arguments(new Limit(0, new TriplePattern(x, ageTerm, y)),
-                          List.of())
+                arguments(new Slice(new Project(List.of("x"), new TriplePattern(x, ageTerm, y)),
+                                    2, 0),
+                          asList(List.of(Alice), List.of(Bob)))
         );
     }
 
     @ParameterizedTest @MethodSource
-    void testLimit(@NonNull Limit in, @NonNull Collection<List<Term>> expected) {
+    void testLimit(@NonNull Slice in, @NonNull Collection<List<Term>> expected) {
         testInContexts(in, expected);
     }
 
     @SuppressWarnings("unused") static Stream<Arguments> testOffset() {
         return Stream.of(
-                arguments(new Offset(0, new TriplePattern(Alice, ageTerm, x)),
+                arguments(new Slice(new TriplePattern(Alice, ageTerm, x), Long.MAX_VALUE, 0),
                           List.of(List.of(i23))),
-                arguments(new Offset(1, new TriplePattern(x, ageTerm, y)),
-                        List.of(asList(Bob, i25)))
+                arguments(new Slice(new TriplePattern(x, ageTerm, y), Long.MAX_VALUE, 1),
+                          List.of(asList(Bob, i25)))
         );
     }
 
     @ParameterizedTest @MethodSource
-    void testOffset(@NonNull Offset in, @NonNull Collection<List<Term>> expected) {
+    void testOffset(@NonNull Slice in, @NonNull Collection<List<Term>> expected) {
         testInContexts(in, expected);
     }
 

@@ -8,7 +8,6 @@ import com.github.lapesd.hdtss.vocab.RDF;
 import com.github.lapesd.hdtss.vocab.RDFS;
 import com.github.lapesd.hdtss.vocab.XSD;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -19,6 +18,8 @@ import java.util.stream.Stream;
 import static com.github.lapesd.hdtss.TestVocab.*;
 import static com.github.lapesd.hdtss.vocab.FOAF.*;
 import static java.util.Arrays.asList;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 public abstract class SparqlParserTestBase {
@@ -33,8 +34,8 @@ public abstract class SparqlParserTestBase {
                 "PREFIX xsd: <"+XSD.NS+">\n";
         return Stream.of(
     /*  1 */    arguments(prolog+"SELECT DISTINCT ?x WHERE {?x foaf:knows ?y.} LIMIT 5",
-                          new Limit(5, new Distinct(new Project(List.of("x"),
-                                  new TriplePattern(x, knowsTerm, y))))),
+                          new Slice(new Distinct(new Project(List.of("x"),
+                                  new TriplePattern(x, knowsTerm, y))), 5, 0)),
     /*  2 */    arguments(prolog+"SELECT * WHERE { { { ?x foaf:knows ?y } } }",
                           new TriplePattern(x, knowsTerm, y)),
     /*  3 */    arguments(prolog+"SELECT * WHERE { { { ?x foaf:knows ?y . } . }. }",
@@ -75,8 +76,9 @@ public abstract class SparqlParserTestBase {
     void testParse(@NonNull String string, @NonNull Op expected) {
         Op actual = createParser().parse(string);
         String msg = "trees differ:\nExpected:" + expected + "\n  Actual:" + actual + "\n";
-        Assertions.assertTrue(actual.deepEquals(expected), msg);
-        Assertions.assertTrue(expected.deepEquals(actual), msg);
+        assertEquals(expected.toString(), actual.toString());
+        assertTrue(actual.deepEquals(expected), msg);
+        assertTrue(expected.deepEquals(actual), msg);
     }
 
 }
