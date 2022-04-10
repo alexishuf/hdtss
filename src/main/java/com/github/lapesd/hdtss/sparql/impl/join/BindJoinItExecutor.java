@@ -8,6 +8,8 @@ import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.impl.ExecutorUtils;
 import com.github.lapesd.hdtss.sparql.impl.conditional.RequiresOperatorFlow;
+import com.github.lapesd.hdtss.utils.Binding;
+import com.github.lapesd.hdtss.utils.BitsetOps;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -16,9 +18,14 @@ import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
 
+import static com.github.lapesd.hdtss.utils.BitsetOps.*;
 import static java.lang.System.arraycopy;
+import static java.util.Arrays.copyOf;
 import static java.util.Collections.emptyIterator;
 
 @Singleton
@@ -35,40 +42,41 @@ public class BindJoinItExecutor extends BindJoinExecutor {
 
     private class State implements Iterator<@Nullable Term []> {
         @Nullable State prev;
-        @NonNull List<@NonNull String> accVars;
-        int[] indices;
-        Term @NonNull [] accTerms;
+        @NonNull Binding binding;
+        final int @NonNull[] indices;
         @NonNull Op op;
         @NonNull Iterator<@Nullable Term []> it;
-        boolean isOptional;
-        @Nullable Term @Nullable [] next;
+        boolean isOptional, hasValue, open = true;
 
         public State(@Nullable State prev, @NonNull Op op, boolean isOptional) {
             if (prev != null && prev.isOptional)
                 throw new IllegalArgumentException("optional left operand not supported");
             this.prev = prev;
             var myVars = op.outputVars();
+            int myVarsSize = myVars.size();
+            this.indices = new int[myVarsSize];
             if (prev == null) {
-                accVars = myVars;
-                indices = new int[myVars.size()];
-                for (int i = 0; i < indices.length; i++)
-                    indices[i] = i;
+                binding = new Binding(myVars.toArray(String[]::new));
+                for (int i = 0; i < indices.length; i++) indices[i] = i;
             } else {
-                var previousAcc = prev.accVars;
-                accVars = new ArrayList<>(previousAcc);
-                int myVarsSize = myVars.size(), nIndices = 0;
-                indices = new int[myVarsSize];
-                for (int i = 0, iAfterBound = 0; i < myVarsSize; i++) {
-                    String v = myVars.get(i);
-                    if (!accVars.contains(v)) {
-                        accVars.add(v);
-                        indices[nIndices++] = iAfterBound++;
-                    }
+                Binding prevBinding = prev.binding;
+                long[] novel = createBitset(myVarsSize);
+                for (int i = 0; i < myVarsSize; i++) {
+                    if (!prevBinding.contains(myVars.get(i)))
+                        BitsetOps.set(novel, i);
                 }
-                indices = Arrays.copyOf(indices, nIndices);
-                accVars = accVars.size() == previousAcc.size() ? previousAcc : accVars;
+                int nNovel = cardinality(novel), nVars = prevBinding.size(), nIndices = 0;
+                if (nNovel == 0) {
+                    this.binding = prevBinding;
+                } else {
+                    String[] vars = copyOf(prevBinding.vars(), nVars + nNovel);
+                    for (int i = nextSet(novel, 0); i >= 0; i = nextSet(novel, i + 1)) {
+                        vars[nVars++] = myVars.get(i);
+                        indices[nIndices++] = i;
+                    }
+                    this.binding = new Binding(vars);
+                }
             }
-            this.accTerms = new Term[accVars.size()];
             this.op = op;
             this.isOptional = isOptional;
             this.it = prev == null ? dispatcher.execute(op).iterator() : emptyIterator();
@@ -76,51 +84,45 @@ public class BindJoinItExecutor extends BindJoinExecutor {
 
         private void merge(@Nullable Term @NonNull[] myRow) {
             if (prev == null) {
-                next = myRow;
-                arraycopy(myRow, 0, accTerms, 0, accTerms.length);
-            } else {
+                binding.setTerms(myRow);
+            } else if (prev.binding != binding) {
                 assert !prev.isOptional;
-                assert prev.accTerms.length+indices.length == accTerms.length;
-                Term[] prevTerms = prev.accTerms;
-                int prevLen = prevTerms.length;
-                arraycopy(prevTerms, 0, accTerms, 0, prevLen);
-                if (myRow.length == 0) {
-                    Arrays.fill(accTerms, prevLen, accTerms.length, null);
+                Term[] prevTerms = prev.binding.terms(), accTerms = binding.terms();
+                arraycopy(prevTerms, 0, accTerms, 0, prevTerms.length);
+                if (myRow.length > 0) {
+                    assert prev.binding.size()+myRow.length == binding.size();
+                    arraycopy(myRow, 0, accTerms, prevTerms.length, myRow.length);
                 } else {
-                    assert prevLen+myRow.length == accTerms.length;
-                    for (int i = prevLen; i < accTerms.length; i++)
-                        accTerms[i] = myRow[indices[i - prevLen]];
+                    Arrays.fill(accTerms, prevTerms.length, accTerms.length, null);
                 }
-                next = Arrays.copyOf(accTerms, accTerms.length);
             }
         }
 
         @EnsuresNonNullIf(expression = "this.next", result = true)
         @Override public boolean hasNext() {
-            while (next == null) {
+            while (open && !hasValue) {
                 if (it.hasNext()) {
                     merge(it.next());
+                    hasValue = true;
                 } else if (prev != null && prev.hasNext()) {
-                    @Nullable Term @NonNull[] leftResult = prev.next();
-                    Op bound = op.bind(prev.accVars, leftResult);
+                    Op bound = op.bind(prev.binding.setTerms(prev.next()));
                     it = dispatcher.execute(bound).iterator();
                     if (!it.hasNext() && isOptional) {
                         it = Row.SINGLE_EMPTY.iterator();
                     }
                 } else {
-                    return false;
+                    open = false;
                 }
             }
-            return true;
+            return open;
         }
 
         @Override public @Nullable Term @NonNull[] next() {
             if (!hasNext())
                 throw new NoSuchElementException();
-            var next = this.next;
-            this.next = null;
-            assert next != null;
-            return next;
+            @Nullable Term[] terms = binding.terms();
+            hasValue = false;
+            return terms;
         }
     }
 
@@ -128,17 +130,14 @@ public class BindJoinItExecutor extends BindJoinExecutor {
     protected @NonNull QuerySolutions execute(boolean isLeft, @NonNull List<@NonNull Op> operands,
                                               @NonNull List<String> varNames,
                                               int @Nullable[] projection) {
-        final int nOperands = operands.size();
-        List<State> states = new ArrayList<>(nOperands);
         return new IteratorQuerySolutions(varNames, new Iterator<>() {
             private State last;
 
             private void init() {
-                if (!states.isEmpty())
-                    return;
-                assert last == null;
-                for (Op op : operands)
-                    states.add(last = new State(last, op, last != null && isLeft));
+                if (last == null) {
+                    for (Op op : operands)
+                        last = new State(last, op, last != null && isLeft);
+                }
             }
 
             @Override public boolean hasNext()  {
@@ -149,7 +148,11 @@ public class BindJoinItExecutor extends BindJoinExecutor {
             @Override public @Nullable Term @NonNull[] next() {
                 if (!hasNext())
                     throw new NoSuchElementException();
-                return ExecutorUtils.project(projection, last.next());
+                @Nullable Term[] raw = last.next();
+                if (projection == null)
+                    return copyOf(raw, raw.length);
+                else
+                    return ExecutorUtils.project(projection, raw);
             }
         });
     }

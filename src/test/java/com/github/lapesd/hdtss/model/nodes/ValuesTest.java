@@ -2,6 +2,7 @@ package com.github.lapesd.hdtss.model.nodes;
 
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions;
+import com.github.lapesd.hdtss.utils.Binding;
 import com.google.common.collect.Collections2;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.Tag;
@@ -157,14 +158,14 @@ class ValuesTest {
 
     @SuppressWarnings("UnstableApiUsage") @ParameterizedTest @MethodSource
     void testBind(@NonNull Values in, @NonNull Map<String, Term> v2t, @NonNull Values expected) {
-        Op bound = in.bind(v2t);
+        Op bound = in.bind(new Binding(v2t));
         assertTrue(bound.deepEquals(expected));
         assertTrue(expected.deepEquals(bound));
 
         for (List<String> permutation : Collections2.permutations(v2t.keySet())) {
             Term[] row = new Term[permutation.size()];
             for (int i = 0; i < row.length; i++) row[i] = v2t.get(permutation.get(i));
-            Op listBound = in.bind(permutation, row);
+            Op listBound = in.bind(new Binding(permutation, row));
             assertTrue(listBound.deepEquals(expected));
             assertTrue(expected.deepEquals(listBound));
         }

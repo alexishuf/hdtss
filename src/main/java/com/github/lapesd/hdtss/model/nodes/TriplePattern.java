@@ -2,6 +2,7 @@ package com.github.lapesd.hdtss.model.nodes;
 
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.TermPosition;
+import com.github.lapesd.hdtss.utils.Binding;
 import io.micronaut.core.annotation.Introspected;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -11,7 +12,10 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import javax.validation.constraints.NotNull;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -50,35 +54,12 @@ public final class TriplePattern implements Op {
         return List.of();
     }
 
-    @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row) {
-        Term[] terms = null;
-        VarsInfo info = collectVarsInfo();
-        TermPosition f = info.sharedVars.first();
-        for (int i = 0, varNamesSize = varNames.size(); i < varNamesSize; i++) {
-            String name = varNames.get(i);
-            for (int j = 0; j < info.names.length; j++) {
-                if (info.names[j].equals(name)) {
-                    if (terms == null) terms = toArray();
-                    terms[info.positions[j].ordinal()] = row[i];
-                    if (info.positions[j] == f) {
-                        terms[requireNonNull(info.sharedVars.second()).ordinal()] = row[i];
-                        if (info.sharedVars.third() != null)
-                            terms[info.sharedVars.third().ordinal()] = row[i];
-                    }
-                }
-            }
-        }
-        if (terms != null)
-            return new TriplePattern(terms[0], terms[1], terms[2]);
-        return this;
-    }
-
-    @Override public @NonNull Op bind(@NonNull Map<@NonNull String, Term> var2term) {
+    @Override public @NonNull Op bind(@NonNull Binding binding) {
         VarsInfo info = collectVarsInfo();
         TermPosition f = info.sharedVars.first();
         Term[] bound = null;
         for (int i = 0; i < info.names.length; i++) {
-            Term term = var2term.getOrDefault(info.names[i], null);
+            Term term = binding.get(info.names[i], null);
             if (term != null) {
                 if (bound == null) bound = toArray();
                 bound[info.positions[i].ordinal()] = term;

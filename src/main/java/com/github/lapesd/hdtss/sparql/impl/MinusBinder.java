@@ -3,6 +3,7 @@ package com.github.lapesd.hdtss.sparql.impl;
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.Minus;
 import com.github.lapesd.hdtss.model.nodes.Op;
+import com.github.lapesd.hdtss.utils.Binding;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
@@ -36,6 +37,6 @@ public final class MinusBinder {
     }
 
     public Op bind(@Nullable Term @NonNull[] leftRow) {
-        return right.bind(sharedVars, ExecutorUtils.project(leftIndices, leftRow));
+        return right.bind(new Binding(sharedVars, ExecutorUtils.project(leftIndices, leftRow)));
     }
 }

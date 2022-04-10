@@ -3,7 +3,6 @@ package com.github.lapesd.hdtss.utils;
 import com.github.lapesd.hdtss.model.Term;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -64,8 +63,7 @@ public class ExprUtils {
         public abstract @NonNull State next(@NonNull Matcher matchedMatcher);
     }
 
-    public static @NonNull String bindExpr(@NonNull String filter,
-                                           @NonNull Map<@NonNull String, Term> v2t) {
+    public static @NonNull String bindExpr(@NonNull String filter, @NonNull Binding binding) {
         StringBuilder b = new StringBuilder(filter.length());
         int consumed = 0;
         State st = State.S;
@@ -81,7 +79,7 @@ public class ExprUtils {
                         b.append(filter, m.start(), m.end()-1);
                 }
                 case VAR_NAME -> {
-                    Term term = v2t.getOrDefault(m.group(), null);
+                    Term term = binding.get(m.group(), null);
                     if (term != null) b.append(term.sparql());
                     else              b.append(filter, m.start()-1, m.end());
                 }

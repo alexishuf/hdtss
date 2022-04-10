@@ -1,6 +1,7 @@
 package com.github.lapesd.hdtss.model;
 
 import com.github.lapesd.hdtss.model.nodes.TriplePattern;
+import com.github.lapesd.hdtss.utils.Binding;
 import com.github.lapesd.hdtss.vocab.FOAF;
 import com.google.common.collect.Collections2;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -128,11 +129,11 @@ class TriplePatternTest {
     @SuppressWarnings("UnstableApiUsage") @ParameterizedTest @MethodSource
     void testBind(@NonNull TriplePattern tp, @NonNull Map<@NonNull String, Term> v2t,
                   @NonNull TriplePattern expected) {
-        assertEquals(expected, tp.bind(v2t));
+        assertEquals(expected, tp.bind(new Binding(v2t)));
         for (List<String> names : Collections2.permutations(v2t.keySet())) {
             Term[] row = new Term[names.size()];
             for (int i = 0; i < row.length; i++) row[i] = v2t.get(names.get(i));
-            assertEquals(expected, tp.bind(names, row));
+            assertEquals(expected, tp.bind(new Binding(names, row)));
         }
     }
 

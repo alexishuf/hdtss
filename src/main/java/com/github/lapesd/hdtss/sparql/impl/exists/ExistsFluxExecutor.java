@@ -7,6 +7,7 @@ import com.github.lapesd.hdtss.model.solutions.FluxQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.impl.conditional.RequiresOperatorFlow;
+import com.github.lapesd.hdtss.utils.Binding;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -27,8 +28,12 @@ public class ExistsFluxExecutor extends ExistsExecutor {
         if (IdentityNode.is(filter))
             return dispatcher.execute(main);
         boolean negate = exists.negate();
-        var outerVars = main.outputVars();
-        return new FluxQuerySolutions(node.outputVars(), dispatcher.execute(main).flux()
-                .filter(r -> negate ^ dispatcher.execute(filter.bind(outerVars, r)).askResult()));
+        var outerVars = main.outputVars().toArray(String[]::new);
+        var flux = dispatcher.execute(main).flux()
+                .filter(r -> {
+                    Op bound = filter.bind(new Binding(outerVars, r));
+                    return negate ^ dispatcher.execute(bound).askResult();
+                });
+        return new FluxQuerySolutions(node.outputVars(), flux);
     }
 }

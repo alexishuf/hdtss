@@ -1,7 +1,6 @@
 package com.github.lapesd.hdtss.model.nodes;
 
-import com.github.lapesd.hdtss.model.Term;
-import com.github.lapesd.hdtss.utils.BindUtils;
+import com.github.lapesd.hdtss.utils.Binding;
 import com.github.lapesd.hdtss.utils.ExprUtils;
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -102,21 +101,18 @@ public final class Assign extends AbstractOp {
         return new Assign(var2expr, OpUtils.single(replacements));
     }
 
-    public @NonNull Op bind(@NonNull Map<String, Term> var2term) {
-        if (var2term.isEmpty()) return this;
-        Op boundInner = inner().bind(var2term);
-        HashMap<String, String> boundExprs = new HashMap<>();
+    public @NonNull Op bind(@NonNull Binding binding) {
+        if (!binding.intersects(outputVars()) && !binding.intersects(inputVars()))
+            return this;
+        HashMap<String, String> boundExprs
+                = new HashMap<>((int)Math.max(4, var2expr.size()/0.75f + 1));
         for (Map.Entry<String, String> e : var2expr.entrySet()) {
             String var = e.getKey();
-            if (var2term.containsKey(var))
+            if (binding.contains(var))
                 continue;
-            boundExprs.put(var, ExprUtils.bindExpr(e.getValue(), var2term));
+            boundExprs.put(var, ExprUtils.bindExpr(e.getValue(), binding));
         }
-        return new Assign(boundExprs, boundInner);
-    }
-
-    @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row) {
-        return BindUtils.bindWithMap(this, varNames, row);
+        return new Assign(boundExprs, inner().bind(binding));
     }
 
     @Override public boolean deepEquals(@NonNull Op other) {

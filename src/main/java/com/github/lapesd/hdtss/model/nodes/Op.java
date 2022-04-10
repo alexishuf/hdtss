@@ -1,10 +1,10 @@
 package com.github.lapesd.hdtss.model.nodes;
 
 import com.github.lapesd.hdtss.model.Term;
+import com.github.lapesd.hdtss.utils.Binding;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -45,22 +45,10 @@ public interface Op {
      * The returned expression may be this same instance if no change is made as result of
      * the bind.
      *
-     * @param varNames a list of variable names not including the leading '?' or '$'.
-     * @param row Term assignments for the variables in {@code varNames}. The i-th {@link Term}
-     *            corresponds to the i-th variable name.
+     * @param binding an association of var names to replacement Terms.
      * @return A SPARQL expression with mentioned variables replaced with the given {@link Term}s.
      */
-    @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull[] row);
-
-    /**
-     * Same effect as {@link Op#bind(List, Term[])}, but variable-{@link Term} bindings are
-     * given in a {@link Map}.
-     *
-     * @param var2term a map from variable names (not including leading '?' or '$') to the
-     *                 {@link Term}s that shall be used instead.
-     * @return a SPARQL expression with the given vars replaced with the given {@link Term}s.
-     */
-    @NonNull Op bind(@NonNull Map<String, Term> var2term);
+    @NonNull Op bind(@NonNull Binding binding);
 
     /**
      * A list of distinct var names exposed in solutions for this SPARQL query.

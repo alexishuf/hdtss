@@ -1,6 +1,7 @@
 package com.github.lapesd.hdtss.model.nodes;
 
 import com.github.lapesd.hdtss.model.Term;
+import com.github.lapesd.hdtss.utils.Binding;
 import com.github.lapesd.hdtss.vocab.FOAF;
 import com.google.common.collect.Collections2;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -46,7 +47,7 @@ class FilterTest {
     @ParameterizedTest @MethodSource
     void testBind(@NonNull Filter in, @NonNull Map<@NonNull String, Term> v2t,
                   @NonNull Filter expected) {
-        Op actual = in.bind(v2t);
+        Op actual = in.bind(new Binding(v2t));
         String msg = "\nExpected: " + expected + "\n  Actual: " + actual;
         assertTrue(actual.deepEquals(expected), msg);
         assertTrue(expected.deepEquals(actual), msg);
@@ -55,7 +56,7 @@ class FilterTest {
             Term[] terms = new Term[varNames.size()];
             for (int i = 0; i < terms.length; i++)
                 terms[i] = v2t.get(varNames.get(i));
-            Op actual2 = in.bind(varNames, terms);
+            Op actual2 = in.bind(new Binding(varNames, terms));
             String msg2 = "\nExpected: "+expected+"\n  Actual: "+actual2;
             assertTrue(actual2.deepEquals(expected), msg2);
             assertTrue(expected.deepEquals(actual2), msg2);

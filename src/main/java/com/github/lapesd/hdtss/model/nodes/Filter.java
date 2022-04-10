@@ -1,7 +1,6 @@
 package com.github.lapesd.hdtss.model.nodes;
 
-import com.github.lapesd.hdtss.model.Term;
-import com.github.lapesd.hdtss.utils.BindUtils;
+import com.github.lapesd.hdtss.utils.Binding;
 import com.github.lapesd.hdtss.utils.ExprUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -96,17 +95,13 @@ public final class Filter extends AbstractOp {
         return union;
     }
 
-    @Override public @NonNull Op bind(@NonNull Map<String, Term> v2t) {
-        if (v2t.isEmpty())
+    @Override public @NonNull Op bind(@NonNull Binding binding) {
+        if (!binding.intersects(outputVars()) && !binding.intersects(inputVars()))
             return this;
         List<@NonNull String> boundFilters = new ArrayList<>(filters.size());
         for (String filter : filters)
-            boundFilters.add(ExprUtils.bindExpr(filter, v2t));
-        return new Filter(inner().bind(v2t), boundFilters);
-    }
-
-    @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row) {
-        return BindUtils.bindWithMap(this, varNames, row);
+            boundFilters.add(ExprUtils.bindExpr(filter, binding));
+        return new Filter(inner().bind(binding), boundFilters);
     }
 
     @Override

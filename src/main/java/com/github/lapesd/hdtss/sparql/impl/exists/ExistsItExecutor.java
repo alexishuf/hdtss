@@ -8,6 +8,7 @@ import com.github.lapesd.hdtss.model.solutions.IteratorQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.impl.conditional.RequiresOperatorFlow;
+import com.github.lapesd.hdtss.utils.Binding;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -37,12 +38,14 @@ public class ExistsItExecutor extends ExistsExecutor {
         var it = dispatcher.execute(main).iterator();
         return new IteratorQuerySolutions(vars, new Iterator<>() {
             private @Nullable Term @Nullable[] next;
+            private final @NonNull Binding binding = new Binding(vars.toArray(String[]::new));
 
             @EnsuresNonNullIf(expression = "this.next", result = true)
             @Override public boolean hasNext() {
                 while (next == null && it.hasNext()) {
                     var outerRow = it.next();
-                    if (negate ^ dispatcher.execute(filter.bind(vars, outerRow)).askResult())
+                    Op bound = filter.bind(binding.setTerms(outerRow));
+                    if (negate ^ dispatcher.execute(bound).askResult())
                         this.next = outerRow;
                 }
                 return next != null;

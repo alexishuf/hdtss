@@ -1,10 +1,9 @@
 package com.github.lapesd.hdtss.model.nodes;
 
-import com.github.lapesd.hdtss.model.Term;
+import com.github.lapesd.hdtss.utils.Binding;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -58,11 +57,7 @@ public final class IdentityNode implements Op {
         return List.of();
     }
 
-    @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row) {
-        return this;
-    }
-
-    @Override public @NonNull Op bind(@NonNull Map<String, Term> var2term) {
+    @Override public @NonNull Op bind(@NonNull Binding binding) {
         return this;
     }
 

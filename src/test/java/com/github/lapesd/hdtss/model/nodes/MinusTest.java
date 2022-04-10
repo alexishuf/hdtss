@@ -1,6 +1,7 @@
 package com.github.lapesd.hdtss.model.nodes;
 
 import com.github.lapesd.hdtss.model.Term;
+import com.github.lapesd.hdtss.utils.Binding;
 import com.github.lapesd.hdtss.vocab.XSD;
 import com.google.common.collect.Collections2;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -109,7 +110,7 @@ class MinusTest {
     @SuppressWarnings("UnstableApiUsage") @ParameterizedTest @MethodSource
     public void testBind(@NonNull Minus in, @NonNull Map<String, Term> v2t,
                          @NonNull Minus expected) {
-        Op bound = in.bind(v2t);
+        Op bound = in.bind(new Binding(v2t));
         assertEquals(expected.toString(), bound.toString());
         assertTrue(bound.deepEquals(expected));
         assertTrue(expected.deepEquals(bound));
@@ -117,7 +118,7 @@ class MinusTest {
         for (List<String> permutation : Collections2.permutations(v2t.keySet())) {
             Term[] row = new Term[permutation.size()];
             for (int i = 0; i < row.length; i++) row[i] = v2t.get(permutation.get(i));
-            Op listBound = in.bind(permutation, row);
+            Op listBound = in.bind(new Binding(permutation, row));
             assertEquals(expected.toString(), listBound.toString());
             assertTrue(listBound.deepEquals(expected));
             assertTrue(expected.deepEquals(listBound));

@@ -1,6 +1,6 @@
 package com.github.lapesd.hdtss.model.nodes;
 
-import com.github.lapesd.hdtss.model.Term;
+import com.github.lapesd.hdtss.utils.Binding;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -57,22 +57,15 @@ abstract class AbstractOp implements Op {
         return true;
     }
 
-    @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row) {
-        if (varNames.isEmpty())
-            return this;
+    @Override public @NonNull Op bind(@NonNull Binding binding) {
         List<@NonNull Op> list = new ArrayList<>(children().size());
-        for (Op child : children())
-            list.add(child.bind(varNames, row));
-        return withChildren(list);
-    }
-
-    @Override public @NonNull Op bind(@NonNull Map<String, Term> var2term) {
-        if (var2term.isEmpty())
-            return this;
-        List<@NonNull Op> list = new ArrayList<>(children().size());
-        for (Op child : children())
-            list.add(child.bind(var2term));
-        return withChildren(list);
+        boolean change = false;
+        for (Op child : children()) {
+            Op replacement = child.bind(binding);
+            change |= replacement != child;
+            list.add(replacement);
+        }
+        return change ? withChildren(list) : this;
     }
 
     @Override public @NonNull String toString() {

@@ -7,6 +7,7 @@ import com.github.lapesd.hdtss.model.solutions.IteratorQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.impl.conditional.RequiresOperatorFlow;
+import com.github.lapesd.hdtss.utils.Binding;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -33,10 +34,12 @@ public class ValuesItExecutor extends ValuesExecutor {
         return new IteratorQuerySolutions(node.outputVars(), new Iterator<>() {
             private final @NonNull Iterator<@Nullable Term @NonNull[]> valuesIt = values.iterator();
             private @NonNull Iterator<@Nullable Term @NonNull[]> it = Collections.emptyIterator();
+            private final @NonNull Binding binding
+                    = new Binding(values.varNames().toArray(String[]::new));
 
             @Override public boolean hasNext() {
                 while (!it.hasNext() && valuesIt.hasNext()) {
-                    Op bound = inner.bind(values.varNames(), valuesIt.next());
+                    Op bound = inner.bind(binding.setTerms(valuesIt.next()));
                     it = dispatcher.execute(bound).iterator();
                 }
                 return it.hasNext();

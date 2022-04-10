@@ -1,12 +1,11 @@
 package com.github.lapesd.hdtss.model.nodes;
 
-import com.github.lapesd.hdtss.model.Term;
-import com.github.lapesd.hdtss.utils.BitsetOps;
+import com.github.lapesd.hdtss.utils.Binding;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 
-import static com.github.lapesd.hdtss.utils.BitsetOps.nextSet;
 import static java.util.Arrays.asList;
 
 public final class Minus extends AbstractOp {
@@ -34,52 +33,11 @@ public final class Minus extends AbstractOp {
         return children.get(0).inputVars();
     }
 
-    @Override public @NonNull Op bind(@NonNull List<String> varNames, Term @NonNull [] row) {
+    @Override public @NonNull Op bind(@NonNull Binding binding) {
         Op main = children.get(0), filter = children.get(1);
-        Op bMain = main.bind(varNames, row);
-
-        Set<@NonNull String> inputVars = filter.inputVars();
-        long[] subset = BitsetOps.createBitset(row.length);
-        for (int i = 0, size = varNames.size(); i < size; i++) {
-            if (!inputVars.contains(varNames.get(i)))
-                BitsetOps.set(subset, i);
-        }
-        int subsetSize = BitsetOps.cardinality(subset);
-        if (subsetSize != row.length) {
-            List<String> varNamesSubset = new ArrayList<>();
-            Term[] rowSubset = new Term[subsetSize];
-            for (int i = nextSet(subset, 0); i >= 0; i = nextSet(subset, i+1) ) {
-                rowSubset[varNames.size()] = row[i];
-                varNamesSubset.add(varNames.get(i));
-            }
-            varNames = varNamesSubset;
-            row = rowSubset;
-        }
-        Op bFilter = filter.bind(varNames, row);
-
-        return bFilter != filter || bMain != main ? new Minus(bMain, bFilter) : this;
-    }
-
-    @Override public @NonNull Op bind(@NonNull Map<String, Term> var2term) {
-        Op main = children.get(0);
-        Op bMain = main.bind(var2term), filter = children.get(1);
-        boolean needsProjection = false;
-        Set<@NonNull String> filterInputs = filter.inputVars();
-        for (String var : filterInputs) {
-            if (var2term.containsKey(var)) {
-                needsProjection = true;
-                break;
-            }
-        }
-        if (needsProjection) {
-            Map<String, Term> subset = new HashMap<>((int)Math.max(4, var2term.size()/0.75+1));
-            for (Map.Entry<String, Term> e : var2term.entrySet()) {
-                if (!filterInputs.contains(e.getKey()))
-                    subset.put(e.getKey(), e.getValue());
-            }
-            var2term = subset;
-        }
-        Op bFilter = filter.bind(var2term);
+        var filterInputs = filter.inputVars();
+        Binding bindingSubset = binding.filter(v -> !filterInputs.contains(v));
+        Op bMain = main.bind(binding), bFilter = filter.bind(bindingSubset);
         return bMain != main || bFilter != filter ? new Minus(bMain, bFilter) : this;
     }
 

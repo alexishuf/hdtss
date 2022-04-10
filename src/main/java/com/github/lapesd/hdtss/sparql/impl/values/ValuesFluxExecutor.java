@@ -7,6 +7,7 @@ import com.github.lapesd.hdtss.model.solutions.FluxQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.impl.conditional.RequiresOperatorFlow;
+import com.github.lapesd.hdtss.utils.Binding;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -24,8 +25,9 @@ public class ValuesFluxExecutor extends ValuesExecutor {
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
         Op inner = node.children().get(0);
         BatchQuerySolutions values = ((Values) node).values();
-        return new FluxQuerySolutions(node.outputVars(), values.flux().flatMap(r ->
-                dispatcher.execute(inner.bind(values.varNames(), r)).flux()
-        ));
+        @NonNull String @NonNull[] valuesVars = values.varNames().toArray(String[]::new);
+        var flux = values.flux().map(t -> new Binding(valuesVars, t))
+                                .flatMap(b -> dispatcher.execute(inner.bind(b)).flux());
+        return new FluxQuerySolutions(node.outputVars(), flux);
     }
 }
