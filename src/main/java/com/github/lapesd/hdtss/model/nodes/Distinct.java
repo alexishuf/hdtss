@@ -10,9 +10,7 @@ public final class Distinct extends AbstractOp {
         super(List.of(inner));
     }
 
-    @Override public @NonNull Type type() {
-        return Type.DISTINCT;
-    }
+    @Override public @NonNull Type type() { return Type.DISTINCT; }
 
     @Override public @NonNull List<@NonNull String> outputVars() {
         return children.get(0).outputVars();

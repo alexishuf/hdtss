@@ -325,6 +325,8 @@ properties is null, delegating control to `sparql.flow`:
 > 
 > `sparql.distinct.flow=REACTIVE|ITERATOR`
 > 
+> `sparql.weakDistinct.flow=REACTIVE|ITERATOR`
+> 
 > `sparql.project.flow=REACTIVE|ITERATOR`
 > 
 > `sparql.values.flow=REACTIVE|ITERATOR`
@@ -397,6 +399,17 @@ such implementations.
 >
 > If `sparql.distinct.strategy` is WINDOW, this property sets the maximum window
 > size. By **default** the window comprises the last `8192` solutions.
+
+Optimizers may introduce `WEAK_DISTINCT` operators, which behave like a 
+`DISTINCT` but which enforce a executor using the `WINDOW` strategy presented 
+above. This allows the user-requested `DISTINCT` to be processed with a higher 
+window or with a hash table, while de-duplication of intermediate results 
+have minimal overhead. 
+
+> sparql.weakDistinct.window=integer
+> 
+> The window size to use when executing WEAK_DISTINCT operators. The **default** 
+> is `512`.
 
 #### MINUS
 

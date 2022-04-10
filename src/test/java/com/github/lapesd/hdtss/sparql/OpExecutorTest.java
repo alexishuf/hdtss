@@ -15,6 +15,8 @@ import com.github.lapesd.hdtss.sparql.impl.assign.JenaAssignFluxExecutor;
 import com.github.lapesd.hdtss.sparql.impl.assign.JenaAssignItExecutor;
 import com.github.lapesd.hdtss.sparql.impl.distinct.DistinctFluxExecutor;
 import com.github.lapesd.hdtss.sparql.impl.distinct.DistinctItExecutor;
+import com.github.lapesd.hdtss.sparql.impl.distinct.WeakDistinctFluxExecutor;
+import com.github.lapesd.hdtss.sparql.impl.distinct.WeakDistinctItExecutor;
 import com.github.lapesd.hdtss.sparql.impl.exists.ExistsFluxExecutor;
 import com.github.lapesd.hdtss.sparql.impl.exists.ExistsItExecutor;
 import com.github.lapesd.hdtss.sparql.impl.filter.JenaFilterFluxExecutor;
@@ -99,6 +101,8 @@ class OpExecutorTest {
         return opConfigName(op.type());
     }
     private String opConfigName(Op.Type type) {
+        if (type == Op.Type.WEAK_DISTINCT)
+            return "weakDistinct";
         String lower = type.name().toLowerCase();
         return (lower.contains("_")) ? lower.split("_")[1] : lower;
     }
@@ -151,19 +155,20 @@ class OpExecutorTest {
 
         record Params(Op.Type op, Class<?> expectedIterator, Class<?> expectedFlux) {}
         List<Params> paramsList = List.of(
-                new Params(Op.Type.ASK,        AskItExecutor.class,           AskFluxExecutor.class),
-                new Params(Op.Type.ASSIGN,     JenaAssignItExecutor.class,    JenaAssignFluxExecutor.class),
-                new Params(Op.Type.DISTINCT,   DistinctItExecutor.class,      DistinctFluxExecutor.class),
-                new Params(Op.Type.EXISTS,     ExistsItExecutor.class,        ExistsFluxExecutor.class),
-                new Params(Op.Type.FILTER,     JenaFilterItExecutor.class,    JenaFilterFluxExecutor.class),
-                new Params(Op.Type.IDENTITY,   IdentityExecutor.class,        IdentityExecutor.class),
-                new Params(Op.Type.JOIN,       BindJoinItExecutor.class,      BindJoinFluxExecutor.class),
-                new Params(Op.Type.LEFT_JOIN,  BindLeftJoinItExecutor.class,  BindLeftJoinFluxExecutor.class),
-                new Params(Op.Type.SLICE,      SliceItExecutor.class,         SliceFluxExecutor.class),
-                new Params(Op.Type.MINUS,      MinusItExecutor.class,         MinusFluxExecutor.class),
-                new Params(Op.Type.PROJECT,    ProjectItExecutor.class,       ProjectFluxExecutor.class),
-                new Params(Op.Type.UNION,      UnionItExecutor.class,         UnionFluxExecutor.class),
-                new Params(Op.Type.VALUES,     ValuesItExecutor.class,        ValuesFluxExecutor.class)
+                new Params(Op.Type.ASK,           AskItExecutor.class,           AskFluxExecutor.class),
+                new Params(Op.Type.ASSIGN,        JenaAssignItExecutor.class,    JenaAssignFluxExecutor.class),
+                new Params(Op.Type.DISTINCT,      DistinctItExecutor.class,      DistinctFluxExecutor.class),
+                new Params(Op.Type.WEAK_DISTINCT, WeakDistinctItExecutor.class,  WeakDistinctFluxExecutor.class),
+                new Params(Op.Type.EXISTS,        ExistsItExecutor.class,        ExistsFluxExecutor.class),
+                new Params(Op.Type.FILTER,        JenaFilterItExecutor.class,    JenaFilterFluxExecutor.class),
+                new Params(Op.Type.IDENTITY,      IdentityExecutor.class,        IdentityExecutor.class),
+                new Params(Op.Type.JOIN,          BindJoinItExecutor.class,      BindJoinFluxExecutor.class),
+                new Params(Op.Type.LEFT_JOIN,     BindLeftJoinItExecutor.class,  BindLeftJoinFluxExecutor.class),
+                new Params(Op.Type.SLICE,         SliceItExecutor.class,         SliceFluxExecutor.class),
+                new Params(Op.Type.MINUS,         MinusItExecutor.class,         MinusFluxExecutor.class),
+                new Params(Op.Type.PROJECT,       ProjectItExecutor.class,       ProjectFluxExecutor.class),
+                new Params(Op.Type.UNION,         UnionItExecutor.class,         UnionFluxExecutor.class),
+                new Params(Op.Type.VALUES,        ValuesItExecutor.class,        ValuesFluxExecutor.class)
         );
         paramsList.parallelStream().forEach(p -> {
             try (ApplicationContext ctx = createFlowSelectionContext(p.op, "ITERATOR")) {
@@ -223,6 +228,11 @@ class OpExecutorTest {
     void testDistinct(@NonNull Distinct in, @NonNull Collection<List<Term>> expected) {
         testInContexts(in, expected,
                        Map.of("sparql.distinct.strategy", List.of("HASH", "WINDOW")));
+    }
+
+    @ParameterizedTest @MethodSource("testDistinct")
+    void testWeakDistinct(@NonNull Distinct in, @NonNull Collection<List<Term>> expected) {
+        testInContexts(in, expected);
     }
 
     @SuppressWarnings("unused") static @NonNull Stream<@NonNull Arguments> testTriplePattern() {

@@ -15,6 +15,7 @@ public interface Op {
         ASK,
         ASSIGN,
         DISTINCT,
+        WEAK_DISTINCT,
         EXISTS,
         FILTER,
         IDENTITY,
