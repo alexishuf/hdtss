@@ -14,8 +14,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 @Requires(property = "sparql.join.strategy", value = "BIND", defaultValue = "BIND")
 public class BindLeftJoinFluxExecutor extends BindJoinFluxExecutor {
     @Inject
-    public BindLeftJoinFluxExecutor(@NonNull OpExecutorDispatcher dispatcher,
-                                    @NonNull JoinReorderStrategy reorderStrategy) {
-        super(dispatcher, reorderStrategy);
+    public BindLeftJoinFluxExecutor(@NonNull OpExecutorDispatcher dispatcher) {
+        super(dispatcher);
     }
 }

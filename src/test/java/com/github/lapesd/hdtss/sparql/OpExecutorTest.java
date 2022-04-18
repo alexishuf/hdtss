@@ -391,7 +391,7 @@ class OpExecutorTest {
     @ParameterizedTest @MethodSource
     void testJoin(@NonNull Join in, @NonNull Collection<List<Term>> expected) {
         testInContexts(in, expected, Map.of(
-                "sparql.join.reorder", List.of("NONE"),
+                "hdt.estimator", List.of("NONE"),
                 "sparql.join.strategy", List.of("BIND")));
     }
 

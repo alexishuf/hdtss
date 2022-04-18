@@ -12,7 +12,8 @@ Table of Contents:
   - [Cardinality Estimation](#cardinality-estimation) 
 - [Querying configuration properties](#querying-configuration-properties)
   - [Flow Control](#flow-control) 
-  - [Implementation Strategies](#implementation-strategies) 
+  - [Implementation Strategies](#implementation-strategies)
+  - [Optimization](#optimization)
 - [SPARQL protocol configuration properties](#sparql-protocol-configuration-properties) 
 
 Setting Properties
@@ -437,21 +438,108 @@ have minimal overhead.
 > > right binding the join variables to the obtained solutions and execute 
 > > such bound rewriting.
 
-The efficiency of join implementations relies on good join reordering. The 
-reordering strategy can be configured as such:
+### Optimization
 
-> `sparql.join.reorder=NONE|VARS_POS|TRIPLE_CARD`
->
-> The join (re)ordering strategy to use before join execution starts. 
-> The **default** is `TRIPLE_CARD`
+Optimization is applied after parsing by an `OptimizerRunner`. There are only 
+two implementations to choose from:
+
+> `sparql.optimizer.runner=ALL|NONE`
 > 
-> > `NONE`: blindly execute joins in the order they appear in the query.
+> > `ALL` (the **default**) will execute all enabled operation optimizers
+
+> > `NONE` will not execute any optimizer, effectively disabling optimization 
+> > and executing queries as parsed
+
+#### Distinct pushing
+
+Under a `ASK` or `SELECT DISTINCT` root, or under the right operand of 
+a `MINUS`, `EXISTS` or `NOT EXISTS` operator, deduplication of intermediate 
+results will not cause incompleteness of overall results. 
+
+This optimizer injects **weak** `DISTINCT` operators wrapping the operands of 
+joins, left joins and filters.
+
+**Weak** `DISTINCT` de-duplicates rows on a best-effort basis with limited 
+memory overhead. Limiting the overhead is achieved by checking incoming rows 
+against a small subset of previous rows instead of all previous rows.  
+
+> `sparql.optimizer.distinct=true|false`
 > 
-> > `VARS_POS`: execute triple patterns with the lowest cardinality first, 
-> > estimating cardinality from the number and position of variables.
+> Whether to enable (`true`, the **default**) or not (`false`) the 
+> distinct-pushing optimizer. The value of this property is case-insensitive.
+
+#### Projection pushing
+
+When the query has an outer projection clause, the projection can be pushed 
+downward to intermediate results, dropping unnecessary columns.
+
+> `sparql.optimizer.project=true|false`
 > 
-> > `TRIPLE_CARD`: execute smallest cardinality triple patterns first, 
-> > as estimated by the configured `hdt.estimator`.  
+> Whether the optimizer will attempt to inject `PROJECT` operators to 
+> intermediary results, dropping useless columns as early as possible in 
+> evaluation. The **default** is `true`.
+
+### Join-reordering
+
+Join order optimizer consists in executing the operand with lower estimated 
+cardinality before its counterparts. This strategy minimizes the number of 
+intermediate results if the estimate is perfectly accurate.
+
+> `sparql.optimizer.join=true|fase`
+> 
+> Whether join-order optimization is enabled. Join operands may be re-ordered 
+> (with corresponding projection if needed) to reduce the number of 
+> intermediate results. The **default** is `true`.
+ 
+The join-order optimizer relies on the triple pattern cardinality estimator 
+set via `hdt.estimator`, as discussed in [HDT > Cardinality Estimation](#cardinality-estimation).
+
+When join operands are not triple patterns, the cardinality of any other 
+operator is estimated by summing the cardinality of all triple patterns 
+recursively contained in the tree rooted at that operator, excluding the 
+right-side operands of `EXISTS` and `MINUS` operators.
+
+> When [filter-pushing](#filter-join-pushing) is enabled, the join-order 
+> optimizer will change its estimation to apply a penalty on join operands 
+> that do not contribute to any upstream filter expression but the join 
+> itself fully feeds an upstream `FILTER`/`EXISTS`/`MINUS` operator.  
+
+> `sparql.optimizer.filter-join-penalty=integer` 
+> 
+> The percentage of the operand's original estimated cardinality to apply as 
+> penalty when that operand does not contribute variables to the nearest 
+> upstream filter which the join operator can fully feed. If the penalty is `x`,
+> `cost += max(1, cost*(x/100))`. The **default** is `5`, meaning 5%.
+> 
+> > Negative values are not allowed. Zero disables this functionality.
+
+#### Filter-Join pushing
+
+When a `FILTER`/`MINUS`/`EXISTS` is applied to a `JOIN` or `LEFT_JOIN` but 
+all filter variables can be filled with only a subset of the join operands the 
+following modifications yield the same results with fewer intermediate results: 
+
+- Replace the enclosing filter with its input child.
+- Replace the aforementioned subset of join operands with the enclosing 
+  filter operator, now having a join among the operand subset as its input
+  - If the subset is a unit set, there is no need for wrapping into a `JOIN` 
+
+This optimization can be toggled with the following property:
+
+> `sparql.optimizer.filter=true|false`
+> 
+> Whether to attempt to push `FILTER`/`EXISTS`/`MINUS` operators into 
+> subsets of `JOIN`/`LEFT_JOIN` operands. The **default** is `false`.
+
+This optimization interacts with the join-order optimizer, which executes 
+previously. The join-order optimizer will apply penalties to operands that do 
+not contribute bindings to the nearest enclosing filter. Such penalties 
+contribute to clustering the eligible subset into the beginning of the 
+join order. 
+
+> The current implementation will only replace contiguous subsets of join 
+> operands. This is a cheap condition that avoids introduction of cartesian 
+> products and does not override the (estimated) optimal join order.
 
 SPARQL protocol configuration properties
 ----------------------------------------

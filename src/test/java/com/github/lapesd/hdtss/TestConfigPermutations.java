@@ -28,8 +28,8 @@ public class TestConfigPermutations implements Iterable<ApplicationContext>, Clo
     private static @NonNull Map<String, List<Object>> createChoices(@NonNull String hdtLocation) {
         Map<String, List<Object>> choices = new HashMap<>();
         choices.put("hdt.location", List.of(hdtLocation));
-        choices.put("sparql.flow", List.of("REACTIVE", "ITERATOR", "HEAVY_REACTIVE"));
-        choices.put("sparql.join.reorder", List.of("NONE", "VARS_POS"));
+        choices.put("sparql.flow", List.of("REACTIVE", "ITERATOR"));
+        choices.put("hdt.estimator", List.of("NONE", "PATTERN", "PEEK"));
         choices.put("sparql.reactive.scheduler", asList("IO", "ELASTIC"));
         choices.put("sparql.reactive.max-threads", asList("-1", "5"));
         choices.put(FMT_PROP, List.of(RESULTS_TSV, RESULTS_JSON));

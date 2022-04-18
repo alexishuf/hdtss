@@ -102,7 +102,7 @@ public class TestUtils {
     }
 
     public static @NonNull TriplePattern parseTriplePattern(@NonNull String string) {
-        String[] parts = string.split(" ", 3);
+        String[] parts = string.split(" +", 3);
         assertEquals(3, parts.length, "Not enough Terms in triple!");
         Term s = new Term(parts[0]), p = new Term(parts[1]), o = new Term(parts[2]);
         assertTrue(s.isValid(), "Invalid subject: "+s);

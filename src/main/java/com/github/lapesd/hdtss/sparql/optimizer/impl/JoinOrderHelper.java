@@ -1,30 +1,53 @@
-package com.github.lapesd.hdtss.sparql.impl.join;
+package com.github.lapesd.hdtss.sparql.optimizer.impl;
 
+import com.github.lapesd.hdtss.data.query.CardinalityEstimator;
 import com.github.lapesd.hdtss.model.nodes.Join;
 import com.github.lapesd.hdtss.model.nodes.Op;
+import com.github.lapesd.hdtss.model.nodes.Project;
+import com.github.lapesd.hdtss.model.nodes.TriplePattern;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.*;
 
-public abstract class WeighedJoinReorderStrategy implements JoinReorderStrategy {
+class JoinOrderHelper {
+    private final @NonNull CardinalityEstimator estimator;
 
-    @Override public @Nullable JoinReorder reorder(@NonNull Join join) {
+    public JoinOrderHelper(@NonNull CardinalityEstimator estimator) {
+        this.estimator = estimator;
+    }
+
+    public @NonNull Op reorder(@NonNull Join join) {
         List<@NonNull Op> ops = join.children();
         int size = ops.size();
         if (size < 2)
-            return null;
+            return join;
         long[] weights = new long[size];
         for (int i = 0; i < size; i++)
             weights[i] = (estimate(ops.get(i)) << 32) | i;
         Arrays.sort(weights);
         avoidProducts(join, ops, weights);
         if (isNoOp(weights))
-            return null;
+            return join;
         ArrayList<@NonNull Op> reordered = new ArrayList<>(size);
         for (long weight : weights)
             reordered.add(ops.get((int)weight));
-        return new JoinReorder(reordered, getProjection(join.outputVars(), reordered));
+        Op optimized = new Join(reordered);
+        if (!optimized.outputVars().equals(join.outputVars()))
+            optimized = new Project(join.outputVars(), optimized);
+        return optimized;
+    }
+
+    protected long estimate(@NonNull Op op) {
+        return switch (op.type()) {
+            case TRIPLE -> estimator.estimate((TriplePattern) op);
+            case MINUS,EXISTS -> estimate(op.children().get(0));
+            default -> {
+                int sum = 0;
+                for (Op child : op.children())
+                    sum += estimate(child);
+                yield sum;
+            }
+        };
     }
 
     static boolean isNoOp(long[] weights) {
@@ -49,7 +72,7 @@ public abstract class WeighedJoinReorderStrategy implements JoinReorderStrategy 
     }
 
     private static int firstIntersecting(@NonNull Set<String> vars, @NonNull List<@NonNull Op> ops,
-                                 long[] weights, int startIdx) {
+                                         long[] weights, int startIdx) {
         for (int i = startIdx; i < weights.length; i++) {
             for (String var : ops.get((int) weights[i]).outputVars()) {
                 if (vars.contains(var))
@@ -58,28 +81,4 @@ public abstract class WeighedJoinReorderStrategy implements JoinReorderStrategy 
         }
         return -1;
     }
-
-    static int @Nullable [] getProjection(@NonNull List<@NonNull String> exposedVars,
-                                          @NonNull List<@NonNull Op> reordered) {
-        List<String> effVars = new ArrayList<>(exposedVars.size());
-        for (Op op : reordered) {
-            for (String var : op.outputVars()) {
-                if (!effVars.contains(var))
-                    effVars.add(var);
-            }
-        }
-        assert effVars.size() == exposedVars.size();
-        int nVars = exposedVars.size();
-        int[] projection = new int[exposedVars.size()];
-        boolean trivial = true;
-        for (int i = 0; i < nVars; i++) {
-            projection[i] = effVars.indexOf(exposedVars.get(i));
-            trivial &= projection[i] == i;
-        }
-        assert Arrays.stream(projection).allMatch(i -> i >= 0);
-        return trivial ? null : projection;
-    }
-
-
-    protected abstract long estimate(Op op);
 }

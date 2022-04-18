@@ -6,7 +6,6 @@ import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.model.solutions.IteratorQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
-import com.github.lapesd.hdtss.sparql.impl.ExecutorUtils;
 import com.github.lapesd.hdtss.sparql.impl.conditional.RequiresOperatorFlow;
 import com.github.lapesd.hdtss.utils.Binding;
 import com.github.lapesd.hdtss.utils.BitsetOps;
@@ -35,9 +34,8 @@ import static java.util.Collections.emptyIterator;
 public class BindJoinItExecutor extends BindJoinExecutor {
 
     @Inject
-    public BindJoinItExecutor(@NonNull OpExecutorDispatcher dispatcher,
-                              @NonNull JoinReorderStrategy reorderStrategy) {
-        super(dispatcher, reorderStrategy);
+    public BindJoinItExecutor(@NonNull OpExecutorDispatcher dispatcher) {
+        super(dispatcher);
     }
 
     private class State implements Iterator<@Nullable Term []> {
@@ -128,8 +126,7 @@ public class BindJoinItExecutor extends BindJoinExecutor {
 
     @Override
     protected @NonNull QuerySolutions execute(boolean isLeft, @NonNull List<@NonNull Op> operands,
-                                              @NonNull List<String> varNames,
-                                              int @Nullable[] projection) {
+                                              @NonNull List<String> varNames) {
         return new IteratorQuerySolutions(varNames, new Iterator<>() {
             private State last;
 
@@ -149,10 +146,7 @@ public class BindJoinItExecutor extends BindJoinExecutor {
                 if (!hasNext())
                     throw new NoSuchElementException();
                 @Nullable Term[] raw = last.next();
-                if (projection == null)
-                    return copyOf(raw, raw.length);
-                else
-                    return ExecutorUtils.project(projection, raw);
+                return copyOf(raw, raw.length);
             }
         });
     }
