@@ -33,8 +33,18 @@ public class TSVCodec extends AbstractSVEncoder {
 
     public static @NonNull CharSequence sanitize(@NonNull Term term) {
         CharSequence s = term.withImplicitString().sparql();
-        if (s.charAt(0) == '[')
+        char first = s.charAt(0);
+        if (first == '[')
             return "_:"+ UUID.randomUUID();
+        if (first == '"') {
+            boolean bad = false;
+            for (int i = 1, len = s.length()-1; !bad && i < len; i++) {
+                char c = s.charAt(i);
+                bad = c == '\t' || c == '\n';
+            }
+            if (bad)
+                return s.toString().replace("\t", "\\t").replace("\n", "\\n");
+        }
         return s;
     }
 
