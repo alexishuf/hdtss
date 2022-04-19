@@ -13,6 +13,8 @@ import java.util.function.Predicate;
 import static com.github.lapesd.hdtss.utils.BitsetOps.nextSet;
 
 public final class Binding {
+    public static final Binding EMPTY = new Binding(new String[0], new Term[0]);
+
     private final String @NonNull[] varNames;
     private Term @NonNull [] terms;
 

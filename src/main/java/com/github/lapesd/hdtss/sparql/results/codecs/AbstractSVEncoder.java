@@ -72,11 +72,11 @@ public abstract class AbstractSVEncoder implements MediaTypeCodec {
                 (i++ != 0 ? w.append(sep) : w).append(varSymbol).append(name);
             w.append(eol);
             for (@Nullable Term @NonNull[] row : solutions) {
-                boolean first = true;
-                for (Term term : row) {
+                for (int j = 0; j < row.length; j++) {
+                    if (j > 0) w.append(sep);
+                    Term term = row[j];
                     if (term != null)
-                        encode(term, first ? w : w.append(sep));
-                    first = false;
+                        encode(term, w);
                 }
                 w.append(eol);
             }

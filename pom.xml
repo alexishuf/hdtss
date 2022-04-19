@@ -10,14 +10,14 @@
   <parent>
     <groupId>io.micronaut</groupId>
     <artifactId>micronaut-parent</artifactId>
-    <version>3.0.1</version>
+    <version>3.4.2</version>
   </parent>
 
   <properties>
     <packaging>jar</packaging>
     <jdk.version>17</jdk.version>
     <release.version>17</release.version>
-    <micronaut.version>3.0.1</micronaut.version>
+    <micronaut.version>3.4.2</micronaut.version>
     <checkerframework.version>3.18.0</checkerframework.version>
     <exec.mainClass>com.github.lapesd.hdtss.Application</exec.mainClass>
     <micronaut.runtime>netty</micronaut.runtime>

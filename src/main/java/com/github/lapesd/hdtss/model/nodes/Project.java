@@ -1,7 +1,9 @@
 package com.github.lapesd.hdtss.model.nodes;
 
+import com.github.lapesd.hdtss.utils.Binding;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class Project extends AbstractOp {
@@ -21,6 +23,18 @@ public final class Project extends AbstractOp {
     @Override
     public @NonNull Op withChildren(@NonNull List<@NonNull Op> replacements) {
         return new Project(outputVars(), OpUtils.single(replacements));
+    }
+
+    @Override public @NonNull Op bind(@NonNull Binding binding) {
+        assert varNames != null;
+        Op inner = children.get(0), bound = inner.bind(binding);
+        ArrayList<String> remainingVars = new ArrayList<>(varNames.size());
+        for (String name : varNames) {
+            if (!binding.contains(name))
+                remainingVars.add(name);
+        }
+        boolean change = bound != inner || remainingVars.size() < varNames.size();
+        return change ? new Project(remainingVars, bound) : this;
     }
 
     @Override public boolean deepEquals(@NonNull Op other) {

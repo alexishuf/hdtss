@@ -14,7 +14,8 @@ Table of Contents:
   - [Flow Control](#flow-control) 
   - [Implementation Strategies](#implementation-strategies)
   - [Optimization](#optimization)
-- [SPARQL protocol configuration properties](#sparql-protocol-configuration-properties) 
+- [SPARQL protocol configuration properties](#sparql-protocol-configuration-properties)
+  - [Websocket support](#websocket-support) 
 
 Setting Properties
 ------------------
@@ -92,6 +93,16 @@ This `-v` (or also `--v`, `-verbosity` and `--verbosity`) expands to
 `-logger.levels.com.github.lapesd.hdtss`. To set the level for other packages, 
 use the longer form.
 
+By default, a query only causes a log message if its execution fails. The 
+following property forces logging even for successful queries:
+
+> sparql.log.query=true|false
+> 
+> Whether to log a `INFO`-level message upon successful or client-cancelled 
+> execution of a query. The log message will include the SPARQL string. The 
+> **default** is `true`. If this is set to false, failed queries will still 
+> yield `ERROR`-level messages, while sucessful and user-cancelled queries 
+> will yield `DEBUG`-level messages.
 
 HDT configuration properties
 ----------------------------
@@ -568,7 +579,7 @@ Regardless of the the `BATCH` or `CHUNKED` endpoint implementations,
 serialization will always be offloaded to an IO-thread, as is recommended 
 by micronaut in order to not block the netty event loop.
 
-hdtss periodically logs simple statiscs about submitted queries. This occurs 
+hdtss periodically logs simple statistics about submitted queries. This occurs 
 at a configurable fixed rate:
 
 > `sparql.heartbeat.period=DURATION`
@@ -579,3 +590,55 @@ at a configurable fixed rate:
 > 
 > Each heartbeat log message will be written from a class within `com.github.lapesd.hdtss.controller` 
 > at this SLF4J level. The **default** is `INFO`
+ 
+
+### Websocket support
+
+In addition to the standard [HTTP-based](https://www.w3.org/TR/sparql11-protocol/) 
+protocol for SPARQL, hdtss also supports websocket as a vendor-specific 
+alternative. The targeted use case for websocket is SPARQL mediators which 
+perform joins by replacing variables on the right-side operand and executing 
+the now bound query. With a websocket, the client can concurrently send 
+additional bindings, avoiding parse&optimize cycles on the server and reducing 
+the total client-server communication.     
+
+> `sparql.ws=true|false`
+>
+> Whether websocket support will be enabled. The **default** is `true`
+
+The protocol on top of websockets is described at [WEBSOCKET.md](WEBSOCKET.md).
+
+The following configuration properties set per-session limits on the server: 
+
+> `sparql.ws.action-queue=INTEGER`
+> 
+> The size of the actions queue held per websocket session by the server. This 
+> size will be reported to clients in response to `!qeuue-cap`. The **default** 
+> value is 8.
+ 
+> `sparql.ws.bind-request=INTEGER`
+>
+> The _n_ in `!bind-request n` sent by the server to receive bindings when 
+> processing a `!bind` action. The default value is `64`.  
+
+When the server sends result rows (assigning RDF terms to unbound variables 
+in a query), it will try to bundle multiple rows into a single websocket 
+message. This has the benefit of reducing protocol overhead, but introduces 
+a minimum latency. The following properties change that behavior.
+
+> `sparql.ws.window.size=INTEGER"
+> 
+> The maximum number of rows to be bundled into a single websocket message. 
+> A message will be sent once this number of rows is available or the set 
+> maximum wait time (`sparql.ws.window.us`) has elapsed, whichever happens 
+> first. The **default** is `16` rows. Setting this to a value `<= 1` will 
+> disable bundling (yielding one immediate message for every row). 
+
+> `sparql.ws.window.us=INTEGER"
+> 
+> The maximum number of microseconds to wait for rows when bundling multiple 
+> rows into a single websocket message. A websocket message with all rows will
+> be emitted once this amount of microseconds has elapsed or once 
+> `sparql.ws.window.size` rows have been collected, whichever occurs first. 
+> The **default** is `500` microseconds. If this is set to something `<= 0`, 
+> no bundling will occur (each row will immediately yield a websocket message).

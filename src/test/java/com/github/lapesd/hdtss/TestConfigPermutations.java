@@ -2,7 +2,6 @@ package com.github.lapesd.hdtss;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.MediaType;
-import lombok.Getter;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.Closeable;
@@ -15,14 +14,13 @@ import static java.util.Arrays.asList;
 
 public class TestConfigPermutations implements Iterable<ApplicationContext>, Closeable {
     private static final @NonNull String FMT_PROP = "sparql.test.results.format";
-    private final @Getter Map<String, List<Object>> choices;
     private final @NonNull TempFile tempFile;
     private boolean closed = false;
 
     public TestConfigPermutations(@NonNull Class<?> refClass,
                                   @NonNull String hdtResourcePath) throws IOException {
         tempFile = new TempFile(".hdt").initFromResource(refClass, hdtResourcePath);
-        choices = createChoices(tempFile.getAbsolutePath());
+
     }
 
     private static @NonNull Map<String, List<Object>> createChoices(@NonNull String hdtLocation) {
@@ -36,13 +34,29 @@ public class TestConfigPermutations implements Iterable<ApplicationContext>, Clo
         return choices;
     }
 
+    public @NonNull Map<String, List<Object>> choices() {
+        return Map.of(
+                "sparql.flow", List.of("REACTIVE", "ITERATOR"),
+                "hdt.estimator", List.of("NONE", "PATTERN", "PEEK"),
+                "sparql.reactive.scheduler", asList("IO", "ELASTIC"),
+                "sparql.reactive.max-threads", asList("-1", "5"),
+                FMT_PROP, List.of(RESULTS_TSV, RESULTS_JSON)
+        );
+    }
+
+    private @NonNull Map<String, List<Object>> choicesWithPath() {
+        HashMap<String, List<Object>> map = new HashMap<>(choices());
+        map.put("hdt.location", List.of(tempFile.getAbsolutePath()));
+        return map;
+    }
+
     public static @NonNull MediaType resultsMediaType(@NonNull ApplicationContext applicationContext) {
         String resultsMT = applicationContext.get(FMT_PROP, String.class).orElseThrow();
         return new MediaType(resultsMT);
     }
 
     @Override public Iterator<ApplicationContext> iterator() {
-        var it = TestUtils.listApplicationContext(choices).iterator();
+        var it = TestUtils.listApplicationContext(choicesWithPath()).iterator();
         return new Iterator<>() {
             @Override public boolean hasNext() {
                 return it.hasNext();

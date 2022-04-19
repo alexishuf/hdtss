@@ -30,7 +30,7 @@ import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-class SparqlControllerTest extends ControllerTestBase {
+public class SparqlControllerTest extends ControllerTestBase {
     private static TestConfigPermutations generator;
 
     @BeforeAll
@@ -45,7 +45,7 @@ class SparqlControllerTest extends ControllerTestBase {
             generator.close();
     }
 
-    static Stream<Arguments> data() {
+    public static Stream<Arguments> data() {
         String prolog = String.format("""
                 PREFIX : <http://example.org/>
                 PREFIX xsd: <%s>
