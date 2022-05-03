@@ -4,10 +4,7 @@ import com.github.lapesd.hdtss.model.Term;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static com.github.lapesd.hdtss.utils.BitsetOps.nextSet;
@@ -39,6 +36,12 @@ public final class Binding {
         assert validInputs(varNames, terms) : "Invalid varNames/terms";
         this.varNames = varNames;
         this.terms = terms;
+    }
+
+    /** Copy constructor */
+    @SuppressWarnings("CopyConstructorMissesField")
+    public Binding(@NonNull Binding other) {
+        this(other.vars(), Arrays.copyOf(other.terms(), other.size()));
     }
 
     /** Alias for {@code Binding(varNames.toArray(String[]::new), terms)} */
@@ -107,6 +110,28 @@ public final class Binding {
         }
         this.terms = terms;
         return this;
+    }
+
+    /**
+     * Add to {@code destination} all vars in {@code in} not mentioned in this {@link Binding}.
+     *
+     * If a var is mapped to {@code null}, it will still not be added to {@code destination}.
+     *
+     * @param destination where to add vars not mentioned by this {@link Binding}.
+     * @param in variables to test for membership
+     */
+    public void addIfUnbound(@NonNull Collection<@NonNull String> destination,
+                             @NonNull Collection<@NonNull String> in) {
+        for (String name : in) {
+            if (!contains(name)) destination.add(name);
+        }
+    }
+
+    /** Fill a new {@link ArrayList} using {@link Binding#addIfUnbound(Collection, Collection)}. */
+    public List<String> unbound(@NonNull Collection<@NonNull String> vars) {
+        ArrayList<String> list = new ArrayList<>(vars.size());
+        addIfUnbound(list, vars);
+        return list;
     }
 
     /**

@@ -3,10 +3,12 @@ package com.github.lapesd.hdtss.utils;
 import com.github.lapesd.hdtss.model.Term;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Predicate;
@@ -175,5 +177,38 @@ class BindingTest {
             else
                 assertThrows(Binding.NoSuchVarException.class, () -> row.get(varName));
         }
+    }
+
+    @SuppressWarnings("unused")
+    static Stream<Arguments> testUnbound() {
+        return Stream.of(
+                arguments(List.of(), List.of(), List.of()),
+                arguments(List.of(), List.of("x"), List.of("x")),
+                arguments(List.of(), List.of("x", "y"), List.of("x", "y")),
+                arguments(List.of("z"), List.of("x", "y"), List.of("x", "y")),
+                arguments(List.of("x"), List.of("x", "y"), List.of("y")),
+                arguments(List.of("y"), List.of("x", "y"), List.of("x")),
+                arguments(List.of("z", "x"), List.of("x", "y"), List.of("y")),
+                arguments(List.of("z", "y"), List.of("x", "y"), List.of("x"))
+        );
+    }
+
+    @ParameterizedTest @MethodSource
+    void testUnbound(List<String> bindingVars, List<String> inVars, List<String> expected) {
+        assertEquals(expected, new Binding(bindingVars).unbound(inVars));
+
+        Binding binding = new Binding(bindingVars);
+        Arrays.fill(binding.terms(), Alice);
+        assertEquals(expected, binding.unbound(inVars));
+    }
+
+    @Test
+    void testCopy() {
+        var vars = new String[] {"x"};
+        var terms = new Term[] {Alice};
+        Binding source = new Binding(vars, terms);
+        Binding copy = new Binding(source);
+        copy.terms()[0] = Bob;
+        assertArrayEquals(new Term[]{Alice}, terms);
     }
 }

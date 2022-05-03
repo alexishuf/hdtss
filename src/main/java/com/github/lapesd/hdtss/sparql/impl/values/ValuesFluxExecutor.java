@@ -12,6 +12,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 @Singleton
 @Named("values")
@@ -27,7 +28,21 @@ public class ValuesFluxExecutor extends ValuesExecutor {
         BatchQuerySolutions values = ((Values) node).values();
         @NonNull String @NonNull[] valuesVars = values.varNames().toArray(String[]::new);
         var flux = values.flux().map(t -> new Binding(valuesVars, t))
-                                .flatMap(b -> dispatcher.execute(inner.bind(b)).flux());
+                .flatMap(b -> dispatcher.execute(inner.bind(b)).flux());
+        return new FluxQuerySolutions(node.outputVars(), flux);
+    }
+
+    @Override public @NonNull QuerySolutions execute(@NonNull Op node, @Nullable Binding binding) {
+        if (binding == null || binding.isEmpty())
+            return execute(node);
+        Op inner = node.children().get(0);
+        BatchQuerySolutions values = ((Values) node).values();
+        Binding augmented = augment(values.varNames(), binding);
+        var flux = values.flux().map(row -> {
+            Binding copy = new Binding(augmented);
+            System.arraycopy(row, 0, copy.terms(), 0, row.length);
+            return copy;
+        }).flatMap(b -> dispatcher.execute(inner, b).flux());
         return new FluxQuerySolutions(node.outputVars(), flux);
     }
 }

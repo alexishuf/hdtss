@@ -8,6 +8,7 @@ import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.DistinctStrategy;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.impl.conditional.RequiresOperatorFlow;
+import com.github.lapesd.hdtss.utils.Binding;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -29,10 +30,11 @@ public class DistinctItExecutor extends DistinctExecutor {
         super(dispatcher, distinctStrategy);
     }
 
-    @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
-        var inner = dispatcher.execute(node.children().get(0)).iterator();
+    @Override public @NonNull QuerySolutions execute(@NonNull Op node, @Nullable Binding binding) {
+        var inner = dispatcher.execute(node.children().get(0), binding).iterator();
         var set = distinctStrategy.createSet();
-        return new IteratorQuerySolutions(node.outputVars(), new Iterator<>() {
+        var outVars = binding == null ? node.outputVars() : binding.unbound(node.outputVars());
+        return new IteratorQuerySolutions(outVars, new Iterator<>() {
             private @Nullable Term @Nullable[] next;
 
             @EnsuresNonNullIf(expression = "this.next", result = true)

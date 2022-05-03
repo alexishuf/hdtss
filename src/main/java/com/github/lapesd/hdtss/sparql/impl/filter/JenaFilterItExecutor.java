@@ -7,6 +7,7 @@ import com.github.lapesd.hdtss.model.solutions.IteratorQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.impl.conditional.RequiresOperatorFlow;
+import com.github.lapesd.hdtss.utils.Binding;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -26,11 +27,11 @@ public class JenaFilterItExecutor extends JenaFilterExecutor {
         super(dispatcher);
     }
 
-    @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
+    @Override public @NonNull QuerySolutions execute(@NonNull Op node, @Nullable Binding binding) {
         Filter filter = (Filter) node;
-        Evaluator evaluator = new Evaluator(filter);
-        var inner = dispatcher.execute(filter.inner()).iterator();
-        return new IteratorQuerySolutions(node.outputVars(), new Iterator<>() {
+        Evaluator evaluator = createEvaluator(filter, binding);
+        var inner = dispatcher.execute(filter.inner(), binding).iterator();
+        return new IteratorQuerySolutions(evaluator.inVars(), new Iterator<>() {
             private @Nullable Term @Nullable[] next = null;
 
             @EnsuresNonNullIf(expression = "this.next", result = true)

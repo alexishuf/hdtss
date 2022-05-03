@@ -35,6 +35,7 @@ import com.github.lapesd.hdtss.sparql.impl.union.UnionFluxExecutor;
 import com.github.lapesd.hdtss.sparql.impl.union.UnionItExecutor;
 import com.github.lapesd.hdtss.sparql.impl.values.ValuesFluxExecutor;
 import com.github.lapesd.hdtss.sparql.impl.values.ValuesItExecutor;
+import com.github.lapesd.hdtss.utils.Binding;
 import com.github.lapesd.hdtss.vocab.RDF;
 import com.github.lapesd.hdtss.vocab.XSD;
 import io.micronaut.context.ApplicationContext;
@@ -58,7 +59,6 @@ import static com.github.lapesd.hdtss.vocab.FOAF.*;
 import static com.github.lapesd.hdtss.vocab.RDF.PropertyTerm;
 import static com.github.lapesd.hdtss.vocab.RDF.typeTerm;
 import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
@@ -112,10 +112,22 @@ class OpExecutorTest {
         String opConfigName = opConfigName(op);
         for (ApplicationContext ctx : applicationContexts(opConfigName, propertyChoices)) {
             try (ctx) {
-                var actual = ctx.getBean(OpExecutorDispatcher.class).execute(op)
-                                .stream().map(Arrays::asList).collect(toList());
+                var dispatcher = ctx.getBean(OpExecutorDispatcher.class);
+
+                var actual = dispatcher.execute(op).stream().map(Arrays::asList).toList();
                 assertEquals(new HashSet<>(expected), new HashSet<>(fixEquals(actual)));
                 assertEquals(expected.size(), actual.size());
+
+                var bindingList = Arrays.asList(
+                        null,
+                        Binding.EMPTY,
+                        new Binding(Map.of("OpExecutorTestDummy",
+                                           new Term("<OpExecutorTestDummy>"))));
+                for (Binding b : bindingList) {
+                    actual = dispatcher.execute(op, b).stream().map(Arrays::asList).toList();
+                    assertEquals(new HashSet<>(expected), new HashSet<>(fixEquals(actual)));
+                    assertEquals(expected.size(), actual.size());
+                }
             }
         }
     }

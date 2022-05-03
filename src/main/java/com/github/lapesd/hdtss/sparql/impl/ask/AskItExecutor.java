@@ -7,6 +7,7 @@ import com.github.lapesd.hdtss.model.solutions.IteratorQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.impl.conditional.RequiresOperatorFlow;
+import com.github.lapesd.hdtss.utils.Binding;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -24,8 +25,8 @@ public class AskItExecutor extends AskExecutor {
         super(dispatcher);
     }
 
-    @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
-        var it = dispatcher.execute(node.children().get(0)).iterator();
+    @Override public @NonNull QuerySolutions execute(@NonNull Op node, @Nullable Binding binding) {
+        var it = dispatcher.execute(node.children().get(0), binding).iterator();
         return new IteratorQuerySolutions(node.outputVars(), new Iterator<>() {
             private boolean exhausted = false;
             @Override public boolean hasNext() {

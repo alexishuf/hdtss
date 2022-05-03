@@ -6,9 +6,11 @@ import com.github.lapesd.hdtss.model.nodes.Op.Type;
 import com.github.lapesd.hdtss.model.solutions.BatchQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutor;
+import com.github.lapesd.hdtss.utils.Binding;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -25,6 +27,10 @@ public class IdentityExecutor implements OpExecutor {
     }
 
     @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
+        return SOLUTIONS;
+    }
+
+    @Override public @NonNull QuerySolutions execute(@NonNull Op node, @Nullable Binding binding) {
         return SOLUTIONS;
     }
 }

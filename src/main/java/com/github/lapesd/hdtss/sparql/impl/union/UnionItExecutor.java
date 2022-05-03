@@ -6,6 +6,7 @@ import com.github.lapesd.hdtss.model.solutions.IteratorQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.impl.conditional.RequiresOperatorFlow;
+import com.github.lapesd.hdtss.utils.Binding;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -14,7 +15,6 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.NoSuchElementException;
 
 @Singleton
@@ -24,11 +24,11 @@ public class UnionItExecutor extends UnionExecutor {
     @Inject
     public UnionItExecutor(@NonNull OpExecutorDispatcher dispatcher) {super(dispatcher);}
 
-    @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
+    @Override public @NonNull QuerySolutions execute(@NonNull Op node, @Nullable Binding binding) {
         if (node.type() != Op.Type.UNION)
             throw new IllegalArgumentException("node is not a Union");
-        List<@NonNull String> exposedVars = node.outputVars();
-        return new IteratorQuerySolutions(node.outputVars(), new Iterator<>() {
+        var exposedVars = binding == null ? node.outputVars() : binding.unbound(node.outputVars());
+        return new IteratorQuerySolutions(exposedVars, new Iterator<>() {
             private final Iterator<@NonNull Op> nodeIt = node.children().iterator();
             private final TermsOrder order = new TermsOrder(exposedVars);
             private Iterator<@Nullable Term @NonNull[]> solutionIt;
@@ -41,7 +41,7 @@ public class UnionItExecutor extends UnionExecutor {
                         if (!nodeIt.hasNext())
                             return false;
                         Op nextNode = nodeIt.next();
-                        QuerySolutions solutions = dispatcher.execute(nextNode);
+                        QuerySolutions solutions = dispatcher.execute(nextNode, binding);
                         order.reset(solutions.varNames());
                         solutionIt = solutions.iterator();
                     }

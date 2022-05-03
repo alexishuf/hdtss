@@ -1,10 +1,6 @@
 package com.github.lapesd.hdtss.controller.websocket;
 
 import com.github.lapesd.hdtss.controller.execution.SparqlExecutor;
-import com.github.lapesd.hdtss.sparql.optimizer.OptimizerRunner;
-import com.github.lapesd.hdtss.sparql.optimizer.impl.AllOptimizerRunner;
-import com.github.lapesd.hdtss.sparql.optimizer.impl.JoinOrderOptimizer;
-import com.github.lapesd.hdtss.sparql.optimizer.impl.NoneOptimizerRunner;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.http.MediaType;
 import io.micronaut.websocket.WebSocketSession;
@@ -15,14 +11,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 @Slf4j
 @Getter @Accessors(fluent = true)
 public class SparqlSessionContext {
     private final @NonNull SparqlExecutor executor;
-    private final @NonNull OptimizerRunner bindOptimizer;
     private final int actionQueueCapacity, bindRequest, windowRows;
     private final long windowNanos;
     private final boolean tracing;
@@ -30,8 +24,6 @@ public class SparqlSessionContext {
 
     @Inject
     public SparqlSessionContext(@NonNull SparqlExecutor executor,
-                                @io.micronaut.core.annotation.Nullable
-                                        JoinOrderOptimizer joinOrderOptimizer,
                                 @Property(name = "sparql.ws.action-queue", defaultValue = "8")
                                         int actionQueueCapacity,
                                 @Property(name = "sparql.ws.bind-request", defaultValue = "64")
@@ -42,9 +34,6 @@ public class SparqlSessionContext {
                                         long windowMicros
     ) {
         this.executor = executor;
-        this.bindOptimizer = joinOrderOptimizer == null
-                ? new NoneOptimizerRunner()
-                : new AllOptimizerRunner(List.of(joinOrderOptimizer));
         this.actionQueueCapacity = actionQueueCapacity;
         this.bindRequest = bindRequest;
         this.windowRows = windowRows;

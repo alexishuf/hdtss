@@ -61,4 +61,40 @@ public class ExistsItExecutor extends ExistsExecutor {
             }
         });
     }
+
+    @Override public @NonNull QuerySolutions execute(@NonNull Op node, @Nullable Binding binding) {
+        if (binding == null || binding.isEmpty())
+            return execute(node);
+
+        Exists exists = (Exists) node;
+        Op main = exists.main(), filter = exists.filter();
+        if (IdentityNode.is(filter))
+            return dispatcher.execute(main, binding);
+        boolean negate = exists.negate();
+        Binding template = createTemplate(main, binding);
+        var it = dispatcher.execute(main).iterator();
+        return new IteratorQuerySolutions(binding.unbound(main.outputVars()), new Iterator<>() {
+            private @Nullable Term @Nullable[] next;
+
+            @EnsuresNonNullIf(expression = "this.next", result = true)
+            @Override public boolean hasNext() {
+                while (next == null && it.hasNext()) {
+                    var outerRow = it.next();
+                    fillTemplate(template, outerRow);
+                    if (negate ^ dispatcher.execute(filter, template).askResult())
+                        this.next = outerRow;
+                }
+                return next != null;
+            }
+
+            @Override public @Nullable Term @NonNull[] next() {
+                if (!hasNext())
+                    throw new NoSuchElementException();
+                var next = this.next;
+                this.next = null;
+                assert next != null;
+                return next;
+            }
+        });
+    }
 }

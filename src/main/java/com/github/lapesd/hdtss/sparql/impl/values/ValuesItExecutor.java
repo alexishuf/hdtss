@@ -27,20 +27,25 @@ public class ValuesItExecutor extends ValuesExecutor {
         super(dispatcher);
     }
 
-    @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
+    @Override public @NonNull QuerySolutions execute(@NonNull Op node,
+                                                     @Nullable Binding outerBinding) {
         Values valuesNode = (Values) node;
         var values = valuesNode.values();
         var inner = valuesNode.inner();
         return new IteratorQuerySolutions(node.outputVars(), new Iterator<>() {
             private final @NonNull Iterator<@Nullable Term @NonNull[]> valuesIt = values.iterator();
             private @NonNull Iterator<@Nullable Term @NonNull[]> it = Collections.emptyIterator();
-            private final @NonNull Binding binding
-                    = new Binding(values.varNames().toArray(String[]::new));
+            private final @NonNull Binding binding = augment(values.varNames(), outerBinding);
 
             @Override public boolean hasNext() {
                 while (!it.hasNext() && valuesIt.hasNext()) {
-                    Op bound = inner.bind(binding.setTerms(valuesIt.next()));
-                    it = dispatcher.execute(bound).iterator();
+                    var row = valuesIt.next();
+                    if (outerBinding == null) {
+                        binding.setTerms(row);
+                    } else {
+                        System.arraycopy(row, 0, binding.terms(), 0, row.length);
+                    }
+                    it = dispatcher.execute(inner, binding).iterator();
                 }
                 return it.hasNext();
             }

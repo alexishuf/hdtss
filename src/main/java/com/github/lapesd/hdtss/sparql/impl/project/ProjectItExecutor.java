@@ -7,6 +7,7 @@ import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.impl.ExecutorUtils;
 import com.github.lapesd.hdtss.sparql.impl.conditional.RequiresOperatorFlow;
+import com.github.lapesd.hdtss.utils.Binding;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -14,6 +15,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @Singleton
@@ -26,16 +28,21 @@ public class ProjectItExecutor extends ProjectExecutor {
         super(dispatcher);
     }
 
-    @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
-        Op child = node.children().get(0);
-        var inner = dispatcher.execute(child).iterator();
-        int[] indices = ExecutorUtils.findIndices(node.outputVars(), child.outputVars());
-        return new IteratorQuerySolutions(node.outputVars(), new Iterator<>() {
-            @Override public boolean hasNext() {return inner.hasNext();}
+    @Override public @NonNull QuerySolutions execute(@NonNull Op node, @Nullable Binding binding) {
+        Op inner = node.children().get(0);
+        List<@NonNull String> outVars = node.outputVars(), innerVars = inner.outputVars();
+        if (binding != null) {
+            outVars = binding.unbound(outVars);
+            innerVars = binding.unbound(innerVars);
+        }
+        int[] indices = ExecutorUtils.findIndices(outVars, innerVars);
+        var it = dispatcher.execute(inner, binding).iterator();
+        return new IteratorQuerySolutions(outVars, new Iterator<>() {
+            @Override public boolean hasNext() {return it.hasNext();}
             @Override public @Nullable Term @NonNull[] next() {
-                if (!inner.hasNext())
+                if (!it.hasNext())
                     throw new NoSuchElementException();
-                return ExecutorUtils.project(indices, inner.next());
+                return ExecutorUtils.project(indices, it.next());
             }
         });
     }

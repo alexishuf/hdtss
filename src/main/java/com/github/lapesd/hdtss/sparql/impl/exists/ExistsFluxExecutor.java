@@ -12,6 +12,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 @Singleton
 @Named("exists")
@@ -36,4 +37,20 @@ public class ExistsFluxExecutor extends ExistsExecutor {
                 });
         return new FluxQuerySolutions(node.outputVars(), flux);
     }
+
+    @Override public @NonNull QuerySolutions execute(@NonNull Op node, @Nullable Binding binding) {
+        if (binding == null || binding.isEmpty())
+            return execute(node);
+        Exists exists = (Exists) node;
+        Op main = exists.main(), filter = exists.filter();
+        if (IdentityNode.is(filter))
+            return dispatcher.execute(main, binding);
+        boolean negate = exists.negate();
+        Binding template = createTemplate(exists.main(), binding);
+        var flux = dispatcher.execute(main, binding).flux().filter(
+                r -> negate ^ dispatcher.execute(filter, fillTemplate(template, r)).askResult());
+        return new FluxQuerySolutions(binding.unbound(node.outputVars()), flux);
+    }
+
+
 }

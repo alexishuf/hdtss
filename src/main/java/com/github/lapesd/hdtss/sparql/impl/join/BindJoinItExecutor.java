@@ -1,5 +1,6 @@
 package com.github.lapesd.hdtss.sparql.impl.join;
 
+import com.github.lapesd.hdtss.data.query.CardinalityEstimator;
 import com.github.lapesd.hdtss.model.Row;
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.Op;
@@ -22,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import static com.github.lapesd.hdtss.sparql.impl.ExecutorUtils.project;
 import static com.github.lapesd.hdtss.utils.BitsetOps.*;
 import static java.lang.System.arraycopy;
 import static java.util.Arrays.copyOf;
@@ -34,8 +36,9 @@ import static java.util.Collections.emptyIterator;
 public class BindJoinItExecutor extends BindJoinExecutor {
 
     @Inject
-    public BindJoinItExecutor(@NonNull OpExecutorDispatcher dispatcher) {
-        super(dispatcher);
+    public BindJoinItExecutor(@NonNull OpExecutorDispatcher dispatcher,
+                              @NonNull CardinalityEstimator estimator) {
+        super(dispatcher, estimator);
     }
 
     private class State implements Iterator<@Nullable Term []> {
@@ -129,12 +132,24 @@ public class BindJoinItExecutor extends BindJoinExecutor {
                                               @NonNull List<String> varNames) {
         return new IteratorQuerySolutions(varNames, new Iterator<>() {
             private State last;
+            private int[] projection;
 
             private void init() {
                 if (last == null) {
                     for (Op op : operands)
                         last = new State(last, op, last != null && isLeft);
                 }
+                assert last != null;
+                Binding lastBinding = last.binding;
+                projection = new int[varNames.size()];
+                boolean trivial = varNames.size() == lastBinding.size();
+                for (int i = 0; i < varNames.size(); i++) {
+                    int idx = lastBinding.indexOf(varNames.get(i));
+                    trivial = trivial && idx == i;
+                    projection[i] = idx;
+                }
+                if (trivial)
+                    projection = null;
             }
 
             @Override public boolean hasNext()  {
@@ -146,7 +161,7 @@ public class BindJoinItExecutor extends BindJoinExecutor {
                 if (!hasNext())
                     throw new NoSuchElementException();
                 @Nullable Term[] raw = last.next();
-                return copyOf(raw, raw.length);
+                return projection == null ? copyOf(raw, raw.length) : project(projection, raw);
             }
         });
     }

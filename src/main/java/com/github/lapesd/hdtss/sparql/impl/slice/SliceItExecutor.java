@@ -7,6 +7,7 @@ import com.github.lapesd.hdtss.model.solutions.IteratorQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.impl.conditional.RequiresOperatorFlow;
+import com.github.lapesd.hdtss.utils.Binding;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -26,11 +27,12 @@ public class SliceItExecutor extends SliceExecutor {
         super(dispatcher);
     }
 
-    @Override public @NonNull QuerySolutions execute(@NonNull Op node) {
+    @Override public @NonNull QuerySolutions execute(@NonNull Op node, @Nullable Binding binding) {
         Slice slice = (Slice) node;
         long offset = slice.offset(), end = offset + slice.limit();
-        var it = dispatcher.execute(slice.inner()).iterator();
-        return new IteratorQuerySolutions(slice.outputVars(), new Iterator<>() {
+        var it = dispatcher.execute(slice.inner(), binding).iterator();
+        var outVars = binding == null ? slice.outputVars() : binding.unbound(slice.outputVars());
+        return new IteratorQuerySolutions(outVars, new Iterator<>() {
             private long cursor = 0;
 
             @Override public boolean hasNext() {

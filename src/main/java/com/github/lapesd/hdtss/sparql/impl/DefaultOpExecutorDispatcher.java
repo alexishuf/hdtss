@@ -4,6 +4,7 @@ import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.OpExecutor;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
+import com.github.lapesd.hdtss.utils.Binding;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Provider;
@@ -99,5 +100,19 @@ public class DefaultOpExecutorDispatcher implements OpExecutorDispatcher {
         // multiple OpExecutor implementations rely on this:
         assert solutions.varNames().equals(node.outputVars());
         return solutions;
+    }
+
+    @Override public @NonNull QuerySolutions execute(@NonNull Op node, @Nullable Binding binding) {
+        if (executorMap == null)
+            init();
+        QuerySolutions solutions = executorMap.get(node.type()).execute(node, binding);
+        assert validOutputVars(solutions, node, binding);
+        return solutions;
+    }
+
+    private boolean validOutputVars(@NonNull QuerySolutions solutions, @NonNull Op node,
+                                    @Nullable Binding binding) {
+        var expected = binding == null ? node.outputVars() : binding.unbound(node.outputVars());
+        return solutions.varNames().equals(expected);
     }
 }
