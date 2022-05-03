@@ -410,7 +410,7 @@ such implementations.
 > `sparql.distinct.window=integer`
 >
 > If `sparql.distinct.strategy` is WINDOW, this property sets the maximum window
-> size. By **default** the window comprises the last `8192` solutions.
+> size. By **default** the window comprises the last `131072` solutions.
 
 Optimizers may introduce `WEAK_DISTINCT` operators, which behave like a 
 `DISTINCT` but which enforce a executor using the `WINDOW` strategy presented 
@@ -421,7 +421,7 @@ have minimal overhead.
 > sparql.weakDistinct.window=integer
 > 
 > The window size to use when executing WEAK_DISTINCT operators. The **default** 
-> is `512`.
+> is `8192`.
 
 #### MINUS
 

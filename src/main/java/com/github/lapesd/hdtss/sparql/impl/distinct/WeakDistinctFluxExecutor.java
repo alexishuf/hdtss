@@ -19,7 +19,7 @@ public class WeakDistinctFluxExecutor extends WeakDistinctExecutor {
 
     public WeakDistinctFluxExecutor(@NonNull OpExecutorDispatcher dispatcher,
                                     @Property(name = "sparql.weakDistinct.window",
-                                              defaultValue = "512")
+                                              defaultValue = "8192")
                                     int window) {
         super();
         delegate = new DistinctFluxExecutor(dispatcher, new WindowDistinctStrategy(window));

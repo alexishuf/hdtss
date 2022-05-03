@@ -21,7 +21,7 @@ public class WeakDistinctItExecutor extends WeakDistinctExecutor {
     @Inject
     public WeakDistinctItExecutor(@NonNull OpExecutorDispatcher dispatcher,
                                   @Property(name = "sparql.weakDistinct.window",
-                                            defaultValue = "512")
+                                            defaultValue = "8192")
                                   int window) {
         delegate = new DistinctItExecutor(dispatcher, new WindowDistinctStrategy(window));
     }

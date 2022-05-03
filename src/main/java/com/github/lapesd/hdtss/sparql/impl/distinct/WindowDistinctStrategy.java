@@ -13,7 +13,7 @@ import java.util.Set;
 @Singleton
 @Requires(property = "sparql.distinct.strategy", value = "WINDOW")
 public record WindowDistinctStrategy(
-        @Property(name = "sparql.distinct.window", defaultValue = "8192")
+        @Property(name = "sparql.distinct.window", defaultValue = "131072")
         int windowSize
 ) implements DistinctStrategy {
 
