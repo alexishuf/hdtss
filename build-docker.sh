@@ -47,7 +47,7 @@ set -e
 # Get version
 if [ -z "$VERSION" ]; then
   VERSION=$(sed -nE 's@^  <version>(.*)</version>@\1@p' pom.xml)
-  if ! echo "$VERSION" | grep -E '^[0-9]+\.[0-9+]'; then
+  if ! echo "$VERSION" | grep -E '^[0-9]+\.[0-9+]' &>/dev/null; then
     echo "Something went wrong when extracting the <version> from pom.xml"
     exit 1
   fi
@@ -61,7 +61,7 @@ fi
 
 # Build JDK variant
 if [ "$DO_JDK" == "y" ]; then
-  (set -x; docker build -f jdk.Dockerfile -t $IMG:$VERSION-jdk -t $IMG:jdk -t $IMG -t $VERSION .)
+  (set -x; docker build -f jdk.Dockerfile -t $IMG:$VERSION-jdk -t $IMG:jdk -t $IMG -t $IMG:$VERSION .)
 fi
 
 # Build native image
