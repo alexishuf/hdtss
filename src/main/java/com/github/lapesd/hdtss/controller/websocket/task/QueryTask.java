@@ -27,8 +27,10 @@ public class QueryTask extends AbstractQueryTask {
         context.executor().scheduler().schedule(() -> {
             SyncSender sender = new SyncSender();
             sendHeaders(sender, dr.solutions().varNames());
-            if (serialize(sender, dr.solutions()))
+            if (serialize(sender, dr.solutions())) {
+                sender.send("!end\n");
                 terminate(null);
+            }
         });
         return dr.info();
     }

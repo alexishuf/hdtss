@@ -87,6 +87,18 @@ public class WebSocketSparqlControllerTest {
         return list;
     }
 
+    static @NonNull List<@NonNull List<@NonNull String>> toResponse(@NonNull CharSequence tsv) {
+        List<@NonNull String> lines = toLines(tsv);
+
+        ArrayList<String> body = new ArrayList<>(lines.subList(1, lines.size()));
+        body.add("!end");
+
+        List<@NonNull List<@NonNull String>> blocks = new ArrayList<>();
+        blocks.add(List.of(lines.get(0)));
+        blocks.add(body);
+        return blocks;
+    }
+
     private record QueryData(List<String> clientMessages, List<List<String>> response,
                              boolean burst) { }
 
@@ -103,10 +115,7 @@ public class WebSocketSparqlControllerTest {
                     .stream().map(l -> l.toArray(new Term[0])).toList();
             var solutions = new BatchQuerySolutions(vars, rows);
             String tsv = new String(tsvCodec.encode(solutions), UTF_8);
-            List<String> lines = toLines(tsv);
-            List<List<String>> response = new ArrayList<>();
-            response.add(List.of(lines.get(0)));
-            response.add(lines.subList(1, lines.size()));
+            List<List<String>> response = toResponse(tsv);
             singleQuery.add(new QueryData(List.of("!query "+sparql), response, false));
         });
         List<QueryData> list = new ArrayList<>(singleQuery);
