@@ -44,7 +44,7 @@ public abstract class AbstractQueryTask {
     private long rows = 0;
     private @NonNull State state = State.CREATED;
     private int sending = 0;
-    private final StringBuilder buf = new StringBuilder(4096-512);
+    protected final StringBuilder buf = new StringBuilder(4096-256);
     protected QueryInfo.@Nullable Builder info;
     private final @NonNull Consumer<Throwable> sendErrorHandler;
     private final @NonNull Runnable sendSuccessHandler;
@@ -273,7 +273,7 @@ public abstract class AbstractQueryTask {
          * */
         public boolean get(@NonNull StringBuilder out) {
             long start = nanoTime();
-            out.setLength(0);
+            assert out.length() == 0 : "concurrent use of buffer";
             if (take(out, Long.MAX_VALUE) == Long.MIN_VALUE)
                 return false; // reached end, no row to serialize.
             long rem = windowNanos-(nanoTime()-start);
@@ -286,6 +286,11 @@ public abstract class AbstractQueryTask {
 
     private void serializeRow(@NonNull StringBuilder out, @Nullable Term @NonNull[] row) {
         ++rows;
+        unaccountedSerializeRow(out, row);
+    }
+
+    protected void unaccountedSerializeRow(@NonNull StringBuilder out,
+                                           @Nullable Term @NonNull[] row) {
         for (@Nullable Term term : row) {
             if (term != null)
                 out.append(TSVCodec.sanitize(term));
@@ -302,12 +307,16 @@ public abstract class AbstractQueryTask {
             if (context.windowEnabled()) {
                 var gen = new WindowGenerator(this, solutions);
                 context.executor().scheduler().schedule(gen);
-                while (gen.get(buf)) sender.send(buf);
+                while (gen.get(buf)) {
+                    sender.send(buf);
+                    buf.setLength(0);
+                }
             } else {
                 for (Term[] row : solutions) {
-                    buf.setLength(0);
+                    assert buf.length() == 0 : "Concurrent use of buf";
                     serializeRow(buf, row);
                     sender.send(buf);
+                    buf.setLength(0);
                 }
             }
             return true;

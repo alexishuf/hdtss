@@ -86,8 +86,8 @@ class OpUtilsTest {
     @ParameterizedTest @MethodSource
     void flattenSingleNodes(@NonNull Op in, @NonNull Op expected) {
         Op actual = OpUtils.flatten(in);
-        assertTrue(expected.deepEquals(actual), "expected "+expected+", got "+actual);
-        assertTrue(actual.deepEquals(expected), "expected "+expected+", got "+actual);
+        assertTrue(expected.deepEquals(actual), "rows "+expected+", got "+actual);
+        assertTrue(actual.deepEquals(expected), "rows "+expected+", got "+actual);
         if (expected.deepEquals(in))
             assertSame(actual, in);
     }

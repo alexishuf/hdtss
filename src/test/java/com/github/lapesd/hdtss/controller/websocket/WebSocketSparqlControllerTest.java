@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.common.value.qual.MinLen;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,7 @@ import java.util.stream.Stream;
 
 import static com.github.lapesd.hdtss.TestVocab.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -387,10 +389,27 @@ public class WebSocketSparqlControllerTest {
         }
     }
 
-    record BindData(String sparql, List<List<Term>> expected,
-                    QuerySolutions bindings, boolean burst) {}
+    record BoundResults(@NonNull List<@NonNull @MinLen(1) String> vars,
+                        @NonNull List<@NonNull BoundResultsEntry> entries) {}
 
-    record ProtoBindData(String sparql, List<List<Term>> expected, QuerySolutions bindings) {
+    record BoundResultsEntry(@NonNull List<Term> binding,
+                             @NonNull List<@NonNull List<@Nullable Term>> rows) {
+        @Override public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof BoundResultsEntry that)) return false;
+            return Objects.equals(binding, that.binding)
+                    && rows.size() == that.rows.size()
+                    && Objects.equals(new HashSet<>(rows), new HashSet<>(that.rows));
+        }
+
+        @Override public int hashCode() {
+            return Objects.hash(binding, new HashSet<>(rows));
+        }
+    }
+
+    record BindData(String sparql, List<BoundResultsEntry> expected, QuerySolutions bindings, boolean burst) {}
+
+    record ProtoBindData(String sparql, List<BoundResultsEntry> expected, QuerySolutions bindings) {
         public @NonNull BindData create(boolean burst) {
             return new BindData(sparql, expected, bindings, burst);
         }
@@ -405,20 +424,22 @@ public class WebSocketSparqlControllerTest {
 
             var nullBinding = new BatchQuerySolutions(List.of(),
                                                       List.of(new Term[][]{new Term[0]}));
-            protoList.add(new ProtoBindData(sparql, expected, nullBinding));
+            var boundExpected = List.of(new BoundResultsEntry(List.of(), expected));
+            protoList.add(new ProtoBindData(sparql, boundExpected, nullBinding));
 
             var singleBogus = new BatchQuerySolutions(
                     List.of("bogus"), singletonList(new Term[]{new Term("<bogus>")}));
-            protoList.add(new ProtoBindData(sparql, expected, singleBogus));
+            boundExpected = List.of(new BoundResultsEntry(List.of(new Term("<bogus>")), expected));
+            protoList.add(new ProtoBindData(sparql, boundExpected, singleBogus));
 
             var twoBogus = new BatchQuerySolutions(
                     List.of("bogus"), List.of(new Term[][]{
                             new Term[]{new Term("<bogus1>")},
                             new Term[]{new Term("<bogus2>")}
             }));
-            ArrayList<List<Term>> twoExpected = new ArrayList<>(expected);
-            twoExpected.addAll(expected);
-            protoList.add(new ProtoBindData(sparql, twoExpected, twoBogus));
+            boundExpected = List.of(new BoundResultsEntry(List.of(new Term("<bogus1>")), expected),
+                                    new BoundResultsEntry(List.of(new Term("<bogus2>")), expected));
+            protoList.add(new ProtoBindData(sparql, boundExpected, twoBogus));
         });
 
         String prefix = String.format("""
@@ -432,8 +453,10 @@ public class WebSocketSparqlControllerTest {
         // useful bindings
         protoList.add(new ProtoBindData(
                 prefix+"SELECT ?x WHERE { ?x foaf:name ?y }",
-                List.of(List.of(Alice),
-                        List.of(Bob)),
+                List.of(new BoundResultsEntry(List.of(new Term("\"Alice\"@en")),
+                                          List.of(List.of(Alice))),
+                        new BoundResultsEntry(List.of(new Term("\"bob\"")),
+                                          List.of(List.of(Bob)))),
                 new BatchQuerySolutions(List.of("y"),
                                         List.of(new Term[][]{
                                                 new Term[]{new Term("\"Alice\"@en")},
@@ -444,8 +467,10 @@ public class WebSocketSparqlControllerTest {
         // project out bound vars
         protoList.add(new ProtoBindData(
                 prefix+"SELECT ?y ?x WHERE { ?x foaf:name ?y }",
-                List.of(List.of(Alice),
-                        List.of(Bob)),
+                List.of(new BoundResultsEntry(List.of(new Term("\"Alice\"@en")),
+                                          List.of(List.of(Alice))),
+                        new BoundResultsEntry(List.of(new Term("\"bob\"")),
+                                          List.of(List.of(Bob)))),
                 new BatchQuerySolutions(List.of("y"),
                         List.of(new Term[][]{
                                 new Term[]{new Term("\"Alice\"@en")},
@@ -456,8 +481,11 @@ public class WebSocketSparqlControllerTest {
         // preserve dummy projection var
         protoList.add(new ProtoBindData(
                 prefix+"SELECT ?y ?x ?z WHERE { ?x foaf:name ?y }",
-                List.of(List.of(Alice),
-                        List.of(Bob)),
+                List.of(new BoundResultsEntry(asList(new Term("\"Alice\"@en"), null),
+                                          List.of(List.of(Alice))),
+                        new BoundResultsEntry(asList(new Term("\"bob\""), null),
+                                List.of(List.of(Bob)))
+                ),
                 new BatchQuerySolutions(List.of("y", "z"),
                         List.of(new Term[][]{
                                 new Term[]{new Term("\"Alice\"@en"), null},
@@ -473,15 +501,21 @@ public class WebSocketSparqlControllerTest {
                                foaf:name ?name .
                         }
                         """,
-                List.of(List.of(AliceEN),
-                        List.of(Alicia),
-                        List.of(AliceEN),
-                        List.of(Alicia),
-                        List.of(bob),
-                        List.of(roberto),
-                        List.of(charlie)),
+                List.of(new BoundResultsEntry(List.of(Alicia), List.of()),
+                        new BoundResultsEntry(List.of(Alice),
+                                          List.of(List.of(AliceEN), List.of(Alicia))),
+                        new BoundResultsEntry(singletonList(null),
+                                          List.of(List.of(AliceEN),
+                                                  List.of(Alicia),
+                                                  List.of(bob),     //:Bob foaf:knows :Alice
+                                                  List.of(roberto), //:Bob foaf:knows :Alice
+                                                  List.of(bob),     //:Bob foaf:knows :Bob
+                                                  List.of(roberto), //:Bob foaf:knows :Bob
+                                                  List.of(charlie)))
+                ),
                 new BatchQuerySolutions(List.of("x"), List.of(new Term[][]{
-                        new Term[]{new Term("\"Alícia\"@pt-BR")},
+                        new Term[]{Alicia},
+                        new Term[]{Alice},
                         new Term[]{null}
                 }))
         ));
@@ -495,8 +529,11 @@ public class WebSocketSparqlControllerTest {
         private @Nullable WebSocketSession session;
         private long requested;
         private @Nullable List<String> vars = null;
-        private final @NonNull List<Term[]> rows = new ArrayList<>();
-        private @Nullable QuerySolutions solutions;
+        private int boundVars = -1;
+        private @Nullable List<@Nullable Term> activeBinding = null;
+        private @NonNull List<List<Term>> rows = new ArrayList<>();
+        private final @NonNull List<BoundResultsEntry> resultsEntries = new ArrayList<>();
+        private @Nullable BoundResults results;
         private RuntimeException error;
 
         @OnOpen
@@ -512,80 +549,106 @@ public class WebSocketSparqlControllerTest {
             assert this.session == session;
             this.session = null;
             this.requested = Long.MAX_VALUE;
-            this.solutions = new BatchQuerySolutions(List.of("closed session"), List.of());
+            this.results = new BoundResults(List.of("closed session"), List.of());
             notifyAll();
         }
 
         @OnMessage
         public synchronized void onMessage(@NonNull String msg) {
-            for (int i = 0, eol, len = msg.length(); i < len; i = eol+1) {
-                eol = msg.indexOf('\n', i);
-                if (eol < 0)
-                    eol = len;
-                String line = msg.substring(i, eol);
-                if (line.startsWith("!end")) {
-                    assert solutions == null && vars != null;
-                    solutions = new BatchQuerySolutions(vars, new ArrayList<>(rows));
-                    notifyAll();
-                } else if (line.startsWith("!error")) {
-                    error = new RuntimeException(line);
-                    solutions = new BatchQuerySolutions(vars == null ? List.of() : vars, rows);
-                    requested = 0;
-                    notifyAll();
-                } else if (line.startsWith("!bind-request +")) {
-                    requested += Long.parseLong(line.replaceAll("!bind-request \\+(\\d+)", "$1"));
-                    notifyAll();
-                } else if (line.startsWith("!bind-request ")) {
-                    requested = Long.parseLong(line.replaceAll("!bind-request (\\d+)", "$1"));
-                    notifyAll();
-                } else if (line.startsWith("?")) {
-                    assert vars == null;
-                    vars = Arrays.stream(line.split("\t"))
-                            .map(s -> s.replaceAll("^\\?", ""))
-                            .filter(s -> !s.isEmpty()).toList();
-                } else if (line.isEmpty()) {
-                    if (vars == null) vars = List.of();
-                    else              rows.add(new Term[0]);
-                } else {
-                    assert vars != null;
-                    rows.add(parseRow(line));
+            try {
+                for (int i = 0, eol, len = msg.length(); i < len; i = eol + 1) {
+                    eol = msg.indexOf('\n', i);
+                    if (eol < 0)
+                        eol = len;
+                    String line = msg.substring(i, eol);
+                    if (line.startsWith("!active-binding ")) {
+                        closeResultEntries();
+                        activeBinding = parseRow(line.substring(16), boundVars);
+                    } else if (line.startsWith("!end")) {
+                        assert results == null && vars != null;
+                        closeResultEntries();
+                        results = new BoundResults(vars, resultsEntries);
+                        notifyAll();
+                    } else if (line.startsWith("!error")) {
+                        error = new RuntimeException(line);
+                        results = new BoundResults(vars == null ? List.of() : vars, resultsEntries);
+                        requested = 0;
+                        notifyAll();
+                    } else if (line.startsWith("!bind-request +")) {
+                        requested += Long.parseLong(line.replaceAll("!bind-request \\+(\\d+)", "$1"));
+                        notifyAll();
+                    } else if (line.startsWith("!bind-request ")) {
+                        requested = Long.parseLong(line.replaceAll("!bind-request (\\d+)", "$1"));
+                        notifyAll();
+                    } else if (line.startsWith("?")) {
+                        assert vars == null;
+                        vars = Arrays.stream(line.split("\t"))
+                                .map(s -> s.replaceAll("^\\?", ""))
+                                .filter(s -> !s.isEmpty()).toList();
+                    } else if (line.isEmpty()) {
+                        if (vars == null) vars = List.of();
+                        else rows.add(List.of());
+                    } else {
+                        assert vars != null;
+                        rows.add(parseRow(line, vars.size()));
+                    }
                 }
+            } catch (Throwable t) {
+                error = t instanceof RuntimeException re ? re : new RuntimeException(t);
+                notifyAll();
             }
         }
 
-        private static @Nullable Term @NonNull [] parseRow(String line) {
+        private void closeResultEntries() {
+            if (activeBinding != null) {
+                resultsEntries.add(new BoundResultsEntry(activeBinding, rows));
+                rows = new ArrayList<>();
+                activeBinding = null;
+            }
+        }
+
+        private static @NonNull List<@Nullable Term> parseRow(String line, int expectedColumns) {
             List<Term> terms = new ArrayList<>();
             for (int i = 0, end, len = line.length(); i < len; i = end+1) {
                 end = line.indexOf('\t', i);
                 if (end < 0) end = len;
                 String sparql = line.substring(i, end);
-                terms.add(sparql.isEmpty() ? null : new Term(sparql));
-                assert terms.get(terms.size()-1) == null || terms.get(terms.size()-1).isValid();
+                Term term = sparql.isEmpty() ? null : new Term(sparql);
+                assert term == null || term.isValid();
+                terms.add(term);
             }
             if (line.endsWith("\t"))
                 terms.add(null);
-            return terms.toArray(Term[]::new);
+            if (expectedColumns == 0 && terms.equals(singletonList(null)))
+                terms.clear();
+            else if (expectedColumns == 1 && terms.isEmpty())
+                terms.add(null);
+            assertEquals(expectedColumns, terms.size());
+            return terms;
         }
 
-        public synchronized @NonNull QuerySolutions request(@NonNull BindData d) {
-            resetForRequest();
+        public synchronized @NonNull BoundResults request(@NonNull BindData d) {
+            resetForRequest(d);
+
             boolean interrupted = send("!bind "+d.sparql);
             interrupted |= sendBindings(d);
-            while (solutions == null && error == null) {
+            while (results == null && error == null) {
                 try { wait(); } catch (InterruptedException e) { interrupted = true; }
             }
             if (error != null)
                 throw error;
             if (interrupted)
                 Thread.currentThread().interrupt();
-            return this.solutions;
+            return this.results;
         }
 
-        private void resetForRequest() {
+        private void resetForRequest(BindData d) {
             this.vars = null;
             this.rows.clear();
             this.requested = 0;
-            this.solutions = null;
+            this.resultsEntries.clear();
+            this.boundVars = d.bindings.varNames().size();
+            this.results = null;
         }
 
         private synchronized void storeError(@Nullable Throwable t) {
@@ -680,13 +743,11 @@ public class WebSocketSparqlControllerTest {
                 for (BindData d : bindData()) {
                     log.debug("--- --- --- Starting bindData[{}] --- --- ---", i);
                     String msg = "at bindData()[" + i + "]";
-                    QuerySolutions actual = bindClient.request(d);
+                    BoundResults actual = bindClient.request(d);
                     var exVars = new ArrayList<>(parser.parse(d.sparql).outputVars());
                     exVars.removeAll(d.bindings.varNames());
-                    assertEquals(exVars, actual.varNames());
-                    var rowsList = actual.list().stream().map(Arrays::asList).toList();
-                    assertEquals(new HashSet<>(d.expected), new HashSet<>(rowsList), msg);
-                    assertEquals(d.expected.size(), rowsList.size(), msg);
+                    assertEquals(exVars, actual.vars);
+                    assertEquals(d.expected, actual.entries, msg);
                     ++i;
                 }
             }

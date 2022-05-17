@@ -79,10 +79,10 @@ class MessageParserTest {
                 new D("", 1, null), //missing EOL
                 new D("", 2, null), //missing EOL
                 new D("\n", 1, singletonList(null)), // ok, first element is null
-                new D("\t\n", 1, null), // two nulls offered, expected 1
-                new D("<a>\t<b>\n", 1, null), // two terms offered, expected 1
-                new D("<a>\n", 2, null), // one term offered, expected 2
-                new D("\n", 2, null) // one null offered, expected 2
+                new D("\t\n", 1, null), // two nulls offered, rows 1
+                new D("<a>\t<b>\n", 1, null), // two terms offered, rows 1
+                new D("<a>\n", 2, null), // one term offered, rows 2
+                new D("\n", 2, null) // one null offered, rows 2
         );
         List<Arguments> list = new ArrayList<>();
         for (D d : base)

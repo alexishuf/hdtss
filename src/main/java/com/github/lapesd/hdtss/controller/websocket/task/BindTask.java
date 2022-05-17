@@ -107,6 +107,11 @@ public class BindTask extends AbstractQueryTask {
             long start = nanoTime();
             var solutions = dispatcher.execute(template, binding.setTerms(terms));
             info.addDispatchNs(nanoTime()-start);
+            assert buf.length() == 0 : "Concurrent use of buf";
+            buf.append("!active-binding ");
+            unaccountedSerializeRow(buf, terms);
+            sender.send(buf);
+            buf.setLength(0);
             if (!serialize(sender, solutions))
                 return; // !error message already sent
         }

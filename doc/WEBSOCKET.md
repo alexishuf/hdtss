@@ -91,11 +91,13 @@ queue-cap-resp   = '!action-queue-cap=' [0-9]+ $
 query-resp       = results | error
 bind-resp        = bind-request bind-results
 error            = ( '!error ' .* '\n' | '!cancelled\n' ) $
-bind-request     = `!bind-request ` [0-9]+
-bind-request-inc = `!bind-request +` [0-9]+  
+bind-request     = '!bind-request ' [0-9]+
+bind-request-inc = '!bind-request +' [0-9]+
+active-binding   = '!active-binding ' values  
 results          = headers ( values* $ )* values* ('!end\n' | error) $ 
-bind-results     = headers ( values* $ | bind-request-inc $ )* values* ('!end\n' | error) $ 
+bind-results     = headers ( bound-values* $ | bind-request-inc $ )* bound-values* ('!end\n' | error) $ 
 headers          = '?' VARNAME ('\t?' VARNAME)* '\n'
+bound-values     = active-binding values* 
 values           = NT_VALUE (\t NT_VALUE)* '\n'
 ```
 
@@ -144,14 +146,19 @@ in that session.
 
 By design, `!bind` sequences include the client hammering the server with
 `values` lines. In this case, the client must always wait the server to
-indicate how many `values` lines it can receive from the client. Since the
-first `values` line must be on the first message, the server will always accept
-that line. However, the client must not send any message other than `!end`
-before the server sends a `!bind-request N` where N is the number of `values`
-lines the server is ready to receive.
+indicate how many `values` lines it can receive from the client. Thus, the 
+client must not send any message other than the `headers` line or an `!end` 
+before the server sends a `!bind-request N` where N is the number of 
+`values` lines the server is ready to receive.
 
-The `!bind-request N` message is sent only once by the server after it receives
+The `!bind-request N` message is sent only once by the server after it processes
 a `!bind` message. At any point after that the server may send
 `!bind-request +N2` messages which are incremental. That is, if the client had
 sent _k_ lines after a `!bind-request N1` message and the client receives a
-`!bind-request N2` message, then it is allowed to send _N1-k+N2_ messages.
+`!bind-request N2` message, then it is now allowed to send _N1-k+N2_ messages.
+
+Since there is no synchronization between the client sending `values` lines 
+and the server sending sending `values` lines, the server will send one  
+`!tive-binding` line before sending the `values` that spawned from that binding. 
+This allows the client to correlate each `values` line it receives to a 
+binding it previously sent as a `values` line earlier.

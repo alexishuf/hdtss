@@ -85,7 +85,7 @@ class ChunkedEncoderTest {
                 assertNotNull(chunks, msgPrefix);
                 int min = svTypes.contains(mediaType) && !solutions.askResult() ? 1 : 2 ;
                 assertTrue(chunks.size() >= min,
-                           msgPrefix+", size()="+chunks.size()+", expected >= "+min);
+                           msgPrefix+", size()="+chunks.size()+", rows >= "+min);
                 assertEquals(expected, String.join("", chunks), msgPrefix);
             }
         }
