@@ -12,9 +12,9 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.util.ArrayDeque;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.Queue;
 
 import static java.lang.System.nanoTime;
 
@@ -26,7 +26,7 @@ public class BindTask extends AbstractQueryTask {
     private @MonotonicNonNull Binding binding;
     private final long batchSize;
     private long requested;
-    private final @NonNull BlockingQueue<@Nullable Term @NonNull[]> bindingsQueue;
+    private final @NonNull Queue<@Nullable Term @NonNull[]> bindingsQueue;
     private @MonotonicNonNull Op template;
 
 
@@ -36,25 +36,23 @@ public class BindTask extends AbstractQueryTask {
         super(context, session, onTermination);
         this.sparql = sparql;
         this.batchSize = Math.max(1, context.bindRequest() / 2);
-        this.bindingsQueue = new ArrayBlockingQueue<>((int)(2*batchSize+Math.max(16, batchSize)));
+        this.bindingsQueue = new ArrayDeque<>((int)(batchSize*2)+16);
     }
 
     /** Delivers a binding values row received from the client. */
-    public void receiveBinding(@Nullable Term @NonNull[] row) throws ProtocolException {
+    public synchronized void receiveBinding(@Nullable Term @NonNull[] row) throws ProtocolException {
         log.debug("{}.receiveBinding()", this);
         if (binding == null)
             throw new ProtocolException("row received before var names");
         try {
             bindingsQueue.add(row);
+            notifyAll();
         } catch (IllegalStateException e) {
             handleError(e);
             return;
         }
         --requested;
-        if (requested == batchSize) {
-            requested += batchSize;
-            sendAsync("!bind-request +"+batchSize+"\n");
-        }
+        tryIncrementalRequest();
     }
 
     /** Delivers the list of vars to be bound in future calls to {@code receiveBinding()}. */
@@ -73,7 +71,7 @@ public class BindTask extends AbstractQueryTask {
     }
 
     /** Notifies an {@code !end} received from the peer. */
-    public void receiveBindingsEnd() throws ProtocolException {
+    public synchronized void receiveBindingsEnd() throws ProtocolException {
         log.debug("{}.receiveBindingsEnd()", this);
         if (binding == null)
             throw new ProtocolException("Received !end before var names");
@@ -93,9 +91,23 @@ public class BindTask extends AbstractQueryTask {
     }
 
     /** Uninterruptible {@code bindingsQueue.take()}. */
-    private @Nullable Term @NonNull[] takeBinding() {
-        while (true) {
-            try { return bindingsQueue.take(); } catch (InterruptedException ignored) { }
+    private synchronized @Nullable Term @NonNull[] takeBinding() {
+        boolean interrupted = false;
+        while (bindingsQueue.isEmpty()) {
+            try { wait(); } catch (InterruptedException e) { interrupted = true; }
+        }
+        @Nullable Term[] binding = bindingsQueue.remove();
+        tryIncrementalRequest();
+        if (interrupted)
+            Thread.currentThread().interrupt();
+        return binding;
+    }
+
+    /** Send a {@code !bind-request +n} if appropriate */
+    private synchronized void tryIncrementalRequest() {
+        if (requested <= batchSize && bindingsQueue.size() <= batchSize) {
+            requested += batchSize;
+            sendAsync("!bind-request +"+batchSize+"\n");
         }
     }
 

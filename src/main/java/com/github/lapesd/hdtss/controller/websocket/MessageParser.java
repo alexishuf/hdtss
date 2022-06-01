@@ -49,7 +49,7 @@ public abstract class MessageParser {
                 throw new ProtocolException(reason);
             }
         } catch (ProtocolException e) {
-            log.info("WebSocket client sent illegal message: {}", e.getMessage());
+            log.info("WebSocket client sent illegal message: {}. msg={}", e.getMessage(), msg);
             onError(e.getMessage().replaceAll("\n", " "));
         }
     }
