@@ -4,6 +4,7 @@ import com.github.lapesd.hdtss.data.query.CardinalityEstimator;
 import com.github.lapesd.hdtss.model.nodes.Join;
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.sparql.optimizer.Optimizer;
+import com.github.lapesd.hdtss.utils.Binding;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Order;
 import jakarta.inject.Inject;
@@ -22,8 +23,12 @@ public class JoinOrderOptimizer implements Optimizer {
     }
 
     @Override public @NonNull Op optimize(@NonNull Op op) {
+        return optimize(op, Binding.EMPTY);
+    }
+
+    @Override public @NonNull Op optimize(@NonNull Op op, @NonNull Binding binding) {
         if (op.type() == Op.Type.JOIN)
-            return helper.reorder((Join) op);
+            return helper.reorder((Join) op, binding);
         return OptimizerUtils.optimizeChildren(op, this);
     }
 }

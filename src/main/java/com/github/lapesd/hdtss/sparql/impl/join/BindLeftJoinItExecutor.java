@@ -1,6 +1,5 @@
 package com.github.lapesd.hdtss.sparql.impl.join;
 
-import com.github.lapesd.hdtss.data.query.CardinalityEstimator;
 import com.github.lapesd.hdtss.sparql.OpExecutorDispatcher;
 import com.github.lapesd.hdtss.sparql.impl.conditional.RequiresOperatorFlow;
 import io.micronaut.context.annotation.Requires;
@@ -15,8 +14,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 @Requires(property = "sparql.join.strategy", value = "BIND", defaultValue = "BIND")
 public class BindLeftJoinItExecutor extends BindJoinItExecutor {
     @Inject
-    public BindLeftJoinItExecutor(@NonNull OpExecutorDispatcher dispatcher,
-                                  @NonNull CardinalityEstimator estimator) {
-        super(dispatcher, estimator);
+    public BindLeftJoinItExecutor(@NonNull OpExecutorDispatcher dispatcher) {
+        super(dispatcher);
     }
 }

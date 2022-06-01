@@ -5,6 +5,7 @@ import com.github.lapesd.hdtss.model.nodes.Filter;
 import com.github.lapesd.hdtss.model.nodes.Join;
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.sparql.optimizer.Optimizer;
+import com.github.lapesd.hdtss.utils.Binding;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Order;
@@ -35,6 +36,10 @@ public class FilterAwareJoinOrderOptimizer implements Optimizer {
     }
 
     @Override public @NonNull Op optimize(@NonNull Op op) {
+        return optimize(op, Binding.EMPTY);
+    }
+
+    @Override public @NonNull Op optimize(@NonNull Op op, @NonNull Binding binding) {
         Op.Type type = op.type();
         return switch (type) {
             case FILTER -> {
@@ -60,7 +65,7 @@ public class FilterAwareJoinOrderOptimizer implements Optimizer {
                     yield op.withChildren(List.of(lOptimized, rOptimized));
                 yield op;
             }
-            case JOIN -> helper.reorder((Join)op);
+            case JOIN -> helper.reorder((Join)op, binding);
             default   -> OptimizerUtils.optimizeChildren(op, this);
         };
     }
@@ -98,7 +103,7 @@ public class FilterAwareJoinOrderOptimizer implements Optimizer {
             return true;
         }
 
-        @Override public @NonNull Op reorder(@NonNull Join join) {
+        @Override public @NonNull Op reorder(@NonNull Join join, @NonNull Binding binding) {
             Collection<String> oldActiveFilterVars = this.activeFilterVars;
             List<@NonNull String> offer = join.outputVars();
             for (Collection<String> vars : filterVarsStack) {
@@ -107,13 +112,13 @@ public class FilterAwareJoinOrderOptimizer implements Optimizer {
                     break;
                 }
             }
-            Op optimized = super.reorder(join);
+            Op optimized = super.reorder(join, binding);
             activeFilterVars = oldActiveFilterVars;
             return optimized;
         }
 
-        @Override protected long estimate(@NonNull Op op) {
-            long cost = super.estimate(op);
+        @Override protected long estimate(@NonNull Op op, @NonNull Binding binding) {
+            long cost = super.estimate(op, binding);
             if (activeFilterVars != null) {
                 for (String v : op.outputVars()) {
                     if (activeFilterVars.contains(v)) return cost;

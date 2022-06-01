@@ -5,6 +5,7 @@ import com.github.lapesd.hdtss.model.nodes.Join;
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.model.nodes.Project;
 import com.github.lapesd.hdtss.model.nodes.TriplePattern;
+import com.github.lapesd.hdtss.utils.Binding;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.*;
@@ -16,14 +17,14 @@ class JoinOrderHelper {
         this.estimator = estimator;
     }
 
-    public @NonNull Op reorder(@NonNull Join join) {
+    public @NonNull Op reorder(@NonNull Join join, @NonNull Binding binding) {
         List<@NonNull Op> ops = join.children();
         int size = ops.size();
         if (size < 2)
             return join;
         long[] weights = new long[size];
         for (int i = 0; i < size; i++)
-            weights[i] = (estimate(ops.get(i)) << 32) | i;
+            weights[i] = (estimate(ops.get(i), binding) << 32) | i;
         Arrays.sort(weights);
         avoidProducts(join, ops, weights);
         if (isNoOp(weights))
@@ -37,14 +38,14 @@ class JoinOrderHelper {
         return optimized;
     }
 
-    protected long estimate(@NonNull Op op) {
+    protected long estimate(@NonNull Op op, @NonNull Binding binding) {
         return switch (op.type()) {
-            case TRIPLE -> estimator.estimate((TriplePattern) op);
-            case MINUS,EXISTS -> estimate(op.children().get(0));
+            case TRIPLE -> estimator.estimate((TriplePattern) op.bind(binding));
+            case MINUS,EXISTS -> estimate(op.children().get(0), binding);
             default -> {
                 int sum = 0;
                 for (Op child : op.children())
-                    sum += estimate(child);
+                    sum += estimate(child, binding);
                 yield sum;
             }
         };

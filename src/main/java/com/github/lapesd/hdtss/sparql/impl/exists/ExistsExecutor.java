@@ -29,7 +29,7 @@ abstract class ExistsExecutor implements OpExecutor {
         List<@NonNull String> offeredVars = main.outputVars();
         List<String> rightBindingVars = new ArrayList<>(offeredVars.size() + parent.size());
         for (String name : offeredVars) {
-            if (!parent.contains(name)) rightBindingVars.add(name);
+            if (!parent.hasValue(name)) rightBindingVars.add(name);
         }
         int parentStart = rightBindingVars.size();
         rightBindingVars.addAll(Arrays.asList(parent.vars()));

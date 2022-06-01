@@ -65,6 +65,7 @@ class BindingTest {
         Binding row = prototype.create();
         for (int i = 0; i < prototype.varNames.size(); i++) {
             assertEquals(i, row.indexOf(prototype.varNames.get(i)));
+            assertTrue(row.hasValue(prototype.varNames.get(i)));
             assertTrue(row.contains(prototype.varNames.get(i)));
         }
     }
@@ -106,6 +107,7 @@ class BindingTest {
         assertEquals(prototype.varNames.size(), actual.size());
         assertEquals(prototype.varNames.isEmpty(), actual.isEmpty());
         for (int i = 0, varNamesSize = prototype.varNames.size(); i < varNamesSize; i++) {
+            assertTrue(actual.hasValue(prototype.varNames.get(i)));
             assertTrue(actual.contains(prototype.varNames.get(i)));
             assertEquals(prototype.varNames.get(i), actual.var(i));
             assertEquals(i, actual.indexOf(prototype.varNames.get(i)));
@@ -134,7 +136,7 @@ class BindingTest {
             assertEquals(expected.get(i), actual.get(i));
             String name = actual.vars()[i];
             assertEquals(expected.get(name), actual.get(name));
-            assertEquals(expected.contains(name), actual.contains(name));
+            assertEquals(expected.hasValue(name), actual.hasValue(name));
             assertEquals(expected.indexOf(name), actual.indexOf(name));
         }
     }
@@ -168,7 +170,7 @@ class BindingTest {
         for (int i = 0; i < prototype.varNames.size(); i++) {
             boolean contains = selected.contains(i);
             String varName = prototype.varNames.get(i);
-            assertEquals(contains, row.contains(varName));
+            assertEquals(contains, row.hasValue(varName));
             assertEquals(contains ? selected.indexOf(i) : -1, row.indexOf(varName));
             assertEquals(contains ? prototype.terms[i] : null,
                          row.get(varName, null));

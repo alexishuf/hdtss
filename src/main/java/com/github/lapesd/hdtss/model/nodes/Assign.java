@@ -108,7 +108,7 @@ public final class Assign extends AbstractOp {
                 = new HashMap<>((int)Math.max(4, var2expr.size()/0.75f + 1));
         for (Map.Entry<String, String> e : var2expr.entrySet()) {
             String var = e.getKey();
-            if (binding.contains(var))
+            if (binding.hasValue(var))
                 continue;
             boundExprs.put(var, ExprUtils.bindExpr(e.getValue(), binding));
         }

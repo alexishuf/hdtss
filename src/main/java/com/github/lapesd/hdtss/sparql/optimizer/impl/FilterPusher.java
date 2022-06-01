@@ -4,6 +4,7 @@ import com.github.lapesd.hdtss.model.nodes.Filter;
 import com.github.lapesd.hdtss.model.nodes.Join;
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.sparql.optimizer.Optimizer;
+import com.github.lapesd.hdtss.utils.Binding;
 import com.github.lapesd.hdtss.utils.SmallRecursiveSet;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Order;
@@ -30,11 +31,19 @@ public class FilterPusher implements Optimizer {
         }
     }
 
+    @Override public @NonNull Op optimize(@NonNull Op op, @NonNull Binding ignore) {
+        return optimize(op);
+    }
+
     private static final class Pusher implements Optimizer {
         private final @NonNull Filter filter;
         private int depth = 0;
 
         public Pusher(@NonNull Filter filter) { this.filter = filter; }
+
+        @Override public @NonNull Op optimize(@NonNull Op op, @NonNull Binding ignored) {
+            return optimize(op);
+        }
 
         @Override public @NonNull Op optimize(@NonNull Op op) {
             var filterVars = filter.filtersVarNames();

@@ -1,6 +1,5 @@
 package com.github.lapesd.hdtss.sparql.impl.join;
 
-import com.github.lapesd.hdtss.data.query.CardinalityEstimator;
 import com.github.lapesd.hdtss.model.Row;
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.Op;
@@ -36,9 +35,8 @@ import static java.util.Collections.emptyIterator;
 public class BindJoinItExecutor extends BindJoinExecutor {
 
     @Inject
-    public BindJoinItExecutor(@NonNull OpExecutorDispatcher dispatcher,
-                              @NonNull CardinalityEstimator estimator) {
-        super(dispatcher, estimator);
+    public BindJoinItExecutor(@NonNull OpExecutorDispatcher dispatcher) {
+        super(dispatcher);
     }
 
     private class State implements Iterator<@Nullable Term []> {

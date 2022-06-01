@@ -3,6 +3,7 @@ package com.github.lapesd.hdtss.sparql.optimizer.impl;
 import com.github.lapesd.hdtss.data.query.impl.PatternCardinalityEstimator;
 import com.github.lapesd.hdtss.model.nodes.*;
 import com.github.lapesd.hdtss.sparql.optimizer.Optimizer;
+import com.github.lapesd.hdtss.utils.Binding;
 import io.micronaut.context.ApplicationContext;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -28,11 +29,7 @@ class FilterAwareJoinOrderOptimizerTest {
             = new FilterAwareJoinOrderOptimizer(new PatternCardinalityEstimator(), 20);
 
     private static long cost(Op op) {
-        return helper.estimate(op);
-    }
-
-    private static long costWithPenalty(Op op) {
-        return cost(op) * (long)Math.max(1L, 0.2*cost(op));
+        return helper.estimate(op, Binding.EMPTY);
     }
 
     @SuppressWarnings("unused") static Stream<Arguments> testJoin() {

@@ -2,6 +2,7 @@ package com.github.lapesd.hdtss.sparql.optimizer.impl;
 
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.sparql.optimizer.OptimizerRunner;
+import com.github.lapesd.hdtss.utils.Binding;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Singleton;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -12,4 +13,6 @@ public class NoneOptimizerRunner implements OptimizerRunner {
     @Override public @NonNull Op optimize(@NonNull Op op) {
         return op;
     }
+
+    @Override public @NonNull Op optimize(@NonNull Op op, @NonNull Binding binding) { return op; }
 }

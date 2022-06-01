@@ -5,6 +5,7 @@ import com.github.lapesd.hdtss.model.nodes.Filter;
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.model.nodes.Project;
 import com.github.lapesd.hdtss.sparql.optimizer.Optimizer;
+import com.github.lapesd.hdtss.utils.Binding;
 import com.github.lapesd.hdtss.utils.SmallRecursiveSet;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Order;
@@ -44,11 +45,19 @@ public class ProjectionPusher implements Optimizer {
         };
     }
 
+    @Override public @NonNull Op optimize(@NonNull Op op, @NonNull Binding binding) {
+        return optimize(op);
+    }
+
     private static final class Active implements Optimizer {
         private final @NonNull SmallRecursiveSet<String> useful;
 
         private Active(@NonNull Collection<String> useful) {
             this.useful = SmallRecursiveSet.fromDistinct(useful);
+        }
+
+        @Override public @NonNull Op optimize(@NonNull Op op, @NonNull Binding ignored) {
+            return optimize(op);
         }
 
         @Override public @NonNull Op optimize(@NonNull Op op) {

@@ -30,7 +30,7 @@ public final class Project extends AbstractOp {
         Op inner = children.get(0), bound = inner.bind(binding);
         ArrayList<String> remainingVars = new ArrayList<>(varNames.size());
         for (String name : varNames) {
-            if (!binding.contains(name))
+            if (!binding.hasValue(name))
                 remainingVars.add(name);
         }
         boolean change = bound != inner || remainingVars.size() < varNames.size();

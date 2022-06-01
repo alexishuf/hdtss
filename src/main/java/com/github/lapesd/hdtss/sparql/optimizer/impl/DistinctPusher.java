@@ -3,6 +3,7 @@ package com.github.lapesd.hdtss.sparql.optimizer.impl;
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.model.nodes.WeakDistinct;
 import com.github.lapesd.hdtss.sparql.optimizer.Optimizer;
+import com.github.lapesd.hdtss.utils.Binding;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Order;
 import jakarta.inject.Singleton;
@@ -30,6 +31,10 @@ public class DistinctPusher implements Optimizer {
                 return OptimizerUtils.optimizeChildren(op, this);
             }
         }
+
+        @Override public @NonNull Op optimize(@NonNull Op op, @NonNull Binding ignored) {
+            return optimize(op);
+        }
     };
 
     @Override public @NonNull Op optimize(@NonNull Op op) {
@@ -42,5 +47,9 @@ public class DistinctPusher implements Optimizer {
             }
             default -> OptimizerUtils.optimizeChildren(op, this);
         };
+    }
+
+    @Override public @NonNull Op optimize(@NonNull Op op, @NonNull Binding ignored) {
+        return optimize(op);
     }
 }

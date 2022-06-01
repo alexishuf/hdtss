@@ -114,8 +114,16 @@ public class BindTask extends AbstractQueryTask {
     /** Consumes bindings and serializes solutions to the client, including a final {@code !end}. */
     private void consumeBindings(@NonNull SyncSender sender) {
         assert binding != null && template != null && info != null;
+        boolean optimized = false;
         var dispatcher = context.executor().dispatcher();
         for (var terms = takeBinding(); terms != END_BINDING; terms = takeBinding()) {
+            if (!optimized) {
+                optimized = true;
+                long start = nanoTime();
+                binding.setTerms(terms);
+                template = context.executor().optimizer().optimize(template, binding);
+                info.addOptimizeNs(nanoTime()-start);
+            }
             long start = nanoTime();
             var solutions = dispatcher.execute(template, binding.setTerms(terms));
             info.addDispatchNs(nanoTime()-start);

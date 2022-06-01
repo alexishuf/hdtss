@@ -3,6 +3,7 @@ package com.github.lapesd.hdtss.sparql.optimizer.impl;
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.sparql.optimizer.Optimizer;
 import com.github.lapesd.hdtss.sparql.optimizer.OptimizerRunner;
+import com.github.lapesd.hdtss.utils.Binding;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -34,6 +35,29 @@ public class AllOptimizerRunner implements OptimizerRunner {
             for (Optimizer optimizer : optimizers) {
                 long start = System.nanoTime();
                 Op optimized = optimizer.optimize(op);
+                if (optimized != op) {
+                    double ms = (System.nanoTime() - start) / 1000000.0;
+                    String name = optimizer.getClass().getSimpleName();
+                    applied.add(String.format("%s (%.3f ms)", name, ms));
+                    op = optimized;
+                }
+            }
+            if (!applied.isEmpty())
+                log.debug("Applied {} to\n    {}\n, yielding\n    {}", applied, input, op);
+        }
+        return op;
+    }
+
+    @Override public @NonNull Op optimize(@NonNull Op input, @NonNull Binding binding) {
+        Op op = input;
+        if (!debug) {
+            for (Optimizer optimizer : optimizers)
+                op = optimizer.optimize(op, binding);
+        } else {
+            List<String> applied = new ArrayList<>(optimizers.size());
+            for (Optimizer optimizer : optimizers) {
+                long start = System.nanoTime();
+                Op optimized = optimizer.optimize(op, binding);
                 if (optimized != op) {
                     double ms = (System.nanoTime() - start) / 1000000.0;
                     String name = optimizer.getClass().getSimpleName();

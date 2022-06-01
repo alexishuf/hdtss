@@ -95,9 +95,13 @@ public final class Binding {
 
     public int     size()                        { return terms.length; }
     public boolean isEmpty()                     { return terms.length == 0; }
-    public boolean contains(@Nullable String varName) { return indexOf(varName) >= 0; }
+    public boolean contains(String name)         { return indexOf(name) >= 0; }
     public Term    get(int index)                { return terms[index]; }
     public String  var(int index)                { return varNames[index]; }
+    public boolean hasValue(@Nullable String varName) {
+        int i = indexOf(varName);
+        return i >= 0 && terms[i] != null;
+    }
 
     public static class NoSuchVarException extends NoSuchElementException {
         public NoSuchVarException(String varName) { super(varName+" not found"); }
@@ -119,18 +123,23 @@ public final class Binding {
      *
      * @param destination where to add vars not mentioned by this {@link Binding}.
      * @param in variables to test for membership
+     * @return true iff all vars in {@code in} were added to {@code destination}
      */
-    public void addIfUnbound(@NonNull Collection<@NonNull String> destination,
-                             @NonNull Collection<@NonNull String> in) {
+    public boolean addIfUnbound(@NonNull Collection<@NonNull String> destination,
+                               @NonNull Collection<@NonNull String> in) {
+        boolean all = true;
         for (String name : in) {
             if (!contains(name)) destination.add(name);
+            else all = false;
         }
+        return all;
     }
 
-    /** Fill a new {@link ArrayList} using {@link Binding#addIfUnbound(Collection, Collection)}. */
+    /** The sublist of names in {@code vars} that are not contained by this {@link Binding} */
     public List<String> unbound(@NonNull Collection<@NonNull String> vars) {
         ArrayList<String> list = new ArrayList<>(vars.size());
-        addIfUnbound(list, vars);
+        if (addIfUnbound(list, vars) && vars instanceof List)
+            return (List<String>) vars;
         return list;
     }
 

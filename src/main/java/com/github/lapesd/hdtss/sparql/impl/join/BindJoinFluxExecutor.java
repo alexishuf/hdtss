@@ -1,6 +1,5 @@
 package com.github.lapesd.hdtss.sparql.impl.join;
 
-import com.github.lapesd.hdtss.data.query.CardinalityEstimator;
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.model.solutions.FluxQuerySolutions;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
@@ -20,9 +19,8 @@ import java.util.List;
 @Requires(property = "sparql.join.strategy", value = "BIND", defaultValue = "BIND")
 public class BindJoinFluxExecutor extends BindJoinItExecutor {
     @Inject
-    public BindJoinFluxExecutor(@NonNull OpExecutorDispatcher dispatcher,
-                                @NonNull CardinalityEstimator estimator) {
-        super(dispatcher, estimator);
+    public BindJoinFluxExecutor(@NonNull OpExecutorDispatcher dispatcher) {
+        super(dispatcher);
     }
 
     @Override
