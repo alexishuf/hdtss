@@ -16,6 +16,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -33,14 +34,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.github.lapesd.hdtss.TestVocab.EX;
 import static com.github.lapesd.hdtss.TestVocab.x;
+import static com.github.lapesd.hdtss.model.TermPosition.OBJ;
 import static com.github.lapesd.hdtss.utils.JenaUtils.fromNode;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.rdfhdt.hdt.enums.TripleComponentRole.OBJECT;
 
 @SuppressWarnings("unused")
 @Tag("fast")
@@ -112,6 +114,22 @@ class HDTUtilsTest {
             assertTrue(id > 0, "id="+id+" should be > 0");
     }
 
+    private String loadObject(String nt) {
+        long id = HDTUtils.toHDTId(foaf.getDictionary(), new Term(nt), OBJECT);
+        Term term = HDTUtils.fromHDTId(foaf.getDictionary(), id, OBJ);
+        assertNotNull(term);
+        return term.sparql().toString();
+    }
+
+    @Test
+    void testImplicitString() {// tolerate ^^xsd:string on lookup, but always load as implicit
+        String type = "^^<"+XSD.string+">";
+        assertEquals("\"bob\"", loadObject("\"bob\""));
+        assertEquals("\"bob\"", loadObject("\"bob\""+type));
+        assertEquals("\"charlie\"", loadObject("\"charlie\""));
+        assertEquals("\"charlie\"", loadObject("\"charlie\""+type));
+    }
+
     static @NonNull Stream<Arguments> testIdBijection() {
         List<Arguments> argumentsList = new ArrayList<>();
         for (var it = foaf.getTriples().searchAll(); it.hasNext(); ) {
@@ -119,10 +137,10 @@ class HDTUtilsTest {
             long s = triple.getSubject(), p = triple.getPredicate(), o = triple.getObject();
             var sStr = foaf.getDictionary().idToString(s, TripleComponentRole.SUBJECT).toString();
             var pStr = foaf.getDictionary().idToString(p, TripleComponentRole.PREDICATE).toString();
-            var oStr = foaf.getDictionary().idToString(o, TripleComponentRole.OBJECT).toString();
+            var oStr = foaf.getDictionary().idToString(o, OBJECT).toString();
             argumentsList.add(arguments(HDTUtils.fromHDT(sStr), s, TermPosition.SUB));
             argumentsList.add(arguments(HDTUtils.fromHDT(pStr), p, TermPosition.PRE));
-            argumentsList.add(arguments(HDTUtils.fromHDT(oStr), o, TermPosition.OBJ));
+            argumentsList.add(arguments(HDTUtils.fromHDT(oStr), o, OBJ));
         }
         return argumentsList.stream();
     }
@@ -162,8 +180,7 @@ class HDTUtilsTest {
                 "2:?x <"+FOAF.knows+"> <"+EX+"Alice>"
         ).map(s -> {
             String[] pieces = s.split(":", 2);
-            var terms = Arrays.stream(pieces[1].split(" ", 3))
-                              .map(Term::new).collect(Collectors.toList());
+            var terms = Arrays.stream(pieces[1].split(" ", 3)).map(Term::new).toList();
             return arguments(Integer.parseInt(pieces[0]),
                              new TriplePattern(terms.get(0), terms.get(1), terms.get(2)));
         });

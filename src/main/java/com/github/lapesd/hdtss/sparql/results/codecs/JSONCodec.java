@@ -150,7 +150,7 @@ public class JSONCodec implements MediaTypeCodec  {
             if (term.isLangStringLiteral()) {
                 CharSequence cs = term.sparql();
                 writer.append(TERM_LANG).append(cs, term.langStart(), cs.length()).append(D_QUOTE);
-            } else if (term.isLiteral()) {
+            } else if (term.isLiteral() && !term.isStringLiteral()) {
                 writer.append(TERM_DATATYPE).append(term.datatype()).append(D_QUOTE);
             }
             writer.append('}');
@@ -182,7 +182,7 @@ public class JSONCodec implements MediaTypeCodec  {
                         }).append("\",\"value\":\"").append(content).append(D_QUOTE);
             if (term.isLangStringLiteral()) {
                 writer.append(",\"xml:lang\":\"").append(term.lang()).append(D_QUOTE);
-            } else if (term.isLiteral()) {
+            } else if (term.isLiteral() && !term.isStringLiteral()) {
                 writer.append(",\"datatype\":\"").append(term.datatype()).append(D_QUOTE);
             }
             writer.append('}');
