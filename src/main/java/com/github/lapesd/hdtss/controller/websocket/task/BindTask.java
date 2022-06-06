@@ -75,7 +75,18 @@ public class BindTask extends AbstractQueryTask {
         log.debug("{}.receiveBindingsEnd()", this);
         if (binding == null)
             throw new ProtocolException("Received !end before var names");
-        bindingsQueue.add(END_BINDING);
+        boolean interrupted = false, queued = false;
+        while (!queued) {
+            try {
+                bindingsQueue.add(END_BINDING);
+                queued = true;
+            } catch (IllegalStateException e) {
+                try { wait(); } catch (InterruptedException ie) { interrupted = true; }
+            }
+        }
+        if (interrupted)
+            Thread.currentThread().interrupt();
+        notifyAll();
     }
 
     @Override protected QueryInfo.@Nullable Builder doStart() {
