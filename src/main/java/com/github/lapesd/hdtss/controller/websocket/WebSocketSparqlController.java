@@ -22,6 +22,7 @@ public class WebSocketSparqlController {
     private final Map<String, SparqlSession> sessionMap = new ConcurrentHashMap<>();
 
     @OnOpen public void onOpen(@NonNull WebSocketSession session) {
+        log.trace("{}.onOpen({})", this, session.getId());
         sessionMap.put(session.getId(), new SparqlSession(context, session));
     }
 
@@ -30,9 +31,13 @@ public class WebSocketSparqlController {
             sessionMap.get(session.getId()).receive(msg);
     }
 
-    @OnError public void onError(@NonNull WebSocketSession session) { onClose(session); }
+    @OnError public void onError(@NonNull WebSocketSession session) {
+        log.debug("{}.onError({})", this, session.getId());
+        onClose(session);
+    }
 
     @OnClose public void onClose(@NonNull WebSocketSession session) {
+        log.trace("{}.onClose({})", this, session.getId());
         sessionMap.get(session.getId()).close();
     }
 }
