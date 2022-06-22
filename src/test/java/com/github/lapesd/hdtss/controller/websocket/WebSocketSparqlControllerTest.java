@@ -383,7 +383,6 @@ public class WebSocketSparqlControllerTest {
                         }
                         return null;
                     });
-
                 }
             }
         }

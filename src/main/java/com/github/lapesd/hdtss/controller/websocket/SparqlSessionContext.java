@@ -4,6 +4,7 @@ import com.github.lapesd.hdtss.controller.execution.SparqlExecutor;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.http.MediaType;
 import io.micronaut.websocket.WebSocketSession;
+import io.micronaut.websocket.exceptions.WebSocketSessionException;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -44,7 +45,7 @@ public class SparqlSessionContext {
     public boolean windowEnabled() { return windowNanos > 1000 && windowRows > 1; }
 
     public void sendSync(@NonNull WebSocketSession session,
-                         @NonNull CharSequence msg) throws Throwable {
+                         @NonNull CharSequence msg) throws WebSocketSessionException {
         if (tracing)
             log.trace("{} <<< {}", session.getId(), msg.toString().replace("\n", "\\n"));
         session.sendSync(msg, MediaType.TEXT_PLAIN_TYPE);

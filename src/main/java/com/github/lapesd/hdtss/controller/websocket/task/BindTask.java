@@ -14,7 +14,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.List;
-import java.util.Queue;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static java.lang.System.nanoTime;
 
@@ -26,8 +27,11 @@ public class BindTask extends AbstractQueryTask {
     private @MonotonicNonNull Binding binding;
     private final long batchSize;
     private long requested;
-    private final @NonNull Queue<@Nullable Term @NonNull[]> bindingsQueue;
+    private final @NonNull ReentrantLock lock;
+    private final @NonNull Condition hasBindings;
+    private final @NonNull ArrayDeque<@Nullable Term @NonNull[]> bindingsQueue;
     private @MonotonicNonNull Op template;
+    private volatile boolean hasWorker = false;
 
 
     public BindTask(@NonNull SparqlSessionContext context, @NonNull WebSocketSession session,
@@ -36,57 +40,65 @@ public class BindTask extends AbstractQueryTask {
         super(context, session, onTermination);
         this.sparql = sparql;
         this.batchSize = Math.max(1, context.bindRequest() / 2);
-        this.bindingsQueue = new ArrayDeque<>((int)(batchSize*2)+16);
+        this.bindingsQueue = new ArrayDeque<>((int)(batchSize*2)+2);
+        this.lock = new ReentrantLock(false);
+        this.hasBindings = this.lock.newCondition();
+    }
+
+    private void raiseProtocolException(String message) throws ProtocolException {
+        ProtocolException ex = new ProtocolException(message);
+        serializer.end("!error "+message.replace("\n", "\\n"), ex);
+        throw ex;
     }
 
     /** Delivers a binding values row received from the client. */
-    public synchronized void receiveBinding(@Nullable Term @NonNull[] row) throws ProtocolException {
+    public void receiveBinding(@Nullable Term @NonNull[] row) throws ProtocolException {
         log.debug("{}.receiveBinding()", this);
         if (binding == null)
-            throw new ProtocolException("row received before var names");
+            raiseProtocolException("row received before var names");
+        lock.lock();
         try {
             bindingsQueue.add(row);
-            notifyAll();
+            hasBindings.signalAll();
         } catch (IllegalStateException e) {
-            handleError(e);
-            return;
+            raiseProtocolException("Client sent more bindings than allowed");
+        } finally {
+            --requested;
+            tryIncrementalRequest();
+            lock.unlock();
         }
-        --requested;
-        tryIncrementalRequest();
     }
 
     /** Delivers the list of vars to be bound in future calls to {@code receiveBinding()}. */
     public void receiveVarNames(@NonNull List<@NonNull String> names) throws ProtocolException {
         log.debug("{}.receiveVarNames({})", this, names);
         if (binding != null)
-            throw new ProtocolException("var names already set");
+            raiseProtocolException("client already sent var names row");
         assert template != null;
         binding = new Binding(names);
-
-        context.executor().scheduler().schedule(() -> {
-            SyncSender sender = new SyncSender();
-            sendHeaders(sender, binding.unbound(template.outputVars()));
-            consumeBindings(sender);
-        });
+        hasWorker = true;
+        context.executor().scheduler().schedule(this::work);
     }
 
     /** Notifies an {@code !end} received from the peer. */
-    public synchronized void receiveBindingsEnd() throws ProtocolException {
+    public void receiveBindingsEnd() throws ProtocolException {
         log.debug("{}.receiveBindingsEnd()", this);
         if (binding == null)
-            throw new ProtocolException("Received !end before var names");
-        boolean interrupted = false, queued = false;
-        while (!queued) {
-            try {
+            raiseProtocolException("Received !end before var names");
+        queueEndBinding();
+    }
+
+    /** Enqueue END_BINDING */
+    private void queueEndBinding() {
+        lock.lock();
+        try {
+            if (hasWorker) {
                 bindingsQueue.add(END_BINDING);
-                queued = true;
-            } catch (IllegalStateException e) {
-                try { wait(); } catch (InterruptedException ie) { interrupted = true; }
+                hasBindings.signalAll();
             }
+        } finally {
+            lock.unlock();
         }
-        if (interrupted)
-            Thread.currentThread().interrupt();
-        notifyAll();
     }
 
     @Override protected QueryInfo.@Nullable Builder doStart() {
@@ -96,38 +108,63 @@ public class BindTask extends AbstractQueryTask {
         info.addParseNs(nanoTime()-start);
 
         requested = batchSize*2;
-        String requestMsg = "!bind-request " + requested+ "\n";
-        context.executor().scheduler().schedule(() -> sendAsync(requestMsg));
+        serializer.send("!bind-request " + requested+ "\n");
         return info;
     }
 
-    /** Uninterruptible {@code bindingsQueue.take()}. */
-    private synchronized @Nullable Term @NonNull[] takeBinding() {
+    @Override protected void cleanup(TaskTerminationListener.Cause cause) {
+        log.trace("{}.cleanup({})", this, cause);
+        queueEndBinding();
+    }
+
+    /** Uninterruptible {@code bindingsQueue.take()} followed by {@code tryIncrementalRequest()}. */
+    private @Nullable Term @NonNull[] takeBinding() {
+        Term[] binding;
         boolean interrupted = false;
-        while (bindingsQueue.isEmpty()) {
-            try { wait(); } catch (InterruptedException e) { interrupted = true; }
+        lock.lock();
+        try {
+            while (bindingsQueue.isEmpty()) {
+                try { hasBindings.await(); }
+                catch (InterruptedException e) { interrupted = true; }
+            }
+            binding = bindingsQueue.remove();
+            tryIncrementalRequest();
+            if (interrupted)
+                Thread.currentThread().interrupt();
+        } finally {
+            lock.unlock();
         }
-        @Nullable Term[] binding = bindingsQueue.remove();
-        tryIncrementalRequest();
-        if (interrupted)
-            Thread.currentThread().interrupt();
         return binding;
     }
 
     /** Send a {@code !bind-request +n} if appropriate */
-    private synchronized void tryIncrementalRequest() {
+    private void tryIncrementalRequest() {
+        assert lock.isHeldByCurrentThread();
         if (requested <= batchSize && bindingsQueue.size() <= batchSize) {
             requested += batchSize;
-            sendAsync("!bind-request +"+batchSize+"\n");
+            serializer.send("!bind-request +"+batchSize+"\n");
+        }
+    }
+
+    /** Entry point for the worker thread that consumes bindings and send solutions over the WS. */
+    private void work() {
+        String originalName = Thread.currentThread().getName();
+        Thread.currentThread().setName("BindTask-worker-"+sessionId);
+        try {
+            consumeBindings();
+        } finally {
+            hasWorker = false;
+            Thread.currentThread().setName(originalName);
         }
     }
 
     /** Consumes bindings and serializes solutions to the client, including a final {@code !end}. */
-    private void consumeBindings(@NonNull SyncSender sender) {
+    private void consumeBindings() {
         assert binding != null && template != null && info != null;
         boolean optimized = false;
         var dispatcher = context.executor().dispatcher();
-        for (var terms = takeBinding(); terms != END_BINDING; terms = takeBinding()) {
+        boolean ok = sendHeaders(binding.unbound(template.outputVars()));
+        for (var terms = takeBinding(); ok && terms != END_BINDING; terms = takeBinding()) {
             if (!optimized) {
                 optimized = true;
                 long start = nanoTime();
@@ -140,13 +177,12 @@ public class BindTask extends AbstractQueryTask {
             info.addDispatchNs(nanoTime()-start);
             assert buf.length() == 0 : "Concurrent use of buf";
             buf.append("!active-binding ");
-            unaccountedSerializeRow(buf, terms);
-            sender.send(buf);
+            serializeRow(buf, terms);
+            ok = serializer.send(buf);
             buf.setLength(0);
-            if (!serialize(sender, solutions))
-                return; // !error message already sent
+            ok = ok && serialize(solutions);
         }
-        if (sender.send("!end\n"))
-            terminate(null);
+        hasWorker = false;
+        sendEnd();
     }
 }
