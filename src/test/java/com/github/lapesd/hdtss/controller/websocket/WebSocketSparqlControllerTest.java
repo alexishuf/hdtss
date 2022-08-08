@@ -827,6 +827,12 @@ public class WebSocketSparqlControllerTest {
 
         @OnMessage public synchronized void onMessage(String msg) {
             try {
+                String[] lines = msg.split("\n");
+                if (lines.length > 1) {
+                    for (String line : lines)
+                        onMessage(line + "\n");
+                    return;
+                }
                 if (expectedMessages.stream().noneMatch(msg::startsWith)) {
                     if (!msg.equals("!bind-request +1\n")) {
                         String expected = expectedMessages.stream().map(m -> m.replace("\n", "\\n")).collect(joining(", "));
