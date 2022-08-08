@@ -73,13 +73,13 @@ public abstract class AbstractQueryTask {
      * Starts cancellation of this task if it has not yet terminated. Will send
      * {@code !cancelled\n} to the peer if headers have already been sent.
      *
-     * Once the task completes, {@code onTermination()} will be called. Note that the task may
-     * terminate for other reasons before the cancel takes effect.
+     * <p>Once the task completes, {@code onTermination()} will be called. Note that the task may
+     * terminate for other reasons before the cancel takes effect.</p>
      */
     public void cancel() {
         if (cancelled.compareAndSet(false, true)) {
             log.trace("{}.cancel(): sending !cancelled", this);
-            serializer.end("!cancelled", null);
+            serializer.end("!cancelled\n", null);
         } else {
             log.trace("{}.cancel(): ignoring", this);
         }

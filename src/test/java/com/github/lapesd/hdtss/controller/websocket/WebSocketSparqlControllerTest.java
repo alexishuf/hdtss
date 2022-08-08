@@ -25,6 +25,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.common.value.qual.MinLen;
@@ -41,6 +42,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static com.github.lapesd.hdtss.TestVocab.*;
+import static java.lang.Long.parseLong;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -574,10 +576,10 @@ public class WebSocketSparqlControllerTest {
                         requested = 0;
                         notifyAll();
                     } else if (line.startsWith("!bind-request +")) {
-                        requested += Long.parseLong(line.replaceAll("!bind-request \\+(\\d+)", "$1"));
+                        requested += parseLong(line.replaceAll("!bind-request \\+(\\d+)", "$1"));
                         notifyAll();
                     } else if (line.startsWith("!bind-request ")) {
-                        requested = Long.parseLong(line.replaceAll("!bind-request (\\d+)", "$1"));
+                        requested = parseLong(line.replaceAll("!bind-request (\\d+)", "$1"));
                         notifyAll();
                     } else if (line.startsWith("?")) {
                         assert vars == null;
@@ -748,6 +750,142 @@ public class WebSocketSparqlControllerTest {
                     assertEquals(exVars, actual.vars);
                     assertEquals(d.expected, actual.entries, msg);
                     ++i;
+                }
+            }
+        }
+    }
+
+    @ClientWebSocket("/sparql")
+    public static class CancelClient implements AutoCloseable {
+        private @MonotonicNonNull WebSocketSession session;
+        private final List<AssertionFailedError> failures = new ArrayList<>();
+        private boolean done = false;
+        private List<String> expectedMessages = List.of("!bind-request ");
+
+        public synchronized void assertExpected() {
+            while (!done) {
+                try {
+                    wait();
+                } catch (InterruptedException ignored) { }
+            }
+            if (!failures.isEmpty())
+                throw failures.get(0);
+        }
+
+        private synchronized void fail(Throwable cause) {
+            if (cause instanceof AssertionFailedError)
+                failures.add((AssertionFailedError) cause);
+            else
+                failures.add(new AssertionFailedError(cause.getMessage(), cause));
+            setDone();
+        }
+
+        private void fail(String cause) { fail(new AssertionFailedError(cause)); }
+
+        private synchronized void setDone() {
+            if (!done) {
+                done = true;
+                close();
+                notifyAll();
+            }
+        }
+
+        @OnOpen public void onOpen(WebSocketSession session) {
+            try {
+                if (session == null) {
+                    fail("onOpen() received null session");
+                    return;
+                }
+                this.session = session;
+                session.sendAsync("!bind\nSELECT * WHERE {?x <http://example.org/p-dummy> ?y}")
+                        .whenComplete((bind, bindErr) -> {
+                            if (bindErr != null)
+                                fail(bindErr);
+                        });
+            } catch (Throwable t) {
+                fail(t);
+                close();
+            }
+        }
+
+        @OnClose public void onClose(WebSocketSession session) {
+            try {
+                if (this.session != session)
+                    fail("onClose(" + session + "): expected " + this.session);
+            } catch (Throwable t) {
+                fail(t);
+            }
+        }
+
+        private void delayed(int ms, Runnable runnable) {
+            Thread thread = new Thread(() -> {
+                try { Thread.sleep(ms); } catch (InterruptedException ignored) { }
+                runnable.run();
+            }, "delayed(" + ms + ", " + runnable + ")");
+            thread.start();
+        }
+
+        @OnMessage public synchronized void onMessage(String msg) {
+            try {
+                if (expectedMessages.stream().noneMatch(msg::startsWith)) {
+                    if (!msg.equals("!bind-request +1\n")) {
+                        String expected = expectedMessages.stream().map(m -> m.replace("\n", "\\n")).collect(joining(", "));
+                        String actual = msg.replace("\n", "\\n");
+                        fail("Expected \""+expected+"\", received \""+actual+"\"");
+                    }
+                } else if (msg.startsWith("!bind-request ")) {
+                    expectedMessages = List.of("?y\n");
+                    long n = parseLong(msg.replaceAll("!bind-request \\+?(\\d+)\\s*", "$1"));
+                    if (n <= 1)
+                        fail("n=" + n + ", expected > 1");
+                    session.sendAsync("?x\n").whenComplete((hdr, hdrErr) -> {
+                        if (hdrErr != null) {
+                            fail(hdrErr);
+                        } else {
+                            session.sendAsync("<http://example.org/Alice>\n").whenComplete((row, rowErr) -> {
+                                if (rowErr != null) {
+                                    fail(rowErr);
+                                } else {
+                                    delayed(200,
+                                            () -> session.sendAsync("!cancel\n").whenComplete((cancel, cancelErr) -> {
+                                                if (cancelErr != null)
+                                                    fail(cancelErr);
+                                                //else: wait for cancelled
+                                            }));
+                                }
+                            });
+                        }
+                    });
+                } else if (msg.startsWith("?y\n")) {
+                    expectedMessages = List.of("!active-binding <http://example.org/Alice>\n", "!cancelled\n");
+                } else if (msg.startsWith("!active-binding <http://example.org/Alice>\n")) {
+                    expectedMessages = List.of("!cancelled");
+                } else if (msg.startsWith("!cancelled")) {
+                    expectedMessages = List.of("<<NO MORE MESSAGES>>");
+                    delayed(50, this::setDone);
+                } else {
+                    fail("Unexpected message: " + msg.replace("\n", "\\n"));
+                    close();
+                }
+            } catch (Throwable t) {
+                fail(t);
+                close();
+            }
+        }
+
+        @Override public void close() {
+            session.close();
+            setDone();
+        }
+    }
+
+    @Test
+    void testCancelWithinBindings() {
+        for (ApplicationContext appCtx : generator) {
+            try (TestContext testCtx = new TestContext(appCtx)) {
+                var wsc = appCtx.getBean(WebSocketClient.class);
+                try (var client = requireNonNull(Flux.from(wsc.connect(CancelClient.class, testCtx.endpointURL)).blockFirst())) {
+                    client.assertExpected();
                 }
             }
         }

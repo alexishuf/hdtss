@@ -121,8 +121,6 @@ public abstract class MessageParser {
     }
 
     private static final Pattern VERB_RX = Pattern.compile("^!(\\S+)\\s*");
-    private static final String MISSING_QUERY_SEP_MSG = "Missing '\\n\"\"\"\\'\\'\\'!<#>\\n' " +
-                                                        "separator in !bind message";
 
     private void rootParse(@NonNull String msg)
             throws ProtocolException {
@@ -148,6 +146,7 @@ public abstract class MessageParser {
 
 
     private static final char[] END_ACTION = "!end".toCharArray();
+    private static final char[] CANCEL_ACTION = "!cancel".toCharArray();
     private void bindingsParse(@NonNull String msg) throws ProtocolException {
         for (int i = 0, end, len = msg.length(); i < len; i = end+1) {
             if (msg.charAt(i) == '!') {
@@ -160,7 +159,17 @@ public abstract class MessageParser {
                     onEndRows();
                     break;
                 } else {
-                    raiseUnexpectedVerb(msg.substring(i));
+                    boolean isCancel = true;
+                    for (int j = 1; isCancel && j < CANCEL_ACTION.length; j++)
+                        isCancel = msg.charAt(i+j) == CANCEL_ACTION[j];
+                    if (isCancel) {
+                        onAction(Action.CANCEL);
+                        state = State.ROOT;
+                        columns = -1;
+                        break;
+                    } else {
+                        raiseUnexpectedVerb(msg.substring(i));
+                    }
                 }
             }
             end = msg.indexOf('\n', i);
