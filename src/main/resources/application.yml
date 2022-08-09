@@ -2,6 +2,12 @@ micronaut:
   application:
     name: hdtss
   server:
+    # Wait a lot before killing idle connections by default. This applies to HTTP connections
+    # and WebSocket sessions. The micronaut default is 5m. Low values can induce
+    # "server closed connection before completing results" errors on the client side when
+    # the server is processing a highly selective query. The risk of larger values is allowing
+    # malicious clients to DoS the server by holding many sessions in a pool.
+    idle-timeout: 1h
     netty:
       # Maximum size of the first line in an HTTP request. This configuration is
       # relevant for GET request in the SPARQL protocol. The whole
