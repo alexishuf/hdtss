@@ -1,12 +1,12 @@
 package com.github.lapesd.hdtss.controller.websocket.task;
 
 import com.github.lapesd.hdtss.controller.execution.QueryInfo;
+import com.github.lapesd.hdtss.controller.execution.SparqlExecutor;
 import com.github.lapesd.hdtss.controller.websocket.ProtocolException;
-import com.github.lapesd.hdtss.controller.websocket.SparqlSessionContext;
+import com.github.lapesd.hdtss.controller.websocket.SparqlSession;
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.nodes.Op;
 import com.github.lapesd.hdtss.utils.Binding;
-import io.micronaut.websocket.WebSocketSession;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -34,12 +34,11 @@ public class BindTask extends AbstractQueryTask {
     private volatile boolean hasWorker = false;
 
 
-    public BindTask(@NonNull SparqlSessionContext context, @NonNull WebSocketSession session,
-                    @NonNull TaskTerminationListener onTermination,
+    public BindTask(@NonNull SparqlSession session, @NonNull TaskTerminationListener onTermination,
                     @NonNull String sparql) {
-        super(context, session, onTermination);
+        super(session, onTermination);
         this.sparql = sparql;
-        this.batchSize = Math.max(1, context.bindRequest() / 2);
+        this.batchSize = Math.max(1, session.context().bindRequest() / 2);
         this.bindingsQueue = new ArrayDeque<>((int)(batchSize*2)+2);
         this.lock = new ReentrantLock(false);
         this.hasBindings = this.lock.newCondition();
@@ -77,7 +76,7 @@ public class BindTask extends AbstractQueryTask {
         assert template != null;
         binding = new Binding(names);
         hasWorker = true;
-        context.executor().scheduler().schedule(this::work);
+        session.context().executor().scheduler().schedule(this::work);
     }
 
     /** Notifies an {@code !end} received from the peer. */
@@ -104,7 +103,7 @@ public class BindTask extends AbstractQueryTask {
     @Override protected QueryInfo.@Nullable Builder doStart() {
         QueryInfo.Builder info = QueryInfo.builder(sparql);
         long start = nanoTime();
-        template = context.executor().parser().parse(sparql);
+        template = session.context().executor().parser().parse(sparql);
         info.addParseNs(nanoTime()-start);
 
         requested = batchSize*2;
@@ -149,7 +148,7 @@ public class BindTask extends AbstractQueryTask {
     /** Entry point for the worker thread that consumes bindings and send solutions over the WS. */
     private void work() {
         String originalName = Thread.currentThread().getName();
-        Thread.currentThread().setName("BindTask-worker-"+sessionId);
+        Thread.currentThread().setName("BindTask-worker-"+session.id());
         try {
             consumeBindings();
         } finally {
@@ -162,14 +161,15 @@ public class BindTask extends AbstractQueryTask {
     private void consumeBindings() {
         assert binding != null && template != null && info != null;
         boolean optimized = false;
-        var dispatcher = context.executor().dispatcher();
+        SparqlExecutor executor = session.context().executor();
+        var dispatcher = executor.dispatcher();
         boolean ok = sendHeaders(binding.unbound(template.outputVars()));
         for (var terms = takeBinding(); ok && terms != END_BINDING; terms = takeBinding()) {
             if (!optimized) {
                 optimized = true;
                 long start = nanoTime();
                 binding.setTerms(terms);
-                template = context.executor().optimizer().optimize(template, binding);
+                template = executor.optimizer().optimize(template, binding);
                 info.addOptimizeNs(nanoTime()-start);
             }
             long start = nanoTime();

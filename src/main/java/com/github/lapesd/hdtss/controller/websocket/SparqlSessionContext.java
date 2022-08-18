@@ -2,26 +2,19 @@ package com.github.lapesd.hdtss.controller.websocket;
 
 import com.github.lapesd.hdtss.controller.execution.SparqlExecutor;
 import io.micronaut.context.annotation.Property;
-import io.micronaut.http.MediaType;
-import io.micronaut.websocket.WebSocketSession;
-import io.micronaut.websocket.exceptions.WebSocketSessionException;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
-
-import java.util.function.Consumer;
 
 @Slf4j
 @Getter @Accessors(fluent = true)
 public class SparqlSessionContext {
     private final @NonNull SparqlExecutor executor;
     private final int actionQueueCapacity, bindRequest, windowRows;
-    private final long windowNanos;
+    private final long windowNanos, pingIntervalNanos;
     private final boolean tracing;
-
 
     @Inject
     public SparqlSessionContext(@NonNull SparqlExecutor executor,
@@ -32,39 +25,17 @@ public class SparqlSessionContext {
                                 @Property(name = "sparql.ws.window.rows", defaultValue = "16")
                                         int windowRows,
                                 @Property(name = "sparql.ws.window.us", defaultValue = "500")
-                                        long windowMicros
+                                        long windowMicros,
+                                @Property(name = "sparql.ws.ping.secs", defaultValue = "120")
+                                        int pingIntervalSecs
     ) {
         this.executor = executor;
         this.actionQueueCapacity = actionQueueCapacity;
         this.bindRequest = bindRequest;
         this.windowRows = windowRows;
         this.windowNanos = windowMicros*1000L;
+        this.pingIntervalNanos = pingIntervalSecs*1_000_000_000L;
         this.tracing = log.isTraceEnabled();
-    }
-
-    public boolean windowEnabled() { return windowNanos > 1000 && windowRows > 1; }
-
-    public void sendSync(@NonNull WebSocketSession session,
-                         @NonNull CharSequence msg) throws WebSocketSessionException {
-        if (tracing)
-            log.trace("{} <<< {}", session.getId(), msg.toString().replace("\n", "\\n"));
-        session.sendSync(msg, MediaType.TEXT_PLAIN_TYPE);
-    }
-
-    public void sendAsync(@NonNull WebSocketSession session, @NonNull CharSequence msg,
-                          @Nullable Runnable onComplete, @Nullable Consumer<Throwable> onError) {
-        if (tracing)
-            log.trace("{} <<< {}", session.getId(), msg.toString().replace("\n", "\\n"));
-        session.sendAsync(msg, MediaType.TEXT_PLAIN_TYPE).whenComplete((cs, err) -> {
-            if (err != null) {
-                if (onError == null)
-                    log.error("{} ({}) sending {}.", err.getClass().getSimpleName(), err, msg);
-                else
-                    onError.accept(err);
-            } else if (onComplete != null) {
-                onComplete.run();
-            }
-        });
     }
 }
 

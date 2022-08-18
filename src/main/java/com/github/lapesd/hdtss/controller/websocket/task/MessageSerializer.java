@@ -1,7 +1,7 @@
 package com.github.lapesd.hdtss.controller.websocket.task;
 
+import com.github.lapesd.hdtss.controller.websocket.SparqlSession;
 import io.micronaut.websocket.WebSocketSession;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -10,23 +10,27 @@ import java.util.ArrayDeque;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static io.micronaut.http.MediaType.TEXT_PLAIN_TYPE;
 import static java.lang.System.nanoTime;
 
 @Slf4j
-@RequiredArgsConstructor
+
 public abstract class MessageSerializer implements Runnable {
     private static final String END_MESSAGE = MessageSerializer.class.getName()+"::END";
 
     private final long windowTimeoutNanos;
     private final int maxMessagesInWindow;
-    private final boolean trace = log.isTraceEnabled();
-    protected final WebSocketSession session;
+    protected final SparqlSession session;
     private final ReentrantLock lock = new ReentrantLock(false);
     private @MonotonicNonNull Throwable injectedException;
     private boolean open = true;
     private final Condition enqueued = lock.newCondition();
     private final ArrayDeque<String> queue = new ArrayDeque<>();
+
+    public MessageSerializer(SparqlSession session) {
+        this.session = session;
+        this.windowTimeoutNanos = session.context().windowNanos();
+        this.maxMessagesInWindow = session.context().windowRows();
+    }
 
     /**
      * Called when {@link MessageSerializer#run()} finishes.
@@ -117,7 +121,7 @@ public abstract class MessageSerializer implements Runnable {
     @SuppressWarnings("StringEquality")
     @Override public final void run() {
         String originalThreadName = Thread.currentThread().getName();
-        Thread.currentThread().setName("MessageSerializer-"+session.getId());
+        Thread.currentThread().setName("MessageSerializer-"+session.id());
         StringBuilder sb = new StringBuilder();
         Throwable cause = null;
         try {
@@ -141,10 +145,7 @@ public abstract class MessageSerializer implements Runnable {
                         }
                     }
                 }
-                String effMessage = singleMessage == null ? sb.toString() : singleMessage;
-                if (trace)
-                    log.trace("{} << {}", session.getId(), effMessage.replace("\n", "\\n"));
-                session.sendSync(effMessage, TEXT_PLAIN_TYPE);
+                session.send(singleMessage == null ? sb.toString() : singleMessage);
             }
         } catch (Throwable t) {
             cause = t;
@@ -155,6 +156,6 @@ public abstract class MessageSerializer implements Runnable {
     }
 
     @Override public String toString() {
-        return "MessageSerializer["+session.getId()+"]";
+        return "MessageSerializer["+session.id()+"]";
     }
 }

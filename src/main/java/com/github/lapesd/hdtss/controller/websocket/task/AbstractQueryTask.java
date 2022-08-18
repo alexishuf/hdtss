@@ -1,11 +1,11 @@
 package com.github.lapesd.hdtss.controller.websocket.task;
 
 import com.github.lapesd.hdtss.controller.execution.QueryInfo;
+import com.github.lapesd.hdtss.controller.websocket.SparqlSession;
 import com.github.lapesd.hdtss.controller.websocket.SparqlSessionContext;
 import com.github.lapesd.hdtss.model.Term;
 import com.github.lapesd.hdtss.model.solutions.QuerySolutions;
 import com.github.lapesd.hdtss.sparql.results.codecs.TSVCodec;
-import io.micronaut.websocket.WebSocketSession;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -17,8 +17,7 @@ import static com.github.lapesd.hdtss.controller.websocket.task.TaskTerminationL
 
 @Slf4j
 public abstract class AbstractQueryTask {
-    protected final SparqlSessionContext context;
-    protected final String sessionId;
+    protected final SparqlSession session;
     protected final MessageSerializer serializer;
     protected final StringBuilder buf = new StringBuilder(4096-256);
 
@@ -29,25 +28,24 @@ public abstract class AbstractQueryTask {
     private final AtomicBoolean started = new AtomicBoolean();
     private final AtomicBoolean cancelled = new AtomicBoolean();
 
-    public AbstractQueryTask(@NonNull SparqlSessionContext ctx, @NonNull WebSocketSession session,
-                             @NonNull TaskTerminationListener onTermination) {
-        this.context = ctx;
-        this.sessionId = session.getId();
-        this.serializer = new MessageSerializer(ctx.windowNanos(), ctx.windowRows(), session) {
+    public AbstractQueryTask(SparqlSession session, @NonNull TaskTerminationListener onTermination) {
+        this.session = session;
+        SparqlSessionContext ctx = session.context();
+        this.serializer = new MessageSerializer(session) {
             @Override public void onCompletion(@Nullable Throwable e) {
                 if (e != null)
                     log.debug("{}.serializer.onCompletion({})", AbstractQueryTask.this, e.toString());
                 if (info != null) {
                     QueryInfo queryInfo = info.cancelled(cancelled.get() && !normalCompletion)
                                               .error(e).rows(rows).build();
-                    context.executor().notify(queryInfo);
+                    ctx.executor().notify(queryInfo);
                 }
                 var c = e != null ? FAILED : (normalCompletion ? COMPLETION : CANCEL);
                 cleanup(c);
                 onTermination.onTerminate(c);
             }
         };
-        context.executor().scheduler().schedule(this.serializer);
+        ctx.executor().scheduler().schedule(this.serializer);
     }
 
     protected void cleanup(TaskTerminationListener.Cause cause) {
@@ -86,7 +84,7 @@ public abstract class AbstractQueryTask {
     }
 
     @Override public @NonNull String toString() {
-        return getClass().getSimpleName() + '[' + sessionId +
+        return getClass().getSimpleName() + '[' + session.id() +
                 (normalCompletion ? ",completed"  : ", !completed") +
                 (cancelled.get()  ? ", cancelled" : "") +
                 (started.get()    ? ""            : ", !started") + ']';

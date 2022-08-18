@@ -1,5 +1,10 @@
 package com.github.lapesd.hdtss.controller.websocket.task;
 
+import com.github.lapesd.hdtss.TempFile;
+import com.github.lapesd.hdtss.controller.execution.SparqlExecutor;
+import com.github.lapesd.hdtss.controller.websocket.SparqlSession;
+import com.github.lapesd.hdtss.controller.websocket.SparqlSessionContext;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.value.MutableConvertibleValues;
 import io.micronaut.core.convert.value.MutableConvertibleValuesMap;
@@ -13,15 +18,14 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.RepeatedTest;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.opentest4j.AssertionFailedError;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -34,6 +38,9 @@ import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.*;
 
 class MessageSerializerTest {
+    private static TempFile hdtFile;
+    private static ApplicationContext appCtx;
+    private static SparqlExecutor sparqlExecutor;
 
     @RequiredArgsConstructor @Accessors(fluent = true, chain = true)
     private static final class SessionMock implements WebSocketSession {
@@ -97,13 +104,28 @@ class MessageSerializerTest {
         private final long startNanos = nanoTime();
         private final long msTestTimeout;
 
+        private static class SparqlSessionHelper extends SparqlSession {
+            final SessionMock sessionMock;
+            public SparqlSessionHelper(long windowTimeoutMs, int maxMessagesInWindow) {
+                this(new SparqlSessionContext(sparqlExecutor, 8, 64,
+                                              maxMessagesInWindow,
+                                             windowTimeoutMs*1_000L, 120));
+            }
+            public SparqlSessionHelper(@NonNull SparqlSessionContext ctx) {
+                this(ctx, new SessionMock());
+            }
+            public SparqlSessionHelper(@NonNull SparqlSessionContext ctx,
+                                       @NonNull SessionMock sessionMock) {
+                super(ctx, sessionMock);
+                this.sessionMock = sessionMock;
+            }
+        }
+
         @Builder
-        public Mock(long windowTimeoutMs, int maxMessagesInWindow,
-                    long msTestTimeout,
+        public Mock(long windowTimeoutMs, int maxMessagesInWindow, long msTestTimeout,
                     @Nullable Class<? extends Throwable> expectedError) {
-            super(windowTimeoutMs*1_000_000L, Math.max(1, maxMessagesInWindow),
-                  new SessionMock());
-            ((SessionMock)this.session).sent(messages);
+            super(new SparqlSessionHelper(windowTimeoutMs, maxMessagesInWindow));
+            ((SparqlSessionHelper)this.session).sessionMock.sent(messages);
             this.expectedError = expectedError;
             assert msTestTimeout >= 0;
             this.msTestTimeout = msTestTimeout == 0 ? Long.MAX_VALUE : msTestTimeout;
@@ -112,7 +134,7 @@ class MessageSerializerTest {
             thread.start();
         }
 
-        public SessionMock session() { return (SessionMock) session; }
+        public SessionMock session() { return ((SparqlSessionHelper)session).sessionMock; }
 
         @Override public void onCompletion(@Nullable Throwable error) {
             if (terminated.tryAcquire()) {
@@ -154,13 +176,15 @@ class MessageSerializerTest {
         }
 
         public void awaitSent(int ms) {
-            int target = session().sent.size() + 1;
+            //noinspection resource
+            SessionMock sessionMock = session();
+            int target = sessionMock.sent.size() + 1;
             long nanos = ms * 1_000_000L;
             nanos += Math.min(nanos/2, 5_000_000L);
             long deadline = nanoTime()+nanos;
-            while (nanoTime() < deadline && session().sent.size() < target && failure == null)
+            while (nanoTime() < deadline && sessionMock.sent.size() < target && failure == null)
                 Thread.yield();
-            if (session().sent.size() < target)
+            if (sessionMock.sent.size() < target)
                 Assertions.fail("no message sent in "+ms+"ms");
         }
 
@@ -188,10 +212,23 @@ class MessageSerializerTest {
 
 
     @BeforeAll
-    static void beforeAll() {
-        SessionMock mock = new SessionMock().sent(new ArrayList<>());
-        mock.sendSync("1"); // first execution may block for a few seconds
-        assertEquals(singletonList("1"), mock.sent);
+    static void beforeAll() throws IOException {
+        var path = "data/query/foaf-graph.hdt";
+        hdtFile = new TempFile(".hdt").initFromResource(TempFile.class, path);
+        var properties = Map.of("hdt.location", (Object)hdtFile.getAbsolutePath());
+        appCtx = ApplicationContext.builder().properties(properties).start();
+        sparqlExecutor = appCtx.getBean(SparqlExecutor.class);
+        assertNotNull(sparqlExecutor);
+        try (SessionMock mock = new SessionMock().sent(new ArrayList<>())) {
+            mock.sendSync("1"); // first execution may block for a few seconds
+            assertEquals(singletonList("1"), mock.sent);
+        }
+    }
+
+    @AfterAll
+    static void afterAll() throws IOException {
+        appCtx.close();
+        hdtFile.close();
     }
 
     @Test

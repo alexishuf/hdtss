@@ -208,15 +208,32 @@ class MessageParserTest {
                                   List.of(new Term("<b>")),
                                   singletonList(null),
                                   END_ROW_LIST),
+                          0),
+        /* 23 */arguments(List.of("!ping\n", "!ping-ack\n!ping"), List.of(PING, PING_ACK, PING),
+                          List.of(), List.of(), 0),
+        /* 24 */arguments(List.of("!ping-ack\n!bind "+sparql,
+                                  "?x\n",
+                                  "!ping",
+                                  "<a>\n!ping-ack\n!end",
+                                  "!ping\n"),
+                          List.of(PING_ACK, new Action.Bind(sparql), PING, PING_ACK, PING),
+                          List.of(List.of("x")),
+                          List.of(List.of(new Term("<a>")),
+                                  END_ROW_LIST),
                           0)
         );
     }
+
+    private static class PingCommand { }
+
+    private static final PingCommand PING = new PingCommand();
+    private static final PingCommand PING_ACK = new PingCommand();
 
     @ParameterizedTest @MethodSource
     void testParse(@NonNull List<String> messages, @NonNull List<Action> expectedActions,
                    @NonNull List<List<String>> expectedVarsLists,
                    @NonNull List<List<Term>> expectedRows, int expectedErrors) {
-        List<Action> actions = new ArrayList<>();
+        List<Object> actions = new ArrayList<>();
         List<@Nullable Term @NonNull[]> rows = new ArrayList<>();
         List<@NonNull List<@NonNull String>> varsLists = new ArrayList<>();
         AtomicInteger errors = new AtomicInteger();
@@ -226,13 +243,15 @@ class MessageParserTest {
             @Override protected void onVars(@NonNull List<String> list) { varsLists.add(list); }
             @Override protected void onEndRows() { rows.add(END_ROW); }
             @Override protected void onError(String reason) { errors.incrementAndGet(); }
+            @Override protected void onPing() { actions.add(PING); }
+            @Override protected void onPingAck() { actions.add(PING_ACK); }
         };
         for (String msg : messages)
             parser.parse(msg);
 
         assertEquals(expectedActions.size(), actions.size());
         for (int i = 0; i < actions.size(); i++) {
-            Action ex = expectedActions.get(i), ac = actions.get(i);
+            Object ex = expectedActions.get(i), ac = actions.get(i);
             if (ex instanceof Action.Bind exBind) {
                 assertTrue(ac instanceof Action.Bind);
                 Action.Bind acBind = (Action.Bind) ac;

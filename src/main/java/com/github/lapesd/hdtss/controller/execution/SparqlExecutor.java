@@ -17,6 +17,10 @@ import org.reactivestreams.Publisher;
 import reactor.core.scheduler.Scheduler;
 
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.System.nanoTime;
 
@@ -29,6 +33,19 @@ public class SparqlExecutor {
     private final @NonNull List<@NonNull QueryInfoConsumer> infoConsumers;
     private final @NonNull GetPredicatesExecutor predicatesExecutor;
     private final @NonNull OpExecutorDispatcher dispatcher;
+    private final @NonNull ScheduledExecutorService scheduledExecutor
+            = Executors.newScheduledThreadPool(1, new ThreadFactory() {
+                private final AtomicInteger nextId = new AtomicInteger(1);
+                @Override public Thread newThread(@NonNull Runnable r) {
+                    int id = nextId.getAndIncrement();
+                    Thread t = new Thread(r, "SparqlExecutor-Scheduled-"+id);
+                    if (!t.isDaemon())
+                        t.setDaemon(true);
+                    if (t.getPriority() != Thread.NORM_PRIORITY)
+                        t.setPriority(Thread.NORM_PRIORITY);
+                    return t;
+                }
+            });
 
     public record DispatchResult(@NonNull QuerySolutions solutions,
                                  QueryInfo.@NonNull Builder info) {}
@@ -75,8 +92,8 @@ public class SparqlExecutor {
     /**
      * Get a {@link Publisher} for the serialized result of the query.
      *
-     * The publisher will be instrumented to fill and distribute a {@link QueryInfo} upon
-     * termination (whatever the cause: cancel, error or completion),
+     * <p>The publisher will be instrumented to fill and distribute a {@link QueryInfo} upon
+     * termination (whatever the cause: cancel, error or completion).</p>
      */
     public @NonNull Publisher<byte[]> execute(@NonNull CharSequence sparql,
                                               @NonNull ChunkedEncoder encoder,
@@ -90,8 +107,8 @@ public class SparqlExecutor {
     /**
      * Distribute a {@link QueryInfo} to all known {@link QueryInfoConsumer}s.
      *
-     * This should be called by callers of {@link SparqlExecutor#dispatch(CharSequence)} after
-     * a non-exception return.
+     * <p>This should be called by callers of {@link SparqlExecutor#dispatch(CharSequence)} after
+     * a non-exception return.</p>
      */
     public void notify(@NonNull QueryInfo info) {
         for (QueryInfoConsumer consumer : infoConsumers)

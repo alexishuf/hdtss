@@ -642,3 +642,17 @@ a minimum latency. The following properties change that behavior.
 > `sparql.ws.window.size` rows have been collected, whichever occurs first. 
 > The **default** is `500` microseconds. If this is set to something `<= 0`, 
 > no bundling will occur (each row will immediately yield a websocket message).
+ 
+A websocket session may become innactive after some time if the client is 
+slow at providing new bindings or the server is slow at finding results. Such 
+scenario could arise on queries that apply selective FILTER clauses on large 
+result sets. To signal its presence, each peer may send a `!ping` message to 
+be answered with an `!ping-ack`. The server by default sends a ping every 
+2 minutes:
+
+> `sparql.ws.ping.secs=INTEGER`
+> 
+> The interval in seconds after which a !ping will be sent by the server on a 
+> session that had no activity from neither the client nor the server. Any 
+> incoming or outgoing message resets this timer. 
+> The **default** is `120`, i.e., 2 minutes

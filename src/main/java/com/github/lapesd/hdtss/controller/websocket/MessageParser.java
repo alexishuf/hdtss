@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 
 @Slf4j
 public abstract class MessageParser {
-    private static final Pattern WS_RX = Pattern.compile("\s+");
+    private static final Pattern WS_RX = Pattern.compile("\\s+");
     private enum State {
         ROOT,
         VARS,
@@ -33,6 +33,10 @@ public abstract class MessageParser {
     protected abstract void onEndRows() throws ProtocolException;
     /** Called when the message contains an syntax or protocol violation  */
     protected abstract void onError(String reason);
+    /** Called when a {@code !ping} line is met */
+    protected abstract void onPing();
+    /** Called when a {@code !ping-ack} line is met */
+    protected abstract void onPingAck();
 
     /** Parse the client-send message calling the adequate {@code on}* methods. */
     public void parse(@NonNull String msg) {
@@ -120,22 +124,37 @@ public abstract class MessageParser {
         return terms;
     }
 
-    private static final Pattern VERB_RX = Pattern.compile("^!(\\S+)\\s*");
+    private static final Pattern VERB_RX = Pattern.compile("\\s*!(\\S+)\\s*");
 
-    private void rootParse(@NonNull String msg)
-            throws ProtocolException {
+    private void rootParse(@NonNull String msg) throws ProtocolException {
+        if (msg.isEmpty())
+            return;
         Matcher m = VERB_RX.matcher(msg);
-        String verb = m.find() ?  m.group(1) : "";
-        switch (verb) {
-            default          -> raiseUnexpectedVerb(msg);
-            case "queue-cap" -> onAction(Action.QUEUE_CAP);
-            case "query"     -> onAction(new Action.Query(msg.substring(7)));
-            case "cancel"    -> onAction(Action.CANCEL);
-            case "bind" -> {
-                onAction(new Action.Bind(msg.substring(6)));
-                state = State.VARS;
+        int end = 0;
+        boolean terminal = false;
+        while (!terminal && m.find()) {
+            end = m.end();
+            String verb = m.group(1);
+            switch (verb) {
+                default              -> raiseUnexpectedVerb(msg.substring(m.start()));
+                case "queue-cap"     -> onAction(Action.QUEUE_CAP);
+                case "ping-ack"      -> onPingAck();
+                case "ping"          -> onPing();
+                case "cancel"        -> onAction(Action.CANCEL);
+                case "query","bind"  -> {
+                    terminal = true;
+                    String arg = msg.substring(end);
+                    if (verb.charAt(0) == 'q') {
+                        onAction(new Action.Query(arg));
+                    } else {
+                        onAction(new Action.Bind(arg));
+                        state = State.VARS;
+                    }
+                }
             }
         }
+        if (!terminal && end < msg.length() && !WS_RX.matcher(msg.substring(end)).matches())
+            raiseUnexpectedVerb(msg.substring(end));
     }
 
     private void raiseUnexpectedVerb(@NonNull String msg) throws ProtocolException {
@@ -145,45 +164,52 @@ public abstract class MessageParser {
     }
 
 
-    private static final char[] END_ACTION = "!end".toCharArray();
-    private static final char[] CANCEL_ACTION = "!cancel".toCharArray();
+    private static final Pattern BIND_VERB_RX = Pattern.compile("\\s*!(\\S+)[\t \r]*\n?");
+
+    /** Parses verbs within bindings. Returns next index to process in msg or throws on error. */
+    private int bindingsVerbParse(@NonNull String msg, int start) throws ProtocolException {
+        Matcher m = BIND_VERB_RX.matcher(msg);
+        if (m.find(start) && m.start() == start) {
+            String verb = m.group(1);
+            switch (verb) {
+                default         -> raiseUnexpectedVerb("!"+verb); // throws
+                case "ping"     -> onPing();
+                case "ping-ack" -> onPingAck();
+                case "end","cancel" -> {
+                    state   = State.ROOT;
+                    columns = -1;
+                    switch (verb.charAt(0)) {
+                        case 'e' -> onEndRows();
+                        case 'c' -> onAction(Action.CANCEL);
+                    }
+                    return msg.length();
+                }
+            }
+            return m.end();
+        } else {
+            raiseUnexpectedVerb(msg.substring(start)); //throws
+        }
+        return msg.length(); // unreachable
+    }
+
     private void bindingsParse(@NonNull String msg) throws ProtocolException {
         for (int i = 0, end, len = msg.length(); i < len; i = end+1) {
             if (msg.charAt(i) == '!') {
-                boolean isEnd = true;
-                for (int j = 1; isEnd && j < END_ACTION.length; j++)
-                    isEnd = msg.charAt(i+j) == END_ACTION[j];
-                if (isEnd) {
-                    state = State.ROOT;
-                    columns = -1;
-                    onEndRows();
-                    break;
-                } else {
-                    boolean isCancel = true;
-                    for (int j = 1; isCancel && j < CANCEL_ACTION.length; j++)
-                        isCancel = msg.charAt(i+j) == CANCEL_ACTION[j];
-                    if (isCancel) {
-                        onAction(Action.CANCEL);
-                        state = State.ROOT;
-                        columns = -1;
-                        break;
-                    } else {
-                        raiseUnexpectedVerb(msg.substring(i));
-                    }
-                }
-            }
-            end = msg.indexOf('\n', i);
-            if (end < 0) {
-                String reason = "Values line not terminated with '\n': "+ msg.substring(i);
-                throw new ProtocolException(reason);
-            }
-            if (state == State.VARS) {
-                List<String> vars = parseVars(msg, i);
-                columns = vars.size();
-                state = State.BINDINGS;
-                onVars(vars);
+                end = bindingsVerbParse(msg, i)-1;
             } else {
-                onRow(parseTerms(msg, i, columns));
+                end = msg.indexOf('\n', i);
+                if (end < 0) {
+                    String reason = "Missing '\\n' in values line: " + msg.substring(i);
+                    throw new ProtocolException(reason);
+                }
+                if (state == State.VARS) {
+                    List<String> vars = parseVars(msg, i);
+                    columns = vars.size();
+                    state = State.BINDINGS;
+                    onVars(vars);
+                } else {
+                    onRow(parseTerms(msg, i, columns));
+                }
             }
         }
     }
