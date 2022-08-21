@@ -14,6 +14,7 @@ public final class ByteArrayWriter extends Writer {
     static final int DEFAULT_CAPACITY = 1024;
     static final int ENCODER_CAPACITY = DEFAULT_CAPACITY;
     private final @NonNull CharsetEncoder encoder;
+    private final Charset charset;
     private final boolean isUtf8;
     private final char @NonNull [] ca = new char[ENCODER_CAPACITY];
     private final @NonNull CharBuffer cb = CharBuffer.wrap(ca);
@@ -25,13 +26,12 @@ public final class ByteArrayWriter extends Writer {
     public ByteArrayWriter() {
         this(DEFAULT_CAPACITY, StandardCharsets.UTF_8);
     }
-    public ByteArrayWriter(int capacity) {
-        this(capacity, StandardCharsets.UTF_8);
-    }
+
     public ByteArrayWriter(@NonNull Charset charset) {
         this(DEFAULT_CAPACITY, charset);
     }
     public ByteArrayWriter(int capacity, @NonNull Charset charset) {
+        this.charset = charset;
         isUtf8 = StandardCharsets.UTF_8.equals(charset);
         encoder = charset.newEncoder()
                 .onMalformedInput(CodingErrorAction.REPLACE)
@@ -142,5 +142,9 @@ public final class ByteArrayWriter extends Writer {
 
     @SneakyThrows public ByteArrayWriter append(byte[] encodedBytes) {
         return append(encodedBytes, 0, encodedBytes.length);
+    }
+
+    @Override public String toString() {
+        return getClass().getSimpleName()+"("+new String(toByteArray(), charset)+")";
     }
 }

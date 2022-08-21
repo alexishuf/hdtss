@@ -602,10 +602,6 @@ the now bound query. With a websocket, the client can concurrently send
 additional bindings, avoiding parse&optimize cycles on the server and reducing 
 the total client-server communication.     
 
-> `sparql.ws=true|false`
->
-> Whether websocket support will be enabled. The **default** is `true`
-
 The protocol on top of websockets is described at [WEBSOCKET.md](WEBSOCKET.md).
 
 The following configuration properties set per-session limits on the server: 

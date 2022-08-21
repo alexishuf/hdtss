@@ -23,7 +23,7 @@ import static com.github.lapesd.hdtss.model.Term.fromURI;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-public class RegressionLMDBEscapes extends ControllerTestBase {
+public class RegressionLMDBEscapesTest extends ControllerTestBase {
     private static TestConfigPermutations permutations;
 
     @BeforeAll

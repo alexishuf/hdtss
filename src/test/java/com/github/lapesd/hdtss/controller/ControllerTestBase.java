@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static com.github.lapesd.hdtss.sparql.results.SparqlMediaTypes.QUERY_TYPE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -70,31 +71,21 @@ abstract class ControllerTestBase {
             server.stop();
             applicationContext.close();
         }
-
-        public @NonNull ApplicationContext getApplicationContext() {
-            return this.applicationContext;
-        }
-
-        public @NonNull EmbeddedServer getServer() {
-            return this.server;
-        }
-
-        public @NonNull HttpClient getRClient() {
-            return this.rClient;
-        }
-
-        public @NonNull BlockingHttpClient getBClient() {
-            return this.bClient;
-        }
-
-        public @NonNull String getBaseURL() {
-            return this.baseURL;
-        }
     }
 
     protected void doTest(@NonNull List<List<Term>> expected,
                           @NonNull Function<TestContext, HttpRequest<?>> requestFactory) {
         for (ApplicationContext appCtx : getPermutations()) {
+            List<String> values = Stream.of("sparql.test.results.format",
+                    "sparql.flow",
+                    "sparql.reactive.max-threads",
+                    "sparql.reactive.scheduler",
+                    "hdt.estimator"
+            ).map(n -> appCtx.getProperty(n, String.class).orElse("")).toList();
+            List<String> buggyValues = List.of("application/sparql-results+json",
+                                               "REACTIVE", "-1", "IO", "NONE");
+            if (values.equals(buggyValues))
+                System.out.println("BREAK");
             try (TestContext ctx = new TestContext(appCtx)) {
                 HttpRequest<?> request = requestFactory.apply(ctx);
                 QuerySolutions solutions = ctx.bClient.retrieve(request, QuerySolutions.class);

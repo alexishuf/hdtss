@@ -168,7 +168,7 @@ public class WebSocketSparqlControllerTest {
         return list;
     }
 
-    @ClientWebSocket("/sparql")
+    @ClientWebSocket("/sparql/ws")
     @Accessors(fluent = true)
     @Slf4j
     public static abstract class QueryClient implements AutoCloseable {
@@ -315,7 +315,7 @@ public class WebSocketSparqlControllerTest {
             this.server = appCtx.getBean(EmbeddedServer.class);
             this.server.start();
             String url = this.server.getURL().toString();
-            this.endpointURL = url + (url.endsWith("/") ? "" : "/") + "sparql";
+            this.endpointURL = url + (url.endsWith("/") ? "" : "/") + "sparql/ws";
             this.executor = Executors.newCachedThreadPool();
         }
 
@@ -755,7 +755,7 @@ public class WebSocketSparqlControllerTest {
         }
     }
 
-    @ClientWebSocket("/sparql")
+    @ClientWebSocket("/sparql/ws")
     public static class CancelClient implements AutoCloseable {
         private @MonotonicNonNull WebSocketSession session;
         private final List<AssertionFailedError> failures = new ArrayList<>();
